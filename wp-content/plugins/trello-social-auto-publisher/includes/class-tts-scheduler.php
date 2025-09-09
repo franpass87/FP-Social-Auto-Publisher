@@ -73,6 +73,7 @@ class TTS_Scheduler {
             'instagram' => get_post_meta( $client_id, '_tts_ig_token', true ),
             // Added support for YouTube uploads.
             'youtube'   => get_post_meta( $client_id, '_tts_yt_token', true ),
+            // Added support for TikTok uploads.
             'tiktok'    => get_post_meta( $client_id, '_tts_tt_token', true ),
         );
 
