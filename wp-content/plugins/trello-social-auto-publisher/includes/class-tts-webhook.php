@@ -101,7 +101,14 @@ class TTS_Webhook {
                 array( 'status' => 500 )
             );
         }
-        $timestamp = empty( $result['due'] ) ? time() : strtotime( $result['due'] );
+        if ( empty( $result['due'] ) ) {
+            $timestamp = time();
+        } else {
+            $timestamp = strtotime( $result['due'] );
+            if ( $timestamp === false ) {
+                $timestamp = time();
+            }
+        }
         as_schedule_single_action( $timestamp, 'tts_publish_social_post', array( $post_id ) );
 
         return rest_ensure_response( $result );
