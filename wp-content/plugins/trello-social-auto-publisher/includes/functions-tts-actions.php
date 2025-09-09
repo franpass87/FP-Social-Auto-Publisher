@@ -6,9 +6,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Callback to publish scheduled social posts.
  *
- * In futuro invocherà i metodi publish_facebook, publish_instagram, ecc.
+ * In the future will invoke publish_facebook, publish_instagram, etc. methods.
  *
- * @param int $post_id ID del post da pubblicare.
+ * @param int $post_id ID of the post to publish.
  */
 function tts_publish_social_post( $post_id ) {
     if ( function_exists( 'publish_facebook' ) ) {
