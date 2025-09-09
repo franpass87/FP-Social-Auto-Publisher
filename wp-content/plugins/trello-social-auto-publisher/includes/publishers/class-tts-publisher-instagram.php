@@ -17,10 +17,14 @@ class TTS_Publisher_Instagram {
     /**
      * Publish the post to Instagram.
      *
-     * @param int    $post_id     Post ID.
-     * @param mixed  $credentials Credentials used for publishing.
-     * @param string $message     Message to publish.
-     * @return string Log message.
+     * Credentials must be provided in the form `{ig-user-id}|{access-token}` where `ig-user-id` is
+     * the Instagram Business account ID. The access token requires the following permissions:
+     * `instagram_basic`, `pages_show_list`, `pages_read_engagement`, and `pages_manage_posts`.
+     *
+     * @param int         $post_id     Post ID.
+     * @param string      $credentials Instagram user ID and access token.
+     * @param string      $message     Message to publish.
+     * @return string|\WP_Error Log message or error.
      */
     public function publish( $post_id, $credentials, $message ) {
         if ( empty( $credentials ) ) {
