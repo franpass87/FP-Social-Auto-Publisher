@@ -72,6 +72,7 @@ class TTS_Scheduler {
             'facebook'  => get_post_meta( $client_id, '_tts_fb_token', true ),
             'instagram' => get_post_meta( $client_id, '_tts_ig_token', true ),
             'youtube'   => get_post_meta( $client_id, '_tts_yt_token', true ),
+            'tiktok'    => get_post_meta( $client_id, '_tts_tt_token', true ),
         );
 
         $options = get_option( 'tts_settings', array() );

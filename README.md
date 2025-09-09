@@ -30,6 +30,14 @@ Per pubblicare contenuti su Instagram è necessario un account **Business** o **
    Il valore `instagram_business_account.id` è l'`ig_user_id`.
 4. Inserisci nel campo *Instagram Access Token* del client il valore nel formato `{ig_user_id}|{access-token}`.
 
+## Token TikTok Business
+
+Per pubblicare contenuti su TikTok è necessario un account **Business** abilitato alle TikTok Marketing/Open API.
+
+1. Crea un'app su [TikTok for Developers](https://developers.tiktok.com/).
+2. Genera un **Access Token** con i permessi necessari per l'upload e la pubblicazione dei video.
+3. Inserisci il token nel campo *TikTok Access Token* del client.
+
 ## Mappatura Trello → Canali Social
 
 Nel metabox del custom post type `tts_client` è possibile definire una mappatura tra l'`idList` di Trello e il relativo `canale_social`.
@@ -50,7 +58,7 @@ La mappatura viene salvata nel meta `_tts_trello_map` come array serializzato da
 
 Ogni elemento dell'array associa una lista Trello al canale social su cui pubblicare.
 
-Canali supportati: `facebook`, `instagram`, `youtube`.
+Canali supportati: `facebook`, `instagram`, `youtube`, `tiktok`.
 
 ## Pulizia dei log
 
