@@ -35,3 +35,10 @@ if ( ! function_exists( 'as_schedule_single_action' ) ) {
 foreach ( glob( TSAP_PLUGIN_DIR . 'includes/*.php' ) as $file ) {
     require_once $file;
 }
+
+// Load admin files when in the dashboard.
+if ( is_admin() ) {
+    foreach ( glob( TSAP_PLUGIN_DIR . 'admin/*.php' ) as $file ) {
+        require_once $file;
+    }
+}
