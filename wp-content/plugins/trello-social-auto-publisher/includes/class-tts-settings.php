@@ -1,0 +1,187 @@
+<?php
+/**
+ * Settings page for Trello Social Auto Publisher.
+ *
+ * @package TrelloSocialAutoPublisher
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
+
+/**
+ * Handles the plugin settings.
+ */
+class TTS_Settings {
+
+    /**
+     * Initialize hooks.
+     */
+    public function __construct() {
+        add_action( 'admin_menu', array( $this, 'add_menu' ) );
+        add_action( 'admin_init', array( $this, 'register_settings' ) );
+    }
+
+    /**
+     * Register the settings page.
+     */
+    public function add_menu() {
+        add_options_page(
+            __( 'Trello Social Settings', 'trello-social-auto-publisher' ),
+            __( 'Trello Social', 'trello-social-auto-publisher' ),
+            'manage_options',
+            'tts-settings',
+            array( $this, 'render_settings_page' )
+        );
+    }
+
+    /**
+     * Register settings, sections, and fields.
+     */
+    public function register_settings() {
+        register_setting( 'tts_settings_group', 'tts_settings' );
+
+        // Trello API credentials.
+        add_settings_section(
+            'tts_trello_api',
+            __( 'Trello API Credentials', 'trello-social-auto-publisher' ),
+            '__return_false',
+            'tts_settings'
+        );
+
+        add_settings_field(
+            'trello_api_key',
+            __( 'API Key', 'trello-social-auto-publisher' ),
+            array( $this, 'render_trello_api_key_field' ),
+            'tts_settings',
+            'tts_trello_api'
+        );
+
+        add_settings_field(
+            'trello_api_token',
+            __( 'API Token', 'trello-social-auto-publisher' ),
+            array( $this, 'render_trello_api_token_field' ),
+            'tts_settings',
+            'tts_trello_api'
+        );
+
+        // Column mapping.
+        add_settings_section(
+            'tts_column_mapping',
+            __( 'Trello Column Mapping', 'trello-social-auto-publisher' ),
+            '__return_false',
+            'tts_settings'
+        );
+
+        add_settings_field(
+            'column_mapping',
+            __( 'Column Mapping (JSON)', 'trello-social-auto-publisher' ),
+            array( $this, 'render_column_mapping_field' ),
+            'tts_settings',
+            'tts_column_mapping'
+        );
+
+        // Social access token.
+        add_settings_section(
+            'tts_social_token',
+            __( 'Social Access Token', 'trello-social-auto-publisher' ),
+            '__return_false',
+            'tts_settings'
+        );
+
+        add_settings_field(
+            'social_access_token',
+            __( 'Access Token', 'trello-social-auto-publisher' ),
+            array( $this, 'render_social_access_token_field' ),
+            'tts_settings',
+            'tts_social_token'
+        );
+
+        // UTM options.
+        add_settings_section(
+            'tts_utm_options',
+            __( 'UTM Options', 'trello-social-auto-publisher' ),
+            '__return_false',
+            'tts_settings'
+        );
+
+        add_settings_field(
+            'utm_options',
+            __( 'UTM Parameters (query string)', 'trello-social-auto-publisher' ),
+            array( $this, 'render_utm_options_field' ),
+            'tts_settings',
+            'tts_utm_options'
+        );
+    }
+
+    /**
+     * Render the settings page.
+     */
+    public function render_settings_page() {
+        ?>
+        <div class="wrap">
+            <h1><?php esc_html_e( 'Trello Social Settings', 'trello-social-auto-publisher' ); ?></h1>
+            <form action="options.php" method="post">
+                <?php
+                settings_fields( 'tts_settings_group' );
+                do_settings_sections( 'tts_settings' );
+                submit_button();
+                ?>
+            </form>
+        </div>
+        <?php
+    }
+
+    /**
+     * Render field for Trello API key.
+     */
+    public function render_trello_api_key_field() {
+        $options = get_option( 'tts_settings', array() );
+        $value   = isset( $options['trello_api_key'] ) ? esc_attr( $options['trello_api_key'] ) : '';
+        echo '<input type="text" name="tts_settings[trello_api_key]" value="' . $value . '" class="regular-text" />';
+    }
+
+    /**
+     * Render field for Trello API token.
+     */
+    public function render_trello_api_token_field() {
+        $options = get_option( 'tts_settings', array() );
+        $value   = isset( $options['trello_api_token'] ) ? esc_attr( $options['trello_api_token'] ) : '';
+        echo '<input type="text" name="tts_settings[trello_api_token]" value="' . $value . '" class="regular-text" />';
+    }
+
+    /**
+     * Render field for column mapping.
+     */
+    public function render_column_mapping_field() {
+        $options = get_option( 'tts_settings', array() );
+        $value   = isset( $options['column_mapping'] ) ? esc_textarea( $options['column_mapping'] ) : '';
+        echo '<textarea name="tts_settings[column_mapping]" rows="5" cols="50" class="large-text">' . $value . '</textarea>';
+    }
+
+    /**
+     * Render field for social access token.
+     */
+    public function render_social_access_token_field() {
+        $options = get_option( 'tts_settings', array() );
+        $value   = isset( $options['social_access_token'] ) ? esc_attr( $options['social_access_token'] ) : '';
+        echo '<input type="password" name="tts_settings[social_access_token]" value="' . $value . '" class="regular-text" />';
+    }
+
+    /**
+     * Render field for UTM options.
+     */
+    public function render_utm_options_field() {
+        $options = get_option( 'tts_settings', array() );
+        $value   = isset( $options['utm_options'] ) ? esc_attr( $options['utm_options'] ) : '';
+        echo '<input type="text" name="tts_settings[utm_options]" value="' . $value . '" class="regular-text" placeholder="utm_source=...&utm_medium=..." />';
+    }
+}
+
+/**
+ * Initialize TTS_Settings on plugins_loaded.
+ */
+function tts_init_settings() {
+    new TTS_Settings();
+}
+add_action( 'plugins_loaded', 'tts_init_settings' );
