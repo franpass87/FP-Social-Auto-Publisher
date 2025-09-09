@@ -17,6 +17,9 @@ class TTS_Publisher_TikTok {
     /**
      * Publish the post to TikTok.
      *
+     * Requires an OAuth 2.0 access token granted with the `video.upload`
+     * scope in order to send media and create the video post.
+     *
      * @param int    $post_id Post ID.
      * @param string $token   OAuth 2.0 access token.
      * @param string $message Video description to publish.
@@ -24,7 +27,7 @@ class TTS_Publisher_TikTok {
      */
     public function publish( $post_id, $token, $message ) {
         if ( empty( $token ) ) {
-            $error = __( 'TikTok token missing', 'trello-social-auto-publisher' );
+            $error = __( 'TikTok token missing or lacks video.upload scope', 'trello-social-auto-publisher' );
             tts_log_event( $post_id, 'tiktok', 'error', $error, '' );
             tts_notify_publication( $post_id, 'error', 'tiktok' );
             return new \WP_Error( 'tiktok_no_token', $error );
