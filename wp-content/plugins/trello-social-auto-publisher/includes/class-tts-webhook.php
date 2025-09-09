@@ -94,6 +94,13 @@ class TTS_Webhook {
             )
         );
 
+        if ( is_wp_error( $post_id ) || ! $post_id ) {
+            return new WP_Error(
+                'post_insert_failed',
+                __( 'Failed to create social post.', 'trello-social-auto-publisher' ),
+                array( 'status' => 500 )
+            );
+        }
         $timestamp = empty( $result['due'] ) ? time() : strtotime( $result['due'] );
         as_schedule_single_action( $timestamp, 'tts_publish_social_post', array( $post_id ) );
 
