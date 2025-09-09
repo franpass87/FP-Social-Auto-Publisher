@@ -156,6 +156,25 @@ class TTS_Webhook {
         if ( empty( $result['idList'] ) || ! is_array( $mapping ) || ! array_key_exists( $result['idList'], $mapping ) ) {
             return rest_ensure_response( array( 'message' => __( 'Unmapped list.', 'trello-social-auto-publisher' ) ) );
         }
+        $existing_post = get_posts(
+            array(
+                'post_type'   => 'tts_social_post',
+                'post_status' => 'any',
+                'meta_query'  => array(
+                    array(
+                        'key'   => '_trello_card_id',
+                        'value' => $result['idCard'],
+                    ),
+                ),
+                'fields'      => 'ids',
+                'numberposts' => 1,
+            )
+        );
+
+        if ( ! empty( $existing_post ) ) {
+            error_log( 'Trello card already processed: ' . $result['idCard'] );
+            return rest_ensure_response( array( 'message' => __( 'Card already processed.', 'trello-social-auto-publisher' ) ) );
+        }
 
         $post_id = wp_insert_post(
             array(
@@ -169,6 +188,7 @@ class TTS_Webhook {
         );
 
         if ( ! is_wp_error( $post_id ) ) {
+            update_post_meta( $post_id, '_trello_card_id', $result['idCard'] );
             update_post_meta( $post_id, '_trello_labels', $result['labels'] );
             update_post_meta( $post_id, '_trello_attachments', $result['attachments'] );
             update_post_meta( $post_id, '_trello_due', $result['due'] );
