@@ -62,6 +62,16 @@ class TTS_Webhook {
             }
         }
 
+        // Verify Action Scheduler plugin is active before proceeding.
+        include_once ABSPATH . 'wp-admin/includes/plugin.php';
+        if ( ! function_exists( 'as_schedule_single_action' ) || ! is_plugin_active( 'action-scheduler/action-scheduler.php' ) ) {
+            return new WP_Error(
+                'missing_action_scheduler',
+                __( 'Action Scheduler plugin is required.', 'trello-social-auto-publisher' ),
+                array( 'status' => 500 )
+            );
+        }
+
         $data  = $request->get_json_params();
         $card  = isset( $data['action']['data']['card'] ) ? $data['action']['data']['card'] : array();
         $result = array(
@@ -73,6 +83,19 @@ class TTS_Webhook {
             'due'         => isset( $card['due'] ) ? $card['due'] : '',
             'idList'      => isset( $card['idList'] ) ? $card['idList'] : '',
         );
+
+        // Create the custom post and schedule its publication.
+        $post_id = wp_insert_post(
+            array(
+                'post_type'   => 'tts_social_post',
+                'post_title'  => $result['name'],
+                'post_content'=> $result['desc'],
+                'post_status' => 'publish',
+            )
+        );
+
+        $timestamp = empty( $result['due'] ) ? time() : strtotime( $result['due'] );
+        as_schedule_single_action( $timestamp, 'tts_publish_social_post', array( $post_id ) );
 
         return rest_ensure_response( $result );
     }
