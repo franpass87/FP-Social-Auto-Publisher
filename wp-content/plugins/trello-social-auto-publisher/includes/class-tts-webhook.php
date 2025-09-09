@@ -121,7 +121,6 @@ class TTS_Webhook {
 
         // Load Trello credentials for the resolved client.
         $client_token = get_post_meta( $client_id, '_tts_trello_token', true );
-        $client_key   = get_post_meta( $client_id, '_tts_trello_key', true );
 
         $provided_token = $request->get_param( 'token' );
         if ( empty( $client_token ) || $provided_token !== $client_token ) {
