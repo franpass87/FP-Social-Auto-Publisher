@@ -74,6 +74,28 @@ class TTS_Webhook {
             'idList'      => isset( $card['idList'] ) ? $card['idList'] : '',
         );
 
+        $mapping = isset( $options['column_mapping'] ) ? json_decode( $options['column_mapping'], true ) : array();
+        if ( empty( $result['idList'] ) || ! is_array( $mapping ) || ! array_key_exists( $result['idList'], $mapping ) ) {
+            return rest_ensure_response( array( 'message' => __( 'Unmapped list.', 'trello-social-auto-publisher' ) ) );
+        }
+
+        $post_id = wp_insert_post(
+            array(
+                'post_title'   => sanitize_text_field( $result['name'] ),
+                'post_content' => wp_kses_post( $result['desc'] ),
+                'post_type'    => 'tts_social_post',
+                'post_status'  => 'publish',
+            ),
+            true
+        );
+
+        if ( ! is_wp_error( $post_id ) ) {
+            update_post_meta( $post_id, '_trello_labels', $result['labels'] );
+            update_post_meta( $post_id, '_trello_attachments', $result['attachments'] );
+            update_post_meta( $post_id, '_trello_due', $result['due'] );
+            $result['post_id'] = $post_id;
+        }
+
         return rest_ensure_response( $result );
     }
 }
