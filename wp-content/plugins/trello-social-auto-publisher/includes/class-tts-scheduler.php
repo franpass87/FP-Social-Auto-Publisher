@@ -59,8 +59,11 @@ class TTS_Scheduler {
 
         $client_id = intval( get_post_meta( $post_id, '_tts_client_id', true ) );
         if ( ! $client_id ) {
+            tts_log_event( $post_id, 'scheduler', 'error', __( 'Missing client ID', 'trello-social-auto-publisher' ), '' );
             return;
         }
+
+        tts_log_event( $post_id, 'scheduler', 'start', __( 'Publishing social post', 'trello-social-auto-publisher' ), '' );
 
         $tokens = array(
             'facebook'  => get_post_meta( $client_id, '_tts_fb_token', true ),
@@ -72,12 +75,14 @@ class TTS_Scheduler {
             $settings = array();
         }
 
-        $log = array();
+        $log              = array();
         $log['facebook']  = $this->publish_facebook( $post_id, $tokens['facebook'], $settings );
         $log['instagram'] = $this->publish_instagram( $post_id, $tokens['instagram'], $settings );
 
         update_post_meta( $post_id, '_published_status', 'published' );
         update_post_meta( $post_id, '_tts_publish_log', $log );
+
+        tts_log_event( $post_id, 'scheduler', 'complete', __( 'Publish process completed', 'trello-social-auto-publisher' ), $log );
     }
 
     /**
@@ -89,7 +94,16 @@ class TTS_Scheduler {
      * @return string Log message.
      */
     protected function publish_facebook( $post_id, $token, $settings ) {
-        return __( 'Published to Facebook', 'trello-social-auto-publisher' );
+        if ( empty( $token ) ) {
+            $message = __( 'Facebook token missing', 'trello-social-auto-publisher' );
+            tts_log_event( $post_id, 'facebook', 'error', $message, '' );
+            return $message;
+        }
+
+        $message = __( 'Published to Facebook', 'trello-social-auto-publisher' );
+        tts_log_event( $post_id, 'facebook', 'success', $message, array() );
+
+        return $message;
     }
 
     /**
@@ -101,7 +115,16 @@ class TTS_Scheduler {
      * @return string Log message.
      */
     protected function publish_instagram( $post_id, $token, $settings ) {
-        return __( 'Published to Instagram', 'trello-social-auto-publisher' );
+        if ( empty( $token ) ) {
+            $message = __( 'Instagram token missing', 'trello-social-auto-publisher' );
+            tts_log_event( $post_id, 'instagram', 'error', $message, '' );
+            return $message;
+        }
+
+        $message = __( 'Published to Instagram', 'trello-social-auto-publisher' );
+        tts_log_event( $post_id, 'instagram', 'success', $message, array() );
+
+        return $message;
     }
 }
 
