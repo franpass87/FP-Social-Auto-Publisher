@@ -57,9 +57,24 @@ class TTS_Scheduler {
             return;
         }
 
+        $client_id = intval( get_post_meta( $post_id, '_tts_client_id', true ) );
+        if ( ! $client_id ) {
+            return;
+        }
+
+        $tokens = array(
+            'facebook'  => get_post_meta( $client_id, '_tts_fb_token', true ),
+            'instagram' => get_post_meta( $client_id, '_tts_ig_token', true ),
+        );
+
+        $settings = get_post_meta( $client_id, '_tts_social_settings', true );
+        if ( ! is_array( $settings ) ) {
+            $settings = array();
+        }
+
         $log = array();
-        $log['facebook']  = $this->publish_facebook( $post_id );
-        $log['instagram'] = $this->publish_instagram( $post_id );
+        $log['facebook']  = $this->publish_facebook( $post_id, $tokens['facebook'], $settings );
+        $log['instagram'] = $this->publish_instagram( $post_id, $tokens['instagram'], $settings );
 
         update_post_meta( $post_id, '_published_status', 'published' );
         update_post_meta( $post_id, '_tts_publish_log', $log );
@@ -68,20 +83,24 @@ class TTS_Scheduler {
     /**
      * Publish to Facebook.
      *
-     * @param int $post_id Post ID.
+     * @param int   $post_id  Post ID.
+     * @param mixed $token    Facebook access token.
+     * @param array $settings Client social settings.
      * @return string Log message.
      */
-    protected function publish_facebook( $post_id ) {
+    protected function publish_facebook( $post_id, $token, $settings ) {
         return __( 'Published to Facebook', 'trello-social-auto-publisher' );
     }
 
     /**
      * Publish to Instagram.
      *
-     * @param int $post_id Post ID.
+     * @param int   $post_id  Post ID.
+     * @param mixed $token    Instagram access token.
+     * @param array $settings Client social settings.
      * @return string Log message.
      */
-    protected function publish_instagram( $post_id ) {
+    protected function publish_instagram( $post_id, $token, $settings ) {
         return __( 'Published to Instagram', 'trello-social-auto-publisher' );
     }
 }
