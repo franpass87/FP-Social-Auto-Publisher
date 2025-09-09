@@ -57,6 +57,9 @@ class TTS_Scheduler {
             return;
         }
 
+        $attempt      = (int) get_post_meta( $post_id, '_tts_retry_count', true );
+        $max_attempts = 5;
+
         $client_id = intval( get_post_meta( $post_id, '_tts_client_id', true ) );
         if ( ! $client_id ) {
             tts_log_event( $post_id, 'scheduler', 'error', __( 'Missing client ID', 'trello-social-auto-publisher' ), '' );
@@ -81,6 +84,8 @@ class TTS_Scheduler {
         $channels = is_array( $channel ) ? $channel : array( $channel );
         $log      = array();
 
+        $error = false;
+
         foreach ( $channels as $ch ) {
             $class = 'TTS_Publisher_' . ucfirst( $ch );
             $file  = plugin_dir_path( __FILE__ ) . 'publishers/class-tts-publisher-' . $ch . '.php';
@@ -92,16 +97,62 @@ class TTS_Scheduler {
                     $credentials = isset( $tokens[ $ch ] ) ? $tokens[ $ch ] : '';
                     $template    = isset( $options[ $ch . '_template' ] ) ? $options[ $ch . '_template' ] : '';
                     $message     = $template ? tts_apply_template( $template, $post_id, $ch ) : '';
-                    $log[ $ch ]  = $publisher->publish( $post_id, $credentials, $message );
+
+                    try {
+                        $log[ $ch ] = $publisher->publish( $post_id, $credentials, $message );
+                        if ( is_wp_error( $log[ $ch ] ) ) {
+                            $error = true;
+                        }
+                    } catch ( \Exception $e ) {
+                        $error       = true;
+                        $log[ $ch ]  = $e->getMessage();
+                        tts_log_event( $post_id, $ch, 'error', $e->getMessage(), '' );
+                    }
+
                     tts_notify_publication( $post_id, 'processed', $ch );
                 }
             }
         }
 
+        if ( $error ) {
+            if ( $attempt >= $max_attempts ) {
+                tts_log_event( $post_id, 'scheduler', 'error', __( 'Maximum retry attempts reached', 'trello-social-auto-publisher' ), '' );
+                tts_notify_publication( $post_id, 'error', 'scheduler' );
+                return;
+            }
+
+            $attempt++;
+            update_post_meta( $post_id, '_tts_retry_count', $attempt );
+
+            $delay     = $this->calculate_backoff_delay( $attempt );
+            $timestamp = time() + $delay * MINUTE_IN_SECONDS;
+            as_schedule_single_action( $timestamp, 'tts_publish_social_post', array( 'post_id' => $post_id ) );
+
+            tts_log_event( $post_id, 'scheduler', 'retry', sprintf( __( 'Retry #%1$d scheduled in %2$d minutes', 'trello-social-auto-publisher' ), $attempt, $delay ), '' );
+            return;
+        }
+
+        delete_post_meta( $post_id, '_tts_retry_count' );
         update_post_meta( $post_id, '_published_status', 'published' );
         update_post_meta( $post_id, '_tts_publish_log', $log );
 
         tts_log_event( $post_id, 'scheduler', 'complete', __( 'Publish process completed', 'trello-social-auto-publisher' ), $log );
+    }
+
+    /**
+     * Calculate delay for retry attempts in minutes.
+     *
+     * @param int $attempt Current attempt number.
+     * @return int Delay in minutes.
+     */
+    private function calculate_backoff_delay( $attempt ) {
+        $delays = array( 1, 5, 15, 30, 60 );
+
+        if ( $attempt <= 0 ) {
+            return 1;
+        }
+
+        return isset( $delays[ $attempt - 1 ] ) ? $delays[ $attempt - 1 ] : end( $delays );
     }
 }
 
