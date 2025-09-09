@@ -104,7 +104,7 @@ class TTS_Settings {
             '__return_false',
             'tts_settings'
         );
-        $channels = array( 'facebook', 'instagram', 'youtube' );
+        $channels = array( 'facebook', 'instagram', 'youtube', 'tiktok' );
         $params   = array( 'source', 'medium', 'campaign' );
 
         foreach ( $channels as $channel ) {
@@ -151,6 +151,14 @@ class TTS_Settings {
             'youtube_template',
             __( 'YouTube Template', 'trello-social-auto-publisher' ),
             array( $this, 'render_youtube_template_field' ),
+            'tts_settings',
+            'tts_template_options'
+        );
+
+        add_settings_field(
+            'tiktok_template',
+            __( 'TikTok Template', 'trello-social-auto-publisher' ),
+            array( $this, 'render_tiktok_template_field' ),
             'tts_settings',
             'tts_template_options'
         );
@@ -265,6 +273,15 @@ class TTS_Settings {
         $options = get_option( 'tts_settings', array() );
         $value   = isset( $options['youtube_template'] ) ? esc_attr( $options['youtube_template'] ) : '';
         echo '<input type="text" name="tts_settings[youtube_template]" value="' . $value . '" class="regular-text" placeholder="{title} {url}" />';
+    }
+
+    /**
+     * Render field for TikTok template.
+     */
+    public function render_tiktok_template_field() {
+        $options = get_option( 'tts_settings', array() );
+        $value   = isset( $options['tiktok_template'] ) ? esc_attr( $options['tiktok_template'] ) : '';
+        echo '<input type="text" name="tts_settings[tiktok_template]" value="' . $value . '" class="regular-text" placeholder="{title} {url}" />';
     }
 
     /**

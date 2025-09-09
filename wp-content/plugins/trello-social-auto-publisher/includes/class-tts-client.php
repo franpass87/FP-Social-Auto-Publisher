@@ -74,6 +74,7 @@ class TTS_Client {
         $fb_token     = get_post_meta( $post->ID, '_tts_fb_token', true );
         $ig_token     = get_post_meta( $post->ID, '_tts_ig_token', true );
         $yt_token     = get_post_meta( $post->ID, '_tts_yt_token', true );
+        $tt_token     = get_post_meta( $post->ID, '_tts_tt_token', true );
         $trello_map   = get_post_meta( $post->ID, '_tts_trello_map', true );
 
         if ( ! is_array( $trello_map ) ) {
@@ -100,6 +101,9 @@ class TTS_Client {
 
         echo '<p><label for="tts_yt_token">' . esc_html__( 'YouTube Access Token', 'trello-social-auto-publisher' ) . '</label>';
         echo '<input type="text" id="tts_yt_token" name="tts_yt_token" value="' . esc_attr( $yt_token ) . '" class="widefat" /></p>';
+
+        echo '<p><label for="tts_tt_token">' . esc_html__( 'TikTok Access Token', 'trello-social-auto-publisher' ) . '</label>';
+        echo '<input type="text" id="tts_tt_token" name="tts_tt_token" value="' . esc_attr( $tt_token ) . '" class="widefat" /></p>';
 
         ?>
         <div id="tts_trello_map">
@@ -165,6 +169,7 @@ class TTS_Client {
             'tts_fb_token'      => '_tts_fb_token',
             'tts_ig_token'      => '_tts_ig_token',
             'tts_yt_token'      => '_tts_yt_token',
+            'tts_tt_token'      => '_tts_tt_token',
         );
 
         foreach ( $fields as $field => $meta_key ) {

@@ -1,0 +1,122 @@
+<?php
+/**
+ * TikTok publisher.
+ *
+ * @package TrelloSocialAutoPublisher\Publishers
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
+
+/**
+ * Handles publishing to TikTok.
+ */
+class TTS_Publisher_TikTok {
+
+    /**
+     * Publish the post to TikTok.
+     *
+     * @param int    $post_id Post ID.
+     * @param string $token   OAuth 2.0 access token.
+     * @param string $message Video description to publish.
+     * @return string|\WP_Error Log message.
+     */
+    public function publish( $post_id, $token, $message ) {
+        if ( empty( $token ) ) {
+            $error = __( 'TikTok token missing', 'trello-social-auto-publisher' );
+            tts_log_event( $post_id, 'tiktok', 'error', $error, '' );
+            tts_notify_publication( $post_id, 'error', 'tiktok' );
+            return new \WP_Error( 'tiktok_no_token', $error );
+        }
+
+        $videos = get_attached_media( 'video', $post_id );
+        if ( empty( $videos ) ) {
+            $error = __( 'No video to publish', 'trello-social-auto-publisher' );
+            tts_log_event( $post_id, 'tiktok', 'error', $error, '' );
+            tts_notify_publication( $post_id, 'error', 'tiktok' );
+            return new \WP_Error( 'tiktok_no_video', $error );
+        }
+
+        $video      = reset( $videos );
+        $video_path = get_attached_file( $video->ID );
+        if ( empty( $video_path ) || ! file_exists( $video_path ) ) {
+            $error = __( 'Video file not found', 'trello-social-auto-publisher' );
+            tts_log_event( $post_id, 'tiktok', 'error', $error, '' );
+            tts_notify_publication( $post_id, 'error', 'tiktok' );
+            return new \WP_Error( 'tiktok_video_missing', $error );
+        }
+
+        // Step 1: Upload the video to TikTok.
+        $upload_endpoint = 'https://open.tiktokapis.com/v2/video/upload/';
+        $upload_result   = wp_remote_post(
+            $upload_endpoint,
+            array(
+                'headers' => array(
+                    'Authorization' => 'Bearer ' . $token,
+                    'Content-Type'  => 'video/mp4',
+                ),
+                'body'    => file_get_contents( $video_path ),
+                'timeout' => 60,
+            )
+        );
+
+        if ( is_wp_error( $upload_result ) ) {
+            $error = $upload_result->get_error_message();
+            tts_log_event( $post_id, 'tiktok', 'error', $error, '' );
+            tts_notify_publication( $post_id, 'error', 'tiktok' );
+            return $upload_result;
+        }
+
+        $upload_code = wp_remote_retrieve_response_code( $upload_result );
+        $upload_data = json_decode( wp_remote_retrieve_body( $upload_result ), true );
+
+        if ( 200 !== $upload_code || empty( $upload_data['data']['video_id'] ) ) {
+            $error = isset( $upload_data['error']['message'] ) ? $upload_data['error']['message'] : __( 'Unknown error', 'trello-social-auto-publisher' );
+            tts_log_event( $post_id, 'tiktok', 'error', $error, $upload_data );
+            tts_notify_publication( $post_id, 'error', 'tiktok' );
+            return new \WP_Error( 'tiktok_upload_error', $error, $upload_data );
+        }
+
+        // Step 2: Publish the uploaded video.
+        $publish_endpoint = 'https://open.tiktokapis.com/v2/video/publish/';
+        $publish_body     = array(
+            'video_id' => $upload_data['data']['video_id'],
+            'caption'  => $message,
+        );
+
+        $publish_result = wp_remote_post(
+            $publish_endpoint,
+            array(
+                'headers' => array(
+                    'Authorization' => 'Bearer ' . $token,
+                    'Content-Type'  => 'application/json',
+                ),
+                'body'    => wp_json_encode( $publish_body ),
+                'timeout' => 60,
+            )
+        );
+
+        if ( is_wp_error( $publish_result ) ) {
+            $error = $publish_result->get_error_message();
+            tts_log_event( $post_id, 'tiktok', 'error', $error, '' );
+            tts_notify_publication( $post_id, 'error', 'tiktok' );
+            return $publish_result;
+        }
+
+        $publish_code = wp_remote_retrieve_response_code( $publish_result );
+        $publish_data = json_decode( wp_remote_retrieve_body( $publish_result ), true );
+
+        if ( 200 === $publish_code && ! empty( $publish_data['data']['video_id'] ) ) {
+            $response = __( 'Published to TikTok', 'trello-social-auto-publisher' );
+            tts_log_event( $post_id, 'tiktok', 'success', $response, $publish_data );
+            tts_notify_publication( $post_id, 'success', 'tiktok' );
+            return $response;
+        }
+
+        $error = isset( $publish_data['error']['message'] ) ? $publish_data['error']['message'] : __( 'Unknown error', 'trello-social-auto-publisher' );
+        tts_log_event( $post_id, 'tiktok', 'error', $error, $publish_data );
+        tts_notify_publication( $post_id, 'error', 'tiktok' );
+        return new \WP_Error( 'tiktok_publish_error', $error, $publish_data );
+    }
+}
