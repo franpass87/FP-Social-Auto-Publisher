@@ -21,6 +21,7 @@ class TTS_Admin {
         add_action( 'admin_menu', array( $this, 'register_menu' ) );
         add_action( 'restrict_manage_posts', array( $this, 'add_client_filter' ) );
         add_action( 'pre_get_posts', array( $this, 'filter_posts_by_client' ) );
+        add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_dashboard_assets' ) );
     }
 
     /**
@@ -44,6 +45,44 @@ class TTS_Admin {
             array( $this, 'render_social_posts_page' ),
             'dashicons-share'
         );
+
+        add_menu_page(
+            __( 'Social Dashboard', 'trello-social-auto-publisher' ),
+            __( 'Social Dashboard', 'trello-social-auto-publisher' ),
+            'manage_options',
+            'tts-dashboard',
+            array( $this, 'render_dashboard_page' ),
+            'dashicons-chart-bar'
+        );
+    }
+
+    /**
+     * Enqueue assets for the dashboard page.
+     *
+     * @param string $hook Current admin page hook.
+     */
+    public function enqueue_dashboard_assets( $hook ) {
+        if ( 'toplevel_page_tts-dashboard' !== $hook ) {
+            return;
+        }
+
+        wp_enqueue_script(
+            'tts-dashboard',
+            plugin_dir_url( __FILE__ ) . 'js/tts-dashboard.js',
+            array( 'wp-element', 'wp-components', 'wp-api-fetch' ),
+            '1.0',
+            true
+        );
+    }
+
+    /**
+     * Render the dashboard page.
+     */
+    public function render_dashboard_page() {
+        echo '<div class="wrap">';
+        echo '<h1>' . esc_html__( 'Social Dashboard', 'trello-social-auto-publisher' ) . '</h1>';
+        echo '<div id="tts-dashboard-root"></div>';
+        echo '</div>';
     }
 
     /**
