@@ -50,6 +50,8 @@ La mappatura viene salvata nel meta `_tts_trello_map` come array serializzato da
 
 Ogni elemento dell'array associa una lista Trello al canale social su cui pubblicare.
 
+Canali supportati: `facebook`, `instagram`, `youtube`.
+
 ## Pulizia dei log
 
 Il plugin registra gli eventi nella tabella personalizzata `tts_logs`.
