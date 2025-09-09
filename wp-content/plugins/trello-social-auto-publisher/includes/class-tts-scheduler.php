@@ -70,6 +70,8 @@ class TTS_Scheduler {
             'instagram' => get_post_meta( $client_id, '_tts_ig_token', true ),
         );
 
+        $options = get_option( 'tts_settings', array() );
+
         $channel = get_post_meta( $post_id, '_tts_social_channel', true );
         if ( empty( $channel ) ) {
             tts_log_event( $post_id, 'scheduler', 'error', __( 'Missing social channel', 'trello-social-auto-publisher' ), '' );
@@ -88,7 +90,9 @@ class TTS_Scheduler {
                 if ( class_exists( $class ) ) {
                     $publisher   = new $class();
                     $credentials = isset( $tokens[ $ch ] ) ? $tokens[ $ch ] : '';
-                    $log[ $ch ]  = $publisher->publish( $post_id, $credentials );
+                    $template    = isset( $options[ $ch . '_template' ] ) ? $options[ $ch . '_template' ] : '';
+                    $message     = $template ? tts_apply_template( $template, $post_id ) : '';
+                    $log[ $ch ]  = $publisher->publish( $post_id, $credentials, $message );
                     tts_notify_publication( $post_id, 'processed', $ch );
                 }
             }
