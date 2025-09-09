@@ -22,6 +22,7 @@ class TTS_CPT {
         add_action( 'init', array( $this, 'register_meta_fields' ) );
         add_action( 'add_meta_boxes_tts_social_post', array( $this, 'add_schedule_metabox' ) );
         add_action( 'add_meta_boxes_tts_social_post', array( $this, 'add_preview_metabox' ) );
+        add_action( 'add_meta_boxes_tts_social_post', array( $this, 'add_channel_metabox' ) );
         add_action( 'save_post_tts_social_post', array( $this, 'save_schedule_metabox' ), 5, 3 );
     }
 
@@ -52,6 +53,20 @@ class TTS_CPT {
                 'type'         => 'integer',
             )
         );
+
+        register_post_meta(
+            'tts_social_post',
+            '_tts_social_channel',
+            array(
+                'show_in_rest' => true,
+                'single'       => true,
+                'type'         => 'array',
+                'items'        => array(
+                    'type' => 'string',
+                ),
+                'default'      => array(),
+            )
+        );
     }
 
     /**
@@ -77,6 +92,19 @@ class TTS_CPT {
             array( $this, 'render_preview_metabox' ),
             'tts_social_post',
             'normal'
+        );
+    }
+
+    /**
+     * Register the social channels meta box.
+     */
+    public function add_channel_metabox() {
+        add_meta_box(
+            'tts_social_channel',
+            __( 'Channels', 'trello-social-auto-publisher' ),
+            array( $this, 'render_channel_metabox' ),
+            'tts_social_post',
+            'side'
         );
     }
 
@@ -117,6 +145,32 @@ class TTS_CPT {
     }
 
     /**
+     * Render the channels meta box.
+     *
+     * @param WP_Post $post Current post object.
+     */
+    public function render_channel_metabox( $post ) {
+        wp_nonce_field( 'tts_channel_metabox', 'tts_channel_nonce' );
+        $value    = get_post_meta( $post->ID, '_tts_social_channel', true );
+        $value    = is_array( $value ) ? $value : array();
+        $channels = array(
+            'facebook'  => 'Facebook',
+            'instagram' => 'Instagram',
+            'youtube'   => 'YouTube',
+            'tiktok'    => 'TikTok',
+        );
+
+        foreach ( $channels as $key => $label ) {
+            printf(
+                '<p><label><input type="checkbox" name="_tts_social_channel[]" value="%1$s" %2$s /> %3$s</label></p>',
+                esc_attr( $key ),
+                checked( in_array( $key, $value, true ), true, false ),
+                esc_html( $label )
+            );
+        }
+    }
+
+    /**
      * Save scheduling meta box data.
      *
      * @param int     $post_id Post ID.
@@ -127,16 +181,26 @@ class TTS_CPT {
         if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
             return;
         }
-        if ( ! isset( $_POST['tts_schedule_nonce'] ) || ! wp_verify_nonce( $_POST['tts_schedule_nonce'], 'tts_schedule_metabox' ) ) {
-            return;
-        }
+
         if ( ! current_user_can( 'edit_post', $post_id ) ) {
             return;
         }
-        if ( isset( $_POST['_tts_publish_at'] ) && '' !== $_POST['_tts_publish_at'] ) {
-            update_post_meta( $post_id, '_tts_publish_at', sanitize_text_field( $_POST['_tts_publish_at'] ) );
-        } else {
-            delete_post_meta( $post_id, '_tts_publish_at' );
+
+        if ( isset( $_POST['tts_schedule_nonce'] ) && wp_verify_nonce( $_POST['tts_schedule_nonce'], 'tts_schedule_metabox' ) ) {
+            if ( isset( $_POST['_tts_publish_at'] ) && '' !== $_POST['_tts_publish_at'] ) {
+                update_post_meta( $post_id, '_tts_publish_at', sanitize_text_field( $_POST['_tts_publish_at'] ) );
+            } else {
+                delete_post_meta( $post_id, '_tts_publish_at' );
+            }
+        }
+
+        if ( isset( $_POST['tts_channel_nonce'] ) && wp_verify_nonce( $_POST['tts_channel_nonce'], 'tts_channel_metabox' ) ) {
+            if ( isset( $_POST['_tts_social_channel'] ) && is_array( $_POST['_tts_social_channel'] ) ) {
+                $channels = array_map( 'sanitize_text_field', $_POST['_tts_social_channel'] );
+                update_post_meta( $post_id, '_tts_social_channel', $channels );
+            } else {
+                delete_post_meta( $post_id, '_tts_social_channel' );
+            }
         }
     }
 }
