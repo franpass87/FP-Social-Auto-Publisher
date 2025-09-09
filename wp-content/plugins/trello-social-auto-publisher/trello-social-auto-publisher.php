@@ -35,6 +35,8 @@ if ( ! function_exists( 'as_schedule_single_action' ) ) {
 foreach ( glob( TSAP_PLUGIN_DIR . 'includes/*.php' ) as $file ) {
     require_once $file;
 }
+// Register activation hook.
+register_activation_hook( __FILE__, 'tts_create_logs_table' );
 
 // Load admin files when in the dashboard.
 if ( is_admin() ) {
