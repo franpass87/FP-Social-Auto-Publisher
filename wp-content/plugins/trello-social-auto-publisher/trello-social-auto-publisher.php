@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Trello Social Auto Publisher
  * Plugin URI:  https://example.com/
- * Description: Automatically publishes posts to Trello.
+ * Description: Publish social posts triggered by Trello cards.
  * Version:     1.0.0
  * Author:      FP-Social-Auto-Publisher
  * Author URI:  https://example.com/
