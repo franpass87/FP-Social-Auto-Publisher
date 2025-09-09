@@ -104,7 +104,7 @@ class TTS_Settings {
             '__return_false',
             'tts_settings'
         );
-        $channels = array( 'facebook', 'instagram' );
+        $channels = array( 'facebook', 'instagram', 'youtube' );
         $params   = array( 'source', 'medium', 'campaign' );
 
         foreach ( $channels as $channel ) {
@@ -143,6 +143,14 @@ class TTS_Settings {
             'instagram_template',
             __( 'Instagram Template', 'trello-social-auto-publisher' ),
             array( $this, 'render_instagram_template_field' ),
+            'tts_settings',
+            'tts_template_options'
+        );
+
+        add_settings_field(
+            'youtube_template',
+            __( 'YouTube Template', 'trello-social-auto-publisher' ),
+            array( $this, 'render_youtube_template_field' ),
             'tts_settings',
             'tts_template_options'
         );
@@ -248,6 +256,15 @@ class TTS_Settings {
         $options = get_option( 'tts_settings', array() );
         $value   = isset( $options['instagram_template'] ) ? esc_attr( $options['instagram_template'] ) : '';
         echo '<input type="text" name="tts_settings[instagram_template]" value="' . $value . '" class="regular-text" placeholder="{title} {url}" />';
+    }
+
+    /**
+     * Render field for YouTube template.
+     */
+    public function render_youtube_template_field() {
+        $options = get_option( 'tts_settings', array() );
+        $value   = isset( $options['youtube_template'] ) ? esc_attr( $options['youtube_template'] ) : '';
+        echo '<input type="text" name="tts_settings[youtube_template]" value="' . $value . '" class="regular-text" placeholder="{title} {url}" />';
     }
 
     /**

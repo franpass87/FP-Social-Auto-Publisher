@@ -102,6 +102,7 @@ class TTS_CPT {
         $templates = array(
             'facebook'  => isset( $options['facebook_template'] ) ? $options['facebook_template'] : '',
             'instagram' => isset( $options['instagram_template'] ) ? $options['instagram_template'] : '',
+            'youtube'   => isset( $options['youtube_template'] ) ? $options['youtube_template'] : '',
         );
 
         echo '<div class="tts-preview">';
