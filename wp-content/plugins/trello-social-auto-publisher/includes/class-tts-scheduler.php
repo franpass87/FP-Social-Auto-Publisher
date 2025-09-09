@@ -40,7 +40,7 @@ class TTS_Scheduler {
             as_unschedule_all_actions( 'tts_publish_social_post', array( 'post_id' => $post_id ) );
 
             $timestamp = strtotime( $publish_at );
-            if ( $timestamp ) {
+            if ( $timestamp !== false ) {
                 $action_id = as_schedule_single_action( $timestamp, 'tts_publish_social_post', array( 'post_id' => $post_id ) );
                 update_post_meta( $post_id, '_tts_as_action_id', $action_id );
             }
