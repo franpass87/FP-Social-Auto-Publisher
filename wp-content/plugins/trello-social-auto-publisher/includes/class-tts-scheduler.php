@@ -34,15 +34,14 @@ class TTS_Scheduler {
             return;
         }
 
-        $publish_at = get_post_meta( $post_id, '_tts_publish_at', true );
+        as_unschedule_all_actions( 'tts_publish_social_post', array( 'post_id' => $post_id ) );
+
+        $publish_at = isset( $_POST['_tts_publish_at'] ) ? sanitize_text_field( $_POST['_tts_publish_at'] ) : '';
 
         if ( ! empty( $publish_at ) ) {
-            as_unschedule_all_actions( 'tts_publish_social_post', array( 'post_id' => $post_id ) );
-
             $timestamp = strtotime( $publish_at );
-            if ( $timestamp !== false ) {
-                $action_id = as_schedule_single_action( $timestamp, 'tts_publish_social_post', array( 'post_id' => $post_id ) );
-                update_post_meta( $post_id, '_tts_as_action_id', $action_id );
+            if ( $timestamp ) {
+                as_schedule_single_action( $timestamp, 'tts_publish_social_post', array( 'post_id' => $post_id ) );
             }
         }
     }
@@ -62,7 +61,7 @@ class TTS_Scheduler {
         $log['facebook']  = $this->publish_facebook( $post_id );
         $log['instagram'] = $this->publish_instagram( $post_id );
 
-        update_post_meta( $post_id, '_tts_publish_status', 'published' );
+        update_post_meta( $post_id, '_published_status', 'published' );
         update_post_meta( $post_id, '_tts_publish_log', $log );
     }
 
