@@ -73,7 +73,7 @@ class TTS_CPT {
     public function add_preview_metabox() {
         add_meta_box(
             'tts_anteprima',
-            __( 'Anteprima', 'trello-social-auto-publisher' ),
+            __( 'Preview', 'trello-social-auto-publisher' ),
             array( $this, 'render_preview_metabox' ),
             'tts_social_post',
             'normal'
