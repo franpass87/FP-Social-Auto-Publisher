@@ -21,6 +21,7 @@ class TTS_CPT {
         add_action( 'init', array( $this, 'register_post_type' ) );
         add_action( 'init', array( $this, 'register_meta_fields' ) );
         add_action( 'add_meta_boxes_tts_social_post', array( $this, 'add_schedule_metabox' ) );
+        add_action( 'add_meta_boxes_tts_social_post', array( $this, 'add_preview_metabox' ) );
         add_action( 'save_post_tts_social_post', array( $this, 'save_schedule_metabox' ), 5, 3 );
     }
 
@@ -67,6 +68,19 @@ class TTS_CPT {
     }
 
     /**
+     * Register the preview meta box.
+     */
+    public function add_preview_metabox() {
+        add_meta_box(
+            'tts_anteprima',
+            __( 'Anteprima', 'trello-social-auto-publisher' ),
+            array( $this, 'render_preview_metabox' ),
+            'tts_social_post',
+            'normal'
+        );
+    }
+
+    /**
      * Render the scheduling meta box.
      *
      * @param WP_Post $post Current post object.
@@ -76,6 +90,29 @@ class TTS_CPT {
         $value     = get_post_meta( $post->ID, '_tts_publish_at', true );
         $formatted = $value ? date( 'Y-m-d\\TH:i', strtotime( $value ) ) : '';
         echo '<input type="datetime-local" name="_tts_publish_at" value="' . esc_attr( $formatted ) . '" class="widefat" />';
+    }
+
+    /**
+     * Render the preview meta box.
+     *
+     * @param WP_Post $post Current post object.
+     */
+    public function render_preview_metabox( $post ) {
+        $options   = get_option( 'tts_settings', array() );
+        $templates = array(
+            'facebook'  => isset( $options['facebook_template'] ) ? $options['facebook_template'] : '',
+            'instagram' => isset( $options['instagram_template'] ) ? $options['instagram_template'] : '',
+        );
+
+        echo '<div class="tts-preview">';
+        foreach ( $templates as $network => $template ) {
+            if ( empty( $template ) ) {
+                continue;
+            }
+            $preview = tts_apply_template( $template, $post->ID );
+            echo '<p><strong>' . esc_html( ucfirst( $network ) ) . ':</strong> ' . esc_html( $preview ) . '</p>';
+        }
+        echo '</div>';
     }
 
     /**

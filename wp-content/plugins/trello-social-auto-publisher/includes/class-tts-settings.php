@@ -112,6 +112,30 @@ class TTS_Settings {
             'tts_settings',
             'tts_utm_options'
         );
+
+        // Template options.
+        add_settings_section(
+            'tts_template_options',
+            __( 'Template Options', 'trello-social-auto-publisher' ),
+            '__return_false',
+            'tts_settings'
+        );
+
+        add_settings_field(
+            'facebook_template',
+            __( 'Facebook Template', 'trello-social-auto-publisher' ),
+            array( $this, 'render_facebook_template_field' ),
+            'tts_settings',
+            'tts_template_options'
+        );
+
+        add_settings_field(
+            'instagram_template',
+            __( 'Instagram Template', 'trello-social-auto-publisher' ),
+            array( $this, 'render_instagram_template_field' ),
+            'tts_settings',
+            'tts_template_options'
+        );
     }
 
     /**
@@ -175,6 +199,24 @@ class TTS_Settings {
         $options = get_option( 'tts_settings', array() );
         $value   = isset( $options['utm_options'] ) ? esc_attr( $options['utm_options'] ) : '';
         echo '<input type="text" name="tts_settings[utm_options]" value="' . $value . '" class="regular-text" placeholder="utm_source=...&utm_medium=..." />';
+    }
+
+    /**
+     * Render field for Facebook template.
+     */
+    public function render_facebook_template_field() {
+        $options = get_option( 'tts_settings', array() );
+        $value   = isset( $options['facebook_template'] ) ? esc_attr( $options['facebook_template'] ) : '';
+        echo '<input type="text" name="tts_settings[facebook_template]" value="' . $value . '" class="regular-text" placeholder="{title} {url}" />';
+    }
+
+    /**
+     * Render field for Instagram template.
+     */
+    public function render_instagram_template_field() {
+        $options = get_option( 'tts_settings', array() );
+        $value   = isset( $options['instagram_template'] ) ? esc_attr( $options['instagram_template'] ) : '';
+        echo '<input type="text" name="tts_settings[instagram_template]" value="' . $value . '" class="regular-text" placeholder="{title} {url}" />';
     }
 }
 
