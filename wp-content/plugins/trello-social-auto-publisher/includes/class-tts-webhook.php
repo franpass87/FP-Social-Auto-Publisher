@@ -139,8 +139,8 @@ class TTS_Webhook {
             }
         }
 
-        $options = get_option( 'tts_settings', array() );
-        $mapping = isset( $options['column_mapping'] ) ? json_decode( $options['column_mapping'], true ) : array();
+        $mapping_json = get_post_meta( $client_id, '_tts_column_mapping', true );
+        $mapping = ! empty( $mapping_json ) ? json_decode( $mapping_json, true ) : array();
         if ( empty( $result['idList'] ) || ! is_array( $mapping ) || ! array_key_exists( $result['idList'], $mapping ) ) {
             return rest_ensure_response( array( 'message' => __( 'Unmapped list.', 'trello-social-auto-publisher' ) ) );
         }
