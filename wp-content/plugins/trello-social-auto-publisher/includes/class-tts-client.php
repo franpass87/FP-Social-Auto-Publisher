@@ -72,6 +72,11 @@ class TTS_Client {
         $board_id     = get_post_meta( $post->ID, '_tts_trello_board', true );
         $fb_token     = get_post_meta( $post->ID, '_tts_fb_token', true );
         $ig_token     = get_post_meta( $post->ID, '_tts_ig_token', true );
+        $trello_map   = get_post_meta( $post->ID, '_tts_trello_map', true );
+
+        if ( ! is_array( $trello_map ) ) {
+            $trello_map = array();
+        }
 
         echo '<p><label for="tts_trello_key">' . esc_html__( 'Trello API Key', 'trello-social-auto-publisher' ) . '</label>';
         echo '<input type="text" id="tts_trello_key" name="tts_trello_key" value="' . esc_attr( $trello_key ) . '" class="widefat" /></p>';
@@ -87,6 +92,44 @@ class TTS_Client {
 
         echo '<p><label for="tts_ig_token">' . esc_html__( 'Instagram Access Token', 'trello-social-auto-publisher' ) . '</label>';
         echo '<input type="text" id="tts_ig_token" name="tts_ig_token" value="' . esc_attr( $ig_token ) . '" class="widefat" /></p>';
+
+        ?>
+        <div id="tts_trello_map">
+            <?php
+            $index = 0;
+            foreach ( $trello_map as $row ) :
+                $id_list = isset( $row['idList'] ) ? esc_attr( $row['idList'] ) : '';
+                $social  = isset( $row['canale_social'] ) ? esc_attr( $row['canale_social'] ) : '';
+                ?>
+                <p class="tts-trello-map-row">
+                    <input type="text" name="tts_trello_map[<?php echo $index; ?>][idList]" value="<?php echo $id_list; ?>" placeholder="<?php esc_attr_e( 'Trello List ID', 'trello-social-auto-publisher' ); ?>" />
+                    <input type="text" name="tts_trello_map[<?php echo $index; ?>][canale_social]" value="<?php echo $social; ?>" placeholder="<?php esc_attr_e( 'Canale Social', 'trello-social-auto-publisher' ); ?>" />
+                </p>
+                <?php
+                $index++;
+            endforeach;
+            ?>
+            <p class="tts-trello-map-row">
+                <input type="text" name="tts_trello_map[<?php echo $index; ?>][idList]" placeholder="<?php esc_attr_e( 'Trello List ID', 'trello-social-auto-publisher' ); ?>" />
+                <input type="text" name="tts_trello_map[<?php echo $index; ?>][canale_social]" placeholder="<?php esc_attr_e( 'Canale Social', 'trello-social-auto-publisher' ); ?>" />
+            </p>
+        </div>
+        <p><button type="button" class="button" id="add-tts-trello-map"><?php esc_html_e( 'Add Mapping', 'trello-social-auto-publisher' ); ?></button></p>
+        <script type="text/javascript">
+        jQuery(document).ready(function($){
+            $('#add-tts-trello-map').on('click', function(e){
+                e.preventDefault();
+                var index = $('#tts_trello_map .tts-trello-map-row').length;
+                var safeIndex = String(parseInt(index, 10));
+                var row = '<p class="tts-trello-map-row">' +
+                    '<input type="text" name="tts_trello_map[' + safeIndex + '][idList]" placeholder="<?php echo esc_js( __( 'Trello List ID', 'trello-social-auto-publisher' ) ); ?>" />' +
+                    '<input type="text" name="tts_trello_map[' + safeIndex + '][canale_social]" placeholder="<?php echo esc_js( __( 'Canale Social', 'trello-social-auto-publisher' ) ); ?>" />' +
+                '</p>';
+                $('#tts_trello_map').append(row);
+            });
+        });
+        </script>
+        <?php
     }
 
     /**
@@ -120,6 +163,26 @@ class TTS_Client {
             } else {
                 delete_post_meta( $post_id, $meta_key );
             }
+        }
+
+        if ( isset( $_POST['tts_trello_map'] ) && is_array( $_POST['tts_trello_map'] ) ) {
+            $map = array();
+            foreach ( $_POST['tts_trello_map'] as $row ) {
+                if ( empty( $row['idList'] ) || empty( $row['canale_social'] ) ) {
+                    continue;
+                }
+                $map[] = array(
+                    'idList'        => sanitize_text_field( $row['idList'] ),
+                    'canale_social' => sanitize_text_field( $row['canale_social'] ),
+                );
+            }
+            if ( ! empty( $map ) ) {
+                update_post_meta( $post_id, '_tts_trello_map', $map );
+            } else {
+                delete_post_meta( $post_id, '_tts_trello_map' );
+            }
+        } else {
+            delete_post_meta( $post_id, '_tts_trello_map' );
         }
     }
 }
