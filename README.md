@@ -15,6 +15,21 @@ Per pubblicare contenuti su Facebook è necessario un **Page Access Token** dota
 
 Inserisci nel campo *Facebook Access Token* del client il valore nel formato `{ID-pagina}|{access-token}` dove `{ID-pagina}` è l'identificativo della pagina su cui pubblicare.
 
+## Token Instagram e ig_user_id
+
+Per pubblicare contenuti su Instagram è necessario un account **Business** o **Creator** collegato a una pagina Facebook.
+
+1. Crea un'app su [Meta for Developers](https://developers.facebook.com/apps/) e abilita l'**Instagram Graph API**.
+2. Genera un **Access Token** con i permessi `instagram_basic`, `pages_show_list`, `instagram_content_publish` e `pages_read_engagement`. Puoi utilizzare il [Graph API Explorer](https://developers.facebook.com/tools/explorer/) per ottenere un token di prova e poi convertirlo in un token di lunga durata.
+3. Recupera l'`ig_user_id` dell'account chiamando:
+
+   ```
+   https://graph.facebook.com/v17.0/{page-id}?fields=instagram_business_account&access_token={page-access-token}
+   ```
+
+   Il valore `instagram_business_account.id` è l'`ig_user_id`.
+4. Inserisci nel campo *Instagram Access Token* del client il valore nel formato `{ig_user_id}|{access-token}`.
+
 ## Mappatura Trello → Canali Social
 
 Nel metabox del custom post type `tts_client` è possibile definire una mappatura tra l'`idList` di Trello e il relativo `canale_social`.
