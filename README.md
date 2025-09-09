@@ -2,6 +2,13 @@
 
 Questo progetto pubblica automaticamente contenuti sui social a partire da Trello.
 
+## Generazione e configurazione di token e secret
+
+1. Visita la pagina [https://trello.com/app-key](https://trello.com/app-key) e copia la tua **API Key**.
+2. Dalla stessa pagina ottieni il **Secret** (client secret) e genera un **Token** cliccando sul link dedicato.
+3. All'interno dell'editor del post type `tts_client` inserisci Key, Token e Secret nei campi dedicati del metabox *Client Credentials*.
+4. Il Secret viene usato per validare le chiamate webhook. Trello invierà l'header `X-Trello-Webhook` firmato; in alternativa è possibile inviare un parametro `hmac` calcolato con `hash_hmac('sha256', $payload, $secret)`.
+
 ## Mappatura Trello → Canali Social
 
 Nel metabox del custom post type `tts_client` è possibile definire una mappatura tra l'`idList` di Trello e il relativo `canale_social`.

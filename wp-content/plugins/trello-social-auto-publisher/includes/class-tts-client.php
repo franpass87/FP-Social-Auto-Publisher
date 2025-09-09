@@ -67,9 +67,10 @@ class TTS_Client {
     public function render_credentials_metabox( $post ) {
         wp_nonce_field( 'tts_client_credentials', 'tts_client_nonce' );
 
-        $trello_key   = get_post_meta( $post->ID, '_tts_trello_key', true );
-        $trello_token = get_post_meta( $post->ID, '_tts_trello_token', true );
-        $board_id     = get_post_meta( $post->ID, '_tts_trello_board', true );
+        $trello_key    = get_post_meta( $post->ID, '_tts_trello_key', true );
+        $trello_token  = get_post_meta( $post->ID, '_tts_trello_token', true );
+        $trello_secret = get_post_meta( $post->ID, '_tts_trello_secret', true );
+        $board_id      = get_post_meta( $post->ID, '_tts_trello_board', true );
         $fb_token     = get_post_meta( $post->ID, '_tts_fb_token', true );
         $ig_token     = get_post_meta( $post->ID, '_tts_ig_token', true );
         $trello_map   = get_post_meta( $post->ID, '_tts_trello_map', true );
@@ -83,6 +84,9 @@ class TTS_Client {
 
         echo '<p><label for="tts_trello_token">' . esc_html__( 'Trello API Token', 'trello-social-auto-publisher' ) . '</label>';
         echo '<input type="text" id="tts_trello_token" name="tts_trello_token" value="' . esc_attr( $trello_token ) . '" class="widefat" /></p>';
+
+        echo '<p><label for="tts_trello_secret">' . esc_html__( 'Trello API Secret', 'trello-social-auto-publisher' ) . '</label>';
+        echo '<input type="text" id="tts_trello_secret" name="tts_trello_secret" value="' . esc_attr( $trello_secret ) . '" class="widefat" /></p>';
 
         echo '<p><label for="tts_trello_board">' . esc_html__( 'Trello Board/List ID', 'trello-social-auto-publisher' ) . '</label>';
         echo '<input type="text" id="tts_trello_board" name="tts_trello_board" value="' . esc_attr( $board_id ) . '" class="widefat" /></p>';
@@ -150,11 +154,12 @@ class TTS_Client {
         }
 
         $fields = array(
-            'tts_trello_key'   => '_tts_trello_key',
-            'tts_trello_token' => '_tts_trello_token',
-            'tts_trello_board' => '_tts_trello_board',
-            'tts_fb_token'     => '_tts_fb_token',
-            'tts_ig_token'     => '_tts_ig_token',
+            'tts_trello_key'    => '_tts_trello_key',
+            'tts_trello_token'  => '_tts_trello_token',
+            'tts_trello_secret' => '_tts_trello_secret',
+            'tts_trello_board'  => '_tts_trello_board',
+            'tts_fb_token'      => '_tts_fb_token',
+            'tts_ig_token'      => '_tts_ig_token',
         );
 
         foreach ( $fields as $field => $meta_key ) {

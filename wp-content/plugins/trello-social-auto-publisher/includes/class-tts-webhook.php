@@ -120,7 +120,8 @@ class TTS_Webhook {
         }
 
         // Load Trello credentials for the resolved client.
-        $client_token = get_post_meta( $client_id, '_tts_trello_token', true );
+        $client_token  = get_post_meta( $client_id, '_tts_trello_token', true );
+        $client_secret = get_post_meta( $client_id, '_tts_trello_secret', true );
 
         $provided_token = $request->get_param( 'token' );
         if ( empty( $client_token ) || $provided_token !== $client_token ) {
@@ -128,14 +129,26 @@ class TTS_Webhook {
         }
 
         $signature_header = $request->get_header( 'x-trello-webhook' );
-        if ( $signature_header && $client_token ) {
-            $callback_url = rest_url( 'tts/v1/trello-webhook' );
-            $content      = $request->get_body();
-            $computed     = base64_encode( hash_hmac( 'sha1', $content . $callback_url, $client_token, true ) );
+        $hmac_param       = $request->get_param( 'hmac' );
+        $content          = $request->get_body();
 
-            if ( ! hash_equals( $signature_header, $computed ) ) {
+        if ( empty( $client_secret ) ) {
+            return new WP_Error( 'missing_secret', __( 'Client secret not configured.', 'trello-social-auto-publisher' ), array( 'status' => 403 ) );
+        }
+
+        if ( $signature_header ) {
+            $callback_url = rest_url( 'tts/v1/trello-webhook' );
+            $expected     = base64_encode( hash_hmac( 'sha1', $content . $callback_url, $client_secret, true ) );
+            if ( ! hash_equals( $signature_header, $expected ) ) {
                 return new WP_Error( 'invalid_signature', __( 'Invalid signature.', 'trello-social-auto-publisher' ), array( 'status' => 403 ) );
             }
+        } elseif ( $hmac_param ) {
+            $expected = hash_hmac( 'sha256', $content, $client_secret );
+            if ( ! hash_equals( $hmac_param, $expected ) ) {
+                return new WP_Error( 'invalid_signature', __( 'Invalid signature.', 'trello-social-auto-publisher' ), array( 'status' => 403 ) );
+            }
+        } else {
+            return new WP_Error( 'invalid_signature', __( 'Missing signature.', 'trello-social-auto-publisher' ), array( 'status' => 403 ) );
         }
 
         $mapping_json = get_post_meta( $client_id, '_tts_column_mapping', true );
