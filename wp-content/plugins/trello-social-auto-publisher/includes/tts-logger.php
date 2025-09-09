@@ -59,3 +59,29 @@ function tts_log_event( $post_id, $channel, $status, $message, $response ) {
         array( '%d', '%s', '%s', '%s', '%s', '%s' )
     );
 }
+
+/**
+ * Purge log records older than the retention period.
+ */
+function tts_purge_old_logs() {
+    global $wpdb;
+
+    $options = get_option( 'tts_settings', array() );
+    $days    = isset( $options['log_retention_days'] ) ? (int) $options['log_retention_days'] : 30;
+
+    $table  = $wpdb->prefix . 'tts_logs';
+    $cutoff = gmdate( 'Y-m-d H:i:s', current_time( 'timestamp' ) - $days * DAY_IN_SECONDS );
+
+    $wpdb->query( $wpdb->prepare( "DELETE FROM {$table} WHERE created_at < %s", $cutoff ) );
+}
+
+add_action( 'tts_purge_old_logs', 'tts_purge_old_logs' );
+
+add_action(
+    'init',
+    function () {
+        if ( ! wp_next_scheduled( 'tts_purge_old_logs' ) ) {
+            wp_schedule_event( time(), 'daily', 'tts_purge_old_logs' );
+        }
+    }
+);

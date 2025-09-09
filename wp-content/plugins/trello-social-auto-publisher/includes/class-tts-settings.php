@@ -146,6 +146,22 @@ class TTS_Settings {
             'tts_settings',
             'tts_template_options'
         );
+
+        // Logging options.
+        add_settings_section(
+            'tts_logging_options',
+            __( 'Logging Options', 'trello-social-auto-publisher' ),
+            '__return_false',
+            'tts_settings'
+        );
+
+        add_settings_field(
+            'log_retention_days',
+            __( 'Log Retention (days)', 'trello-social-auto-publisher' ),
+            array( $this, 'render_log_retention_days_field' ),
+            'tts_settings',
+            'tts_logging_options'
+        );
     }
 
     /**
@@ -232,6 +248,15 @@ class TTS_Settings {
         $options = get_option( 'tts_settings', array() );
         $value   = isset( $options['instagram_template'] ) ? esc_attr( $options['instagram_template'] ) : '';
         echo '<input type="text" name="tts_settings[instagram_template]" value="' . $value . '" class="regular-text" placeholder="{title} {url}" />';
+    }
+
+    /**
+     * Render field for log retention period.
+     */
+    public function render_log_retention_days_field() {
+        $options = get_option( 'tts_settings', array() );
+        $value   = isset( $options['log_retention_days'] ) ? intval( $options['log_retention_days'] ) : 30;
+        echo '<input type="number" min="1" name="tts_settings[log_retention_days]" value="' . esc_attr( $value ) . '" class="small-text" />';
     }
 }
 
