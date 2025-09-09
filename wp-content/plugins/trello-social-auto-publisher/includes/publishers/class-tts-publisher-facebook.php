@@ -25,11 +25,13 @@ class TTS_Publisher_Facebook {
         if ( empty( $credentials ) ) {
             $message = __( 'Facebook token missing', 'trello-social-auto-publisher' );
             tts_log_event( $post_id, 'facebook', 'error', $message, '' );
+            tts_notify_publication( $post_id, 'error', 'facebook' );
             return $message;
         }
 
         $message = __( 'Published to Facebook', 'trello-social-auto-publisher' );
         tts_log_event( $post_id, 'facebook', 'success', $message, array() );
+        tts_notify_publication( $post_id, 'success', 'facebook' );
         return $message;
     }
 }

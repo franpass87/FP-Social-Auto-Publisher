@@ -89,6 +89,7 @@ class TTS_Scheduler {
                     $publisher   = new $class();
                     $credentials = isset( $tokens[ $ch ] ) ? $tokens[ $ch ] : '';
                     $log[ $ch ]  = $publisher->publish( $post_id, $credentials );
+                    tts_notify_publication( $post_id, 'processed', $ch );
                 }
             }
         }
