@@ -76,8 +76,36 @@ class TTS_Scheduler {
         );
 
         $options = get_option( 'tts_settings', array() );
-
         $channel = get_post_meta( $post_id, '_tts_social_channel', true );
+        if ( empty( $channel ) ) {
+            $id_list = get_post_meta( $post_id, '_trello_idList', true );
+            if ( empty( $id_list ) ) {
+                $card_id     = get_post_meta( $post_id, '_trello_card_id', true );
+                $trello_key   = get_post_meta( $client_id, '_tts_trello_key', true );
+                $trello_token = get_post_meta( $client_id, '_tts_trello_token', true );
+                if ( $card_id && $trello_key && $trello_token ) {
+                    $url      = 'https://api.trello.com/1/cards/' . rawurlencode( $card_id ) . '?fields=idList&key=' . rawurlencode( $trello_key ) . '&token=' . rawurlencode( $trello_token );
+                    $response = wp_remote_get( $url );
+                    if ( ! is_wp_error( $response ) ) {
+                        $body = json_decode( wp_remote_retrieve_body( $response ), true );
+                        if ( isset( $body['idList'] ) ) {
+                            $id_list = $body['idList'];
+                        }
+                    }
+                }
+            }
+            if ( $id_list ) {
+                $mapping = get_post_meta( $client_id, '_tts_trello_map', true );
+                if ( is_array( $mapping ) ) {
+                    foreach ( $mapping as $row ) {
+                        if ( isset( $row['idList'], $row['canale_social'] ) && $row['idList'] === $id_list ) {
+                            $channel = $row['canale_social'];
+                            break;
+                        }
+                    }
+                }
+            }
+        }
         if ( empty( $channel ) ) {
             tts_log_event( $post_id, 'scheduler', 'error', __( 'Missing social channel', 'trello-social-auto-publisher' ), '' );
             return;

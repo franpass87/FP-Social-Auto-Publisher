@@ -12,7 +12,7 @@ const PostList = ( { posts } ) => {
         {},
         createElement( 'tr', {}, [
           createElement( 'th', {}, 'Title' ),
-          createElement( 'th', {}, 'Channel' ),
+          createElement( 'th', {}, 'Preferred Channel' ),
           createElement( 'th', {}, 'Status' ),
           createElement( 'th', {}, 'Log' ),
         ] )
@@ -67,7 +67,9 @@ const Dashboard = () => {
         options: [
           { label: 'All', value: '' },
           { label: 'Facebook', value: 'facebook' },
-          { label: 'Instagram', value: 'instagram' }
+          { label: 'Instagram', value: 'instagram' },
+          { label: 'YouTube', value: 'youtube' },
+          { label: 'TikTok', value: 'tiktok' }
         ],
         onChange: ( value ) => setChannel( value )
       } ),
