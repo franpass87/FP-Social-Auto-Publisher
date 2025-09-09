@@ -43,25 +43,6 @@ class TTS_Webhook {
      * @return WP_REST_Response|WP_Error
      */
     public function handle_trello_webhook( WP_REST_Request $request ) {
-        $options       = get_option( 'tts_settings', array() );
-        $expected_token = isset( $options['trello_api_token'] ) ? $options['trello_api_token'] : '';
-
-        $provided_token = $request->get_param( 'token' );
-        if ( empty( $expected_token ) || $provided_token !== $expected_token ) {
-            return new WP_Error( 'invalid_token', __( 'Invalid token.', 'trello-social-auto-publisher' ), array( 'status' => 403 ) );
-        }
-
-        $signature_header = $request->get_header( 'x-trello-webhook' );
-        if ( $signature_header && $expected_token ) {
-            $callback_url = rest_url( 'tts/v1/trello-webhook' );
-            $content      = $request->get_body();
-            $computed     = base64_encode( hash_hmac( 'sha1', $content . $callback_url, $expected_token, true ) );
-
-            if ( ! hash_equals( $signature_header, $computed ) ) {
-                return new WP_Error( 'invalid_signature', __( 'Invalid signature.', 'trello-social-auto-publisher' ), array( 'status' => 403 ) );
-            }
-        }
-
         $data  = $request->get_json_params();
         $card  = isset( $data['action']['data']['card'] ) ? $data['action']['data']['card'] : array();
         $result = array(
@@ -74,11 +55,6 @@ class TTS_Webhook {
             'idList'      => isset( $card['idList'] ) ? $card['idList'] : '',
             'idBoard'     => isset( $card['idBoard'] ) ? $card['idBoard'] : '',
         );
-
-        $mapping = isset( $options['column_mapping'] ) ? json_decode( $options['column_mapping'], true ) : array();
-        if ( empty( $result['idList'] ) || ! is_array( $mapping ) || ! array_key_exists( $result['idList'], $mapping ) ) {
-            return rest_ensure_response( array( 'message' => __( 'Unmapped list.', 'trello-social-auto-publisher' ) ) );
-        }
 
         $client_id = 0;
         $board_id  = $result['idBoard'];
@@ -137,6 +113,36 @@ class TTS_Webhook {
                     }
                 }
             }
+        }
+
+        if ( ! $client_id ) {
+            return new WP_Error( 'client_not_found', __( 'Client not found.', 'trello-social-auto-publisher' ), array( 'status' => 404 ) );
+        }
+
+        // Load Trello credentials for the resolved client.
+        $client_token = get_post_meta( $client_id, '_tts_trello_token', true );
+        $client_key   = get_post_meta( $client_id, '_tts_trello_key', true );
+
+        $provided_token = $request->get_param( 'token' );
+        if ( empty( $client_token ) || $provided_token !== $client_token ) {
+            return new WP_Error( 'invalid_token', __( 'Invalid token.', 'trello-social-auto-publisher' ), array( 'status' => 403 ) );
+        }
+
+        $signature_header = $request->get_header( 'x-trello-webhook' );
+        if ( $signature_header && $client_token ) {
+            $callback_url = rest_url( 'tts/v1/trello-webhook' );
+            $content      = $request->get_body();
+            $computed     = base64_encode( hash_hmac( 'sha1', $content . $callback_url, $client_token, true ) );
+
+            if ( ! hash_equals( $signature_header, $computed ) ) {
+                return new WP_Error( 'invalid_signature', __( 'Invalid signature.', 'trello-social-auto-publisher' ), array( 'status' => 403 ) );
+            }
+        }
+
+        $options = get_option( 'tts_settings', array() );
+        $mapping = isset( $options['column_mapping'] ) ? json_decode( $options['column_mapping'], true ) : array();
+        if ( empty( $result['idList'] ) || ! is_array( $mapping ) || ! array_key_exists( $result['idList'], $mapping ) ) {
+            return rest_ensure_response( array( 'message' => __( 'Unmapped list.', 'trello-social-auto-publisher' ) ) );
         }
 
         $post_id = wp_insert_post(
