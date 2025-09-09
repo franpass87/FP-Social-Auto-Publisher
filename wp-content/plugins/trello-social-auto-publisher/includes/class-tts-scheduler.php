@@ -70,61 +70,33 @@ class TTS_Scheduler {
             'instagram' => get_post_meta( $client_id, '_tts_ig_token', true ),
         );
 
-        $settings = get_post_meta( $client_id, '_tts_social_settings', true );
-        if ( ! is_array( $settings ) ) {
-            $settings = array();
+        $channel = get_post_meta( $post_id, '_tts_social_channel', true );
+        if ( empty( $channel ) ) {
+            tts_log_event( $post_id, 'scheduler', 'error', __( 'Missing social channel', 'trello-social-auto-publisher' ), '' );
+            return;
         }
 
-        $log              = array();
-        $log['facebook']  = $this->publish_facebook( $post_id, $tokens['facebook'], $settings );
-        $log['instagram'] = $this->publish_instagram( $post_id, $tokens['instagram'], $settings );
+        $channels = is_array( $channel ) ? $channel : array( $channel );
+        $log      = array();
+
+        foreach ( $channels as $ch ) {
+            $class = 'TTS_Publisher_' . ucfirst( $ch );
+            $file  = plugin_dir_path( __FILE__ ) . 'publishers/class-tts-publisher-' . $ch . '.php';
+
+            if ( file_exists( $file ) ) {
+                require_once $file;
+                if ( class_exists( $class ) ) {
+                    $publisher   = new $class();
+                    $credentials = isset( $tokens[ $ch ] ) ? $tokens[ $ch ] : '';
+                    $log[ $ch ]  = $publisher->publish( $post_id, $credentials );
+                }
+            }
+        }
 
         update_post_meta( $post_id, '_published_status', 'published' );
         update_post_meta( $post_id, '_tts_publish_log', $log );
 
         tts_log_event( $post_id, 'scheduler', 'complete', __( 'Publish process completed', 'trello-social-auto-publisher' ), $log );
-    }
-
-    /**
-     * Publish to Facebook.
-     *
-     * @param int   $post_id  Post ID.
-     * @param mixed $token    Facebook access token.
-     * @param array $settings Client social settings.
-     * @return string Log message.
-     */
-    protected function publish_facebook( $post_id, $token, $settings ) {
-        if ( empty( $token ) ) {
-            $message = __( 'Facebook token missing', 'trello-social-auto-publisher' );
-            tts_log_event( $post_id, 'facebook', 'error', $message, '' );
-            return $message;
-        }
-
-        $message = __( 'Published to Facebook', 'trello-social-auto-publisher' );
-        tts_log_event( $post_id, 'facebook', 'success', $message, array() );
-
-        return $message;
-    }
-
-    /**
-     * Publish to Instagram.
-     *
-     * @param int   $post_id  Post ID.
-     * @param mixed $token    Instagram access token.
-     * @param array $settings Client social settings.
-     * @return string Log message.
-     */
-    protected function publish_instagram( $post_id, $token, $settings ) {
-        if ( empty( $token ) ) {
-            $message = __( 'Instagram token missing', 'trello-social-auto-publisher' );
-            tts_log_event( $post_id, 'instagram', 'error', $message, '' );
-            return $message;
-        }
-
-        $message = __( 'Published to Instagram', 'trello-social-auto-publisher' );
-        tts_log_event( $post_id, 'instagram', 'success', $message, array() );
-
-        return $message;
     }
 }
 
