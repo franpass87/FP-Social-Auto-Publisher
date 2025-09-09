@@ -15,19 +15,63 @@ if ( ! defined( 'ABSPATH' ) ) {
 class TTS_Publisher_YouTube {
 
     /**
-     * Publish the post to YouTube.
+     * Publish the post to YouTube Shorts.
      *
      * @param int    $post_id     Post ID.
-     * @param string $token       OAuth 2.0 access token.
+     * @param string $credentials OAuth 2.0 credentials or access token.
      * @param string $message     Message to publish.
      * @return string|\WP_Error  Log message.
      */
-    public function publish( $post_id, $token, $message ) {
-        if ( empty( $token ) ) {
+    public function publish( $post_id, $credentials, $message ) {
+        if ( empty( $credentials ) ) {
             $error = __( 'YouTube token missing', 'trello-social-auto-publisher' );
             tts_log_event( $post_id, 'youtube', 'error', $error, '' );
             tts_notify_publication( $post_id, 'error', 'youtube' );
             return new \WP_Error( 'youtube_no_token', $error );
+        }
+
+        $client_id = get_post_meta( $post_id, '_tts_client_id', true );
+
+        // Credentials may be a plain token string or a JSON object with refresh token data.
+        $creds      = is_string( $credentials ) ? json_decode( $credentials, true ) : $credentials;
+        $access_tok = '';
+        if ( is_array( $creds ) ) {
+            $access_tok = isset( $creds['access_token'] ) ? $creds['access_token'] : '';
+            if ( empty( $access_tok ) && ! empty( $creds['refresh_token'] ) && ! empty( $creds['client_id'] ) && ! empty( $creds['client_secret'] ) ) {
+                // Request a new access token using the refresh token.
+                $token_resp = wp_remote_post(
+                    'https://oauth2.googleapis.com/token',
+                    array(
+                        'body' => array(
+                            'client_id'     => $creds['client_id'],
+                            'client_secret' => $creds['client_secret'],
+                            'refresh_token' => $creds['refresh_token'],
+                            'grant_type'    => 'refresh_token',
+                            'scope'         => 'https://www.googleapis.com/auth/youtube.upload',
+                        ),
+                    )
+                );
+                if ( ! is_wp_error( $token_resp ) ) {
+                    $token_body = json_decode( wp_remote_retrieve_body( $token_resp ), true );
+                    if ( ! empty( $token_body['access_token'] ) ) {
+                        $access_tok            = $token_body['access_token'];
+                        $creds['access_token'] = $access_tok;
+                        if ( $client_id ) {
+                            update_post_meta( $client_id, '_tts_yt_token', wp_json_encode( $creds ) );
+                        }
+                    }
+                }
+            }
+        } else {
+            // Backward compatibility: plain token string.
+            $access_tok = $credentials;
+        }
+
+        if ( empty( $access_tok ) ) {
+            $error = __( 'Unable to obtain YouTube access token', 'trello-social-auto-publisher' );
+            tts_log_event( $post_id, 'youtube', 'error', $error, '' );
+            tts_notify_publication( $post_id, 'error', 'youtube' );
+            return new \WP_Error( 'youtube_no_access_token', $error );
         }
 
         $videos = get_attached_media( 'video', $post_id );
@@ -55,7 +99,8 @@ class TTS_Publisher_YouTube {
         );
 
         $status = array(
-            'privacyStatus' => 'public',
+            'privacyStatus'  => 'public',
+            'shortsEligible' => true,
         );
 
         $metadata = array(
@@ -63,43 +108,66 @@ class TTS_Publisher_YouTube {
             'status'  => $status,
         );
 
-        $boundary  = wp_generate_password( 24, false );
-        $delimiter = '-------' . $boundary;
+        // Step 1: initiate resumable upload.
+        $endpoint = 'https://www.googleapis.com/upload/youtube/v3/videos?part=snippet,status&uploadType=resumable';
+        $init     = wp_remote_request(
+            $endpoint,
+            array(
+                'method'  => 'POST',
+                'headers' => array(
+                    'Authorization'           => 'Bearer ' . $access_tok,
+                    'Content-Type'            => 'application/json; charset=UTF-8',
+                    'X-Upload-Content-Type'   => 'video/mp4',
+                    'X-Upload-Content-Length' => filesize( $video_path ),
+                ),
+                'body'    => wp_json_encode( $metadata ),
+                'timeout' => 60,
+            )
+        );
 
-        $body  = "--$delimiter\r\n";
-        $body .= "Content-Type: application/json; charset=UTF-8\r\n\r\n";
-        $body .= wp_json_encode( $metadata ) . "\r\n";
-
-        $body .= "--$delimiter\r\n";
-        $body .= "Content-Type: video/mp4\r\n";
-        $body .= "Content-Transfer-Encoding: binary\r\n";
-        $body .= 'Content-Disposition: form-data; name="video"; filename="' . basename( $video_path ) . '"' . "\r\n\r\n";
-        $body .= file_get_contents( $video_path ) . "\r\n";
-        $body .= "--$delimiter--";
-
-        $endpoint = 'https://www.googleapis.com/upload/youtube/v3/videos?part=snippet,status&uploadType=multipart';
-        $result   = wp_remote_post( $endpoint, array(
-            'headers' => array(
-                'Authorization' => 'Bearer ' . $token,
-                'Content-Type'  => 'multipart/related; boundary=' . $delimiter,
-            ),
-            'body'    => $body,
-            'timeout' => 60,
-        ) );
-
-        if ( is_wp_error( $result ) ) {
-            $error = $result->get_error_message();
+        if ( is_wp_error( $init ) ) {
+            $error = $init->get_error_message();
             tts_log_event( $post_id, 'youtube', 'error', $error, '' );
             tts_notify_publication( $post_id, 'error', 'youtube' );
-            return $result;
+            return $init;
         }
 
-        $code = wp_remote_retrieve_response_code( $result );
-        $data = json_decode( wp_remote_retrieve_body( $result ), true );
+        $upload_url = wp_remote_retrieve_header( $init, 'location' );
+        if ( empty( $upload_url ) ) {
+            $error = __( 'Upload URL missing', 'trello-social-auto-publisher' );
+            tts_log_event( $post_id, 'youtube', 'error', $error, '' );
+            tts_notify_publication( $post_id, 'error', 'youtube' );
+            return new \WP_Error( 'youtube_no_upload_url', $error );
+        }
+
+        // Step 2: upload the actual video file.
+        $upload = wp_remote_request(
+            $upload_url,
+            array(
+                'method'  => 'PUT',
+                'headers' => array(
+                    'Content-Type'   => 'video/mp4',
+                    'Content-Length' => filesize( $video_path ),
+                ),
+                'body'    => file_get_contents( $video_path ),
+                'timeout' => 60,
+            )
+        );
+
+        if ( is_wp_error( $upload ) ) {
+            $error = $upload->get_error_message();
+            tts_log_event( $post_id, 'youtube', 'error', $error, '' );
+            tts_notify_publication( $post_id, 'error', 'youtube' );
+            return $upload;
+        }
+
+        $code = wp_remote_retrieve_response_code( $upload );
+        $data = json_decode( wp_remote_retrieve_body( $upload ), true );
 
         if ( 200 === $code && ! empty( $data['id'] ) ) {
             $response = __( 'Published to YouTube', 'trello-social-auto-publisher' );
             tts_log_event( $post_id, 'youtube', 'success', $response, $data );
+            tts_notify_publication( $post_id, 'success', 'youtube' );
             return $response;
         }
 
