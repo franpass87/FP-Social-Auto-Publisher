@@ -89,7 +89,7 @@ class TTS_Webhook {
             array(
                 'post_type'   => 'tts_social_post',
                 'post_title'  => $result['name'],
-                'post_content'=> $result['desc'],
+                'post_content' => $result['desc'],
                 'post_status' => 'publish',
             )
         );
