@@ -120,9 +120,10 @@ class TTS_Client {
             $('#add-tts-trello-map').on('click', function(e){
                 e.preventDefault();
                 var index = $('#tts_trello_map .tts-trello-map-row').length;
+                var safeIndex = String(parseInt(index, 10));
                 var row = '<p class="tts-trello-map-row">' +
-                    '<input type="text" name="tts_trello_map[' + index + '][idList]" placeholder="<?php echo esc_js( __( 'Trello List ID', 'trello-social-auto-publisher' ) ); ?>" />' +
-                    '<input type="text" name="tts_trello_map[' + index + '][canale_social]" placeholder="<?php echo esc_js( __( 'Canale Social', 'trello-social-auto-publisher' ) ); ?>" />' +
+                    '<input type="text" name="tts_trello_map[' + safeIndex + '][idList]" placeholder="<?php echo esc_js( __( 'Trello List ID', 'trello-social-auto-publisher' ) ); ?>" />' +
+                    '<input type="text" name="tts_trello_map[' + safeIndex + '][canale_social]" placeholder="<?php echo esc_js( __( 'Canale Social', 'trello-social-auto-publisher' ) ); ?>" />' +
                 '</p>';
                 $('#tts_trello_map').append(row);
             });
