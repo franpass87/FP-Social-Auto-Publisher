@@ -165,7 +165,7 @@ class TTS_Settings {
     public function render_social_access_token_field() {
         $options = get_option( 'tts_settings', array() );
         $value   = isset( $options['social_access_token'] ) ? esc_attr( $options['social_access_token'] ) : '';
-        echo '<input type="text" name="tts_settings[social_access_token]" value="' . $value . '" class="regular-text" />';
+        echo '<input type="password" name="tts_settings[social_access_token]" value="' . $value . '" class="regular-text" />';
     }
 
     /**
