@@ -24,7 +24,7 @@ class TTS_Admin {
     }
 
     /**
-     * Register the Clienti menu page.
+     * Register plugin menu pages.
      */
     public function register_menu() {
         add_menu_page(
@@ -34,6 +34,15 @@ class TTS_Admin {
             'tts-clienti',
             array( $this, 'render_clients_page' ),
             'dashicons-groups'
+        );
+
+        add_menu_page(
+            __( 'Social Post', 'trello-social-auto-publisher' ),
+            __( 'Social Post', 'trello-social-auto-publisher' ),
+            'manage_options',
+            'tts-social-posts',
+            array( $this, 'render_social_posts_page' ),
+            'dashicons-share'
         );
     }
 
@@ -117,6 +126,121 @@ class TTS_Admin {
                 )
             );
         }
+    }
+
+    /**
+     * Render social posts list page.
+     */
+    public function render_social_posts_page() {
+        if ( ! class_exists( 'WP_List_Table' ) ) {
+            require_once ABSPATH . 'wp-admin/includes/class-wp-list-table.php';
+        }
+
+        // Handle publish now action.
+        if ( isset( $_GET['action'], $_GET['post'] ) && 'publish' === $_GET['action'] ) {
+            do_action( 'tts_publish_social_post', array( 'post_id' => absint( $_GET['post'] ) ) );
+            echo '<div class="notice notice-success"><p>' . esc_html__( 'Post published.', 'trello-social-auto-publisher' ) . '</p></div>';
+        }
+
+        // Handle log view.
+        if ( isset( $_GET['action'], $_GET['post'] ) && 'log' === $_GET['action'] ) {
+            $log = get_post_meta( absint( $_GET['post'] ), '_tts_publish_log', true );
+            echo '<div class="wrap">';
+            echo '<h1>' . esc_html__( 'Log', 'trello-social-auto-publisher' ) . '</h1>';
+            if ( ! empty( $log ) ) {
+                echo '<pre>' . esc_html( print_r( $log, true ) ) . '</pre>';
+            } else {
+                echo '<p>' . esc_html__( 'No log entries found.', 'trello-social-auto-publisher' ) . '</p>';
+            }
+            echo '</div>';
+            return;
+        }
+
+        $table = new TTS_Social_Posts_Table();
+        $table->prepare_items();
+
+        echo '<div class="wrap">';
+        echo '<h1>' . esc_html__( 'Social Post', 'trello-social-auto-publisher' ) . '</h1>';
+        $table->display();
+        echo '</div>';
+    }
+}
+
+/**
+ * WP_List_Table implementation for social posts.
+ */
+class TTS_Social_Posts_Table extends WP_List_Table {
+
+    /**
+     * Retrieve table columns.
+     *
+     * @return array
+     */
+    public function get_columns() {
+        return array(
+            'title'        => __( 'Titolo', 'trello-social-auto-publisher' ),
+            'channel'      => __( 'Canale', 'trello-social-auto-publisher' ),
+            'publish_date' => __( 'Data Pubblicazione', 'trello-social-auto-publisher' ),
+            'status'       => __( 'Stato', 'trello-social-auto-publisher' ),
+        );
+    }
+
+    /**
+     * Prepare the table items.
+     */
+    public function prepare_items() {
+        $posts = get_posts(
+            array(
+                'post_type'      => 'tts_social_post',
+                'posts_per_page' => -1,
+            )
+        );
+
+        $data = array();
+        foreach ( $posts as $post ) {
+            $channel = get_post_meta( $post->ID, '_tts_social_channel', true );
+            $publish = get_post_meta( $post->ID, '_tts_publish_at', true );
+            $status  = get_post_meta( $post->ID, '_published_status', true );
+
+            $data[] = array(
+                'ID'          => $post->ID,
+                'title'       => $post->post_title,
+                'channel'     => is_array( $channel ) ? implode( ', ', $channel ) : $channel,
+                'publish_date'=> $publish ? date_i18n( 'Y-m-d H:i', strtotime( $publish ) ) : '',
+                'status'      => $status ? $status : __( 'scheduled', 'trello-social-auto-publisher' ),
+            );
+        }
+
+        $this->items = $data;
+    }
+
+    /**
+     * Render title column with row actions.
+     *
+     * @param array $item Current row.
+     *
+     * @return string
+     */
+    public function column_title( $item ) {
+        $actions = array(
+            'publish'  => sprintf( '<a href="%s">%s</a>', esc_url( add_query_arg( array( 'page' => 'tts-social-posts', 'action' => 'publish', 'post' => $item['ID'] ), admin_url( 'admin.php' ) ) ), __( 'Publish Now', 'trello-social-auto-publisher' ) ),
+            'edit'     => sprintf( '<a href="%s">%s</a>', get_edit_post_link( $item['ID'] ), __( 'Edit', 'trello-social-auto-publisher' ) ),
+            'view_log' => sprintf( '<a href="%s">%s</a>', esc_url( add_query_arg( array( 'page' => 'tts-social-posts', 'action' => 'log', 'post' => $item['ID'] ), admin_url( 'admin.php' ) ) ), __( 'View Log', 'trello-social-auto-publisher' ) ),
+        );
+
+        return sprintf( '<strong>%1$s</strong>%2$s', esc_html( $item['title'] ), $this->row_actions( $actions ) );
+    }
+
+    /**
+     * Default column rendering.
+     *
+     * @param array  $item        Row item.
+     * @param string $column_name Column name.
+     *
+     * @return string
+     */
+    public function column_default( $item, $column_name ) {
+        return isset( $item[ $column_name ] ) ? esc_html( $item[ $column_name ] ) : '';
     }
 }
 
