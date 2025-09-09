@@ -9,6 +9,12 @@ Questo progetto pubblica automaticamente contenuti sui social a partire da Trell
 3. All'interno dell'editor del post type `tts_client` inserisci Key, Token e Secret nei campi dedicati del metabox *Client Credentials*.
 4. Il Secret viene usato per validare le chiamate webhook. Trello invierà l'header `X-Trello-Webhook` firmato; in alternativa è possibile inviare un parametro `hmac` calcolato con `hash_hmac('sha256', $payload, $secret)`.
 
+## Token Facebook e permessi
+
+Per pubblicare contenuti su Facebook è necessario un **Page Access Token** dotato dei permessi `pages_manage_posts` e `pages_read_engagement`.
+
+Inserisci nel campo *Facebook Access Token* del client il valore nel formato `{ID-pagina}|{access-token}` dove `{ID-pagina}` è l'identificativo della pagina su cui pubblicare.
+
 ## Mappatura Trello → Canali Social
 
 Nel metabox del custom post type `tts_client` è possibile definire una mappatura tra l'`idList` di Trello e il relativo `canale_social`.
