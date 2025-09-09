@@ -105,23 +105,37 @@ class TTS_Webhook {
             }
         }
         if ( ! $client_id && $result['idList'] ) {
+            // Get all tts_client posts with the _tts_trello_map meta key
             $client_query = get_posts(
                 array(
                     'post_type'   => 'tts_client',
                     'post_status' => 'any',
                     'meta_query'  => array(
                         array(
-                            'key'     => '_tts_trello_map',
-                            'value'   => $result['idList'],
-                            'compare' => 'LIKE',
+                            'key' => '_tts_trello_map',
+                            'compare' => 'EXISTS',
                         ),
                     ),
                     'fields'      => 'ids',
-                    'numberposts' => 1,
+                    'numberposts' => -1,
                 )
             );
-            if ( ! empty( $client_query ) ) {
-                $client_id = (int) $client_query[0];
+            foreach ( $client_query as $client_post_id ) {
+                $map = get_post_meta( $client_post_id, '_tts_trello_map', true );
+                $map = maybe_unserialize( $map );
+                if ( is_array( $map ) ) {
+                    if ( in_array( $result['idList'], $map, true ) ) {
+                        $client_id = (int) $client_post_id;
+                        break;
+                    }
+                } elseif ( is_string( $map ) ) {
+                    // If stored as comma-separated or single value
+                    $ids = array_map( 'trim', explode( ',', $map ) );
+                    if ( in_array( $result['idList'], $ids, true ) ) {
+                        $client_id = (int) $client_post_id;
+                        break;
+                    }
+                }
             }
         }
 
