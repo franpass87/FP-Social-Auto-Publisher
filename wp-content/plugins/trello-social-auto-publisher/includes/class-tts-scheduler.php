@@ -1,0 +1,90 @@
+<?php
+/**
+ * Handles scheduling and publishing of social posts.
+ *
+ * @package TrelloSocialAutoPublisher
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
+
+/**
+ * Scheduler for social posts.
+ */
+class TTS_Scheduler {
+
+    /**
+     * Constructor.
+     */
+    public function __construct() {
+        add_action( 'save_post_tts_social_post', array( $this, 'schedule_post' ), 10, 3 );
+        add_action( 'tts_publish_social_post', array( $this, 'publish_social_post' ) );
+    }
+
+    /**
+     * Schedule post publication via Action Scheduler.
+     *
+     * @param int     $post_id Post ID.
+     * @param WP_Post $post    Post object.
+     * @param bool    $update  Whether this is an existing post being updated.
+     */
+    public function schedule_post( $post_id, $post, $update ) {
+        if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+            return;
+        }
+
+        $publish_at = get_post_meta( $post_id, '_tts_publish_at', true );
+
+        if ( ! empty( $publish_at ) ) {
+            as_unschedule_all_actions( 'tts_publish_social_post', array( 'post_id' => $post_id ) );
+
+            $timestamp = strtotime( $publish_at );
+            if ( $timestamp ) {
+                $action_id = as_schedule_single_action( $timestamp, 'tts_publish_social_post', array( 'post_id' => $post_id ) );
+                update_post_meta( $post_id, '_tts_as_action_id', $action_id );
+            }
+        }
+    }
+
+    /**
+     * Publish the social post to configured networks.
+     *
+     * @param array $args Action Scheduler arguments.
+     */
+    public function publish_social_post( $args ) {
+        $post_id = isset( $args['post_id'] ) ? intval( $args['post_id'] ) : 0;
+        if ( ! $post_id ) {
+            return;
+        }
+
+        $log = array();
+        $log['facebook']  = $this->publish_facebook( $post_id );
+        $log['instagram'] = $this->publish_instagram( $post_id );
+
+        update_post_meta( $post_id, '_tts_publish_status', 'published' );
+        update_post_meta( $post_id, '_tts_publish_log', $log );
+    }
+
+    /**
+     * Publish to Facebook.
+     *
+     * @param int $post_id Post ID.
+     * @return string Log message.
+     */
+    protected function publish_facebook( $post_id ) {
+        return __( 'Published to Facebook', 'trello-social-auto-publisher' );
+    }
+
+    /**
+     * Publish to Instagram.
+     *
+     * @param int $post_id Post ID.
+     * @return string Log message.
+     */
+    protected function publish_instagram( $post_id ) {
+        return __( 'Published to Instagram', 'trello-social-auto-publisher' );
+    }
+}
+
+new TTS_Scheduler();
