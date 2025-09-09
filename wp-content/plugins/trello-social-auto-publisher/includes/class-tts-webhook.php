@@ -172,6 +172,50 @@ class TTS_Webhook {
             update_post_meta( $post_id, '_trello_labels', $result['labels'] );
             update_post_meta( $post_id, '_trello_attachments', $result['attachments'] );
             update_post_meta( $post_id, '_trello_due', $result['due'] );
+
+            $media_ids = array();
+            if ( ! empty( $result['attachments'] ) && is_array( $result['attachments'] ) ) {
+                require_once ABSPATH . 'wp-admin/includes/file.php';
+                require_once ABSPATH . 'wp-admin/includes/media.php';
+                require_once ABSPATH . 'wp-admin/includes/image.php';
+
+                foreach ( $result['attachments'] as $attachment ) {
+                    if ( empty( $attachment['isUpload'] ) || empty( $attachment['url'] ) ) {
+                        continue;
+                    }
+
+                    $response = wp_remote_get( $attachment['url'] );
+                    if ( is_wp_error( $response ) ) {
+                        continue;
+                    }
+
+                    $body = wp_remote_retrieve_body( $response );
+                    $tmp  = wp_tempnam( $attachment['url'] );
+                    if ( ! $tmp ) {
+                        continue;
+                    }
+
+                    file_put_contents( $tmp, $body );
+
+                    $file_array = array(
+                        'name'     => sanitize_file_name( basename( wp_parse_url( $attachment['url'], PHP_URL_PATH ) ) ),
+                        'tmp_name' => $tmp,
+                    );
+
+                    $media_id = media_handle_sideload( $file_array, $post_id );
+                    @unlink( $tmp );
+
+                    if ( ! is_wp_error( $media_id ) ) {
+                        $media_ids[] = (int) $media_id;
+                    }
+                }
+
+                if ( ! empty( $media_ids ) ) {
+                    set_post_thumbnail( $post_id, $media_ids[0] );
+                    update_post_meta( $post_id, '_trello_media_ids', $media_ids );
+                }
+            }
+
             $result['post_id']   = $post_id;
             $result['client_id'] = $client_id;
         }
