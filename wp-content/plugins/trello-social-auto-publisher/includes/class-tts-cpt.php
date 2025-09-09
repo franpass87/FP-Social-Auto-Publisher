@@ -19,6 +19,7 @@ class TTS_CPT {
      */
     public function __construct() {
         add_action( 'init', array( $this, 'register_post_type' ) );
+        add_action( 'init', array( $this, 'register_meta_fields' ) );
         add_action( 'add_meta_boxes_tts_social_post', array( $this, 'add_schedule_metabox' ) );
         add_action( 'save_post_tts_social_post', array( $this, 'save_schedule_metabox' ), 5, 3 );
     }
@@ -35,6 +36,21 @@ class TTS_CPT {
         );
 
         register_post_type( 'tts_social_post', $args );
+    }
+
+    /**
+     * Register custom meta fields.
+     */
+    public function register_meta_fields() {
+        register_post_meta(
+            'tts_social_post',
+            '_tts_client_id',
+            array(
+                'show_in_rest' => true,
+                'single'       => true,
+                'type'         => 'integer',
+            )
+        );
     }
 
     /**
