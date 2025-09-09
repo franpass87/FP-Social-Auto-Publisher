@@ -178,4 +178,10 @@ class TTS_Settings {
     }
 }
 
-new TTS_Settings();
+/**
+ * Initialize TTS_Settings on plugins_loaded.
+ */
+function tts_init_settings() {
+    new TTS_Settings();
+}
+add_action( 'plugins_loaded', 'tts_init_settings' );
