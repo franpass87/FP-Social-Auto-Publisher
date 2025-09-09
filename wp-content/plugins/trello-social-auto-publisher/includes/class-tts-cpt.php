@@ -109,7 +109,7 @@ class TTS_CPT {
             if ( empty( $template ) ) {
                 continue;
             }
-            $preview = tts_apply_template( $template, $post->ID );
+            $preview = tts_apply_template( $template, $post->ID, $network );
             echo '<p><strong>' . esc_html( ucfirst( $network ) ) . ':</strong> ' . esc_html( $preview ) . '</p>';
         }
         echo '</div>';

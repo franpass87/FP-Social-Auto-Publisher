@@ -91,7 +91,7 @@ class TTS_Scheduler {
                     $publisher   = new $class();
                     $credentials = isset( $tokens[ $ch ] ) ? $tokens[ $ch ] : '';
                     $template    = isset( $options[ $ch . '_template' ] ) ? $options[ $ch . '_template' ] : '';
-                    $message     = $template ? tts_apply_template( $template, $post_id ) : '';
+                    $message     = $template ? tts_apply_template( $template, $post_id, $ch ) : '';
                     $log[ $ch ]  = $publisher->publish( $post_id, $credentials, $message );
                     tts_notify_publication( $post_id, 'processed', $ch );
                 }

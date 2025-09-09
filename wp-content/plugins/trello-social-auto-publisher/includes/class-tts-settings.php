@@ -104,14 +104,24 @@ class TTS_Settings {
             '__return_false',
             'tts_settings'
         );
+        $channels = array( 'facebook', 'instagram' );
+        $params   = array( 'source', 'medium', 'campaign' );
 
-        add_settings_field(
-            'utm_options',
-            __( 'UTM Parameters (query string)', 'trello-social-auto-publisher' ),
-            array( $this, 'render_utm_options_field' ),
-            'tts_settings',
-            'tts_utm_options'
-        );
+        foreach ( $channels as $channel ) {
+            foreach ( $params as $param ) {
+                add_settings_field(
+                    $channel . '_utm_' . $param,
+                    sprintf( __( '%s UTM %s', 'trello-social-auto-publisher' ), ucfirst( $channel ), ucfirst( $param ) ),
+                    array( $this, 'render_utm_field' ),
+                    'tts_settings',
+                    'tts_utm_options',
+                    array(
+                        'channel' => $channel,
+                        'param'   => $param,
+                    )
+                );
+            }
+        }
 
         // Template options.
         add_settings_section(
@@ -193,12 +203,17 @@ class TTS_Settings {
     }
 
     /**
-     * Render field for UTM options.
+     * Render a UTM field for a given channel and parameter.
+     *
+     * @param array $args Field arguments.
      */
-    public function render_utm_options_field() {
+    public function render_utm_field( $args ) {
         $options = get_option( 'tts_settings', array() );
-        $value   = isset( $options['utm_options'] ) ? esc_attr( $options['utm_options'] ) : '';
-        echo '<input type="text" name="tts_settings[utm_options]" value="' . $value . '" class="regular-text" placeholder="utm_source=...&utm_medium=..." />';
+        $channel = isset( $args['channel'] ) ? $args['channel'] : '';
+        $param   = isset( $args['param'] ) ? $args['param'] : '';
+        $key     = $channel . '_utm_' . $param;
+        $value   = isset( $options[ $key ] ) ? esc_attr( $options[ $key ] ) : '';
+        echo '<input type="text" name="tts_settings[' . esc_attr( $key ) . ']" value="' . $value . '" class="regular-text" />';
     }
 
     /**
