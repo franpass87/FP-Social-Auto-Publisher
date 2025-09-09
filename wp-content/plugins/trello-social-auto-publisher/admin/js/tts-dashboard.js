@@ -12,7 +12,7 @@ const PostList = ( { posts } ) => {
         {},
         createElement( 'tr', {}, [
           createElement( 'th', {}, 'Title' ),
-          createElement( 'th', {}, 'Preferred Channel' ),
+          createElement( 'th', {}, 'Channels' ),
           createElement( 'th', {}, 'Status' ),
           createElement( 'th', {}, 'Log' ),
         ] )

@@ -77,10 +77,12 @@ class TTS_Scheduler {
             'tiktok'    => get_post_meta( $client_id, '_tts_tt_token', true ),
         );
 
-        $options = get_option( 'tts_settings', array() );
-        $channel = get_post_meta( $post_id, '_tts_social_channel', true );
-        if ( empty( $channel ) ) {
-            $id_list = get_post_meta( $post_id, '_trello_idList', true );
+        $options  = get_option( 'tts_settings', array() );
+        $channels = get_post_meta( $post_id, '_tts_social_channel', true );
+
+        if ( empty( $channels ) ) {
+            $mapped_channel = '';
+            $id_list        = get_post_meta( $post_id, '_trello_idList', true );
             if ( empty( $id_list ) ) {
                 $card_id     = get_post_meta( $post_id, '_trello_card_id', true );
                 $trello_key   = get_post_meta( $client_id, '_tts_trello_key', true );
@@ -101,19 +103,23 @@ class TTS_Scheduler {
                 if ( is_array( $mapping ) ) {
                     foreach ( $mapping as $row ) {
                         if ( isset( $row['idList'], $row['canale_social'] ) && $row['idList'] === $id_list ) {
-                            $channel = $row['canale_social'];
+                            $mapped_channel = $row['canale_social'];
                             break;
                         }
                     }
                 }
             }
+            if ( $mapped_channel ) {
+                $channels = array( $mapped_channel );
+            }
         }
-        if ( empty( $channel ) ) {
+
+        if ( empty( $channels ) ) {
             tts_log_event( $post_id, 'scheduler', 'error', __( 'Missing social channel', 'trello-social-auto-publisher' ), '' );
             return;
         }
 
-        $channels = is_array( $channel ) ? $channel : array( $channel );
+        $channels = is_array( $channels ) ? $channels : array( $channels );
         $log      = array();
 
         $error = false;
