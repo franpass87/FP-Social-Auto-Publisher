@@ -25,11 +25,13 @@ class TTS_Publisher_Instagram {
         if ( empty( $credentials ) ) {
             $message = __( 'Instagram token missing', 'trello-social-auto-publisher' );
             tts_log_event( $post_id, 'instagram', 'error', $message, '' );
+            tts_notify_publication( $post_id, 'error', 'instagram' );
             return $message;
         }
 
         $message = __( 'Published to Instagram', 'trello-social-auto-publisher' );
         tts_log_event( $post_id, 'instagram', 'success', $message, array() );
+        tts_notify_publication( $post_id, 'success', 'instagram' );
         return $message;
     }
 }
