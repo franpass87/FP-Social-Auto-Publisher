@@ -21,7 +21,12 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 function tts_notify_publication( $post_id, $status, $channel ) {
     $title   = get_the_title( $post_id );
-    $message = sprintf( 'Post "%s" on %s: %s', $title, $channel, $status );
+    $message = sprintf(
+        __( 'Post "%s" on %s: %s', 'trello-social-auto-publisher' ),
+        $title,
+        $channel,
+        $status
+    );
 
     $webhook = get_option( 'tts_slack_webhook', '' );
     if ( ! empty( $webhook ) ) {
@@ -35,6 +40,10 @@ function tts_notify_publication( $post_id, $status, $channel ) {
         return;
     }
 
-    $subject = sprintf( '[Social Publish] %s - %s', $channel, $status );
+    $subject = sprintf(
+        __( '[Social Publish] %s - %s', 'trello-social-auto-publisher' ),
+        $channel,
+        $status
+    );
     wp_mail( get_option( 'admin_email' ), $subject, $message );
 }
