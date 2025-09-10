@@ -76,3 +76,16 @@ add_action(
 
 // Attach the refresh action to the token refresh handler.
 add_action( 'tts_refresh_tokens', array( 'TTS_Token_Refresh', 'refresh_tokens' ) );
+
+// Schedule daily metrics fetching.
+add_action(
+    'init',
+    function () {
+        if ( ! wp_next_scheduled( 'tts_fetch_metrics' ) ) {
+            wp_schedule_event( time(), 'daily', 'tts_fetch_metrics' );
+        }
+    }
+);
+
+// Hook the analytics fetcher.
+add_action( 'tts_fetch_metrics', array( 'TTS_Analytics', 'fetch_all' ) );

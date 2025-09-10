@@ -74,6 +74,7 @@ class TTS_Log_Table extends WP_List_Table {
             'channel'    => __( 'Channel', 'trello-social-auto-publisher' ),
             'status'     => __( 'Status', 'trello-social-auto-publisher' ),
             'message'    => __( 'Message', 'trello-social-auto-publisher' ),
+            'metrics'    => __( 'Metrics', 'trello-social-auto-publisher' ),
             'created_at' => __( 'Date', 'trello-social-auto-publisher' ),
         );
     }
@@ -160,6 +161,15 @@ class TTS_Log_Table extends WP_List_Table {
      * @return string
      */
     public function column_default( $item, $column_name ) {
+        if ( 'metrics' === $column_name ) {
+            $metrics = get_post_meta( $item['post_id'], '_tts_metrics', true );
+            $channel = isset( $item['channel'] ) ? $item['channel'] : '';
+            if ( is_array( $metrics ) && isset( $metrics[ $channel ] ) ) {
+                return esc_html( wp_json_encode( $metrics[ $channel ] ) );
+            }
+            return '';
+        }
+
         return isset( $item[ $column_name ] ) ? esc_html( $item[ $column_name ] ) : '';
     }
 
