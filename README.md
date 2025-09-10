@@ -2,6 +2,13 @@
 
 Questo progetto pubblica automaticamente contenuti sui social a partire da Trello.
 
+## API richieste
+
+- **Trello**: API Key e Token.
+- **Meta (Facebook/Instagram)**: App ID e secret con permessi `pages_manage_posts`, `instagram_basic`, `pages_show_list`, `pages_read_engagement`.
+- **YouTube**: OAuth client con scope `youtube.upload`.
+- **TikTok**: App con scope `video.upload`.
+
 ## Generazione e configurazione di token e secret
 
 1. Visita la pagina [https://trello.com/app-key](https://trello.com/app-key) e copia la tua **API Key**.
