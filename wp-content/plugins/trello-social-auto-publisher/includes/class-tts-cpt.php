@@ -188,7 +188,7 @@ class TTS_CPT {
 
         if ( isset( $_POST['tts_schedule_nonce'] ) && wp_verify_nonce( $_POST['tts_schedule_nonce'], 'tts_schedule_metabox' ) ) {
             if ( isset( $_POST['_tts_publish_at'] ) && '' !== $_POST['_tts_publish_at'] ) {
-                update_post_meta( $post_id, '_tts_publish_at', sanitize_text_field( $_POST['_tts_publish_at'] ) );
+                update_post_meta( $post_id, '_tts_publish_at', sanitize_text_field( wp_unslash( $_POST['_tts_publish_at'] ) ) );
             } else {
                 delete_post_meta( $post_id, '_tts_publish_at' );
             }
@@ -196,7 +196,7 @@ class TTS_CPT {
 
         if ( isset( $_POST['tts_channel_nonce'] ) && wp_verify_nonce( $_POST['tts_channel_nonce'], 'tts_channel_metabox' ) ) {
             if ( isset( $_POST['_tts_social_channel'] ) && is_array( $_POST['_tts_social_channel'] ) ) {
-                $channels = array_map( 'sanitize_text_field', $_POST['_tts_social_channel'] );
+                $channels = array_map( 'sanitize_text_field', wp_unslash( $_POST['_tts_social_channel'] ) );
                 update_post_meta( $post_id, '_tts_social_channel', $channels );
             } else {
                 delete_post_meta( $post_id, '_tts_social_channel' );
