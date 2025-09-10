@@ -54,6 +54,7 @@ class TTS_Webhook {
             'due'         => isset( $card['due'] ) ? $card['due'] : '',
             'idList'      => isset( $card['idList'] ) ? $card['idList'] : '',
             'idBoard'     => isset( $card['idBoard'] ) ? $card['idBoard'] : '',
+            'canale_social' => '',
         );
 
         $client_id = 0;
@@ -100,9 +101,12 @@ class TTS_Webhook {
                 $map = get_post_meta( $client_post_id, '_tts_trello_map', true );
                 $map = maybe_unserialize( $map );
                 if ( is_array( $map ) ) {
-                    if ( in_array( $result['idList'], $map, true ) ) {
-                        $client_id = (int) $client_post_id;
-                        break;
+                    foreach ( $map as $row ) {
+                        if ( isset( $row['idList'] ) && $row['idList'] === $result['idList'] ) {
+                            $client_id               = (int) $client_post_id;
+                            $result['canale_social'] = isset( $row['canale_social'] ) ? $row['canale_social'] : '';
+                            break 2;
+                        }
                     }
                 } elseif ( is_string( $map ) ) {
                     // If stored as comma-separated or single value
