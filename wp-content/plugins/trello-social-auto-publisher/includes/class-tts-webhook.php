@@ -181,7 +181,7 @@ class TTS_Webhook {
         );
 
         if ( ! empty( $existing_post ) ) {
-            error_log( 'Trello card already processed: ' . $result['idCard'] );
+            tts_log_event( $existing_post[0], 'webhook', 'skip', 'Trello card already processed', '' );
             return rest_ensure_response( array( 'message' => __( 'Card already processed.', 'trello-social-auto-publisher' ) ) );
         }
 
