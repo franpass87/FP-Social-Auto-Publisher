@@ -33,8 +33,14 @@ if ( ! function_exists( 'as_schedule_single_action' ) ) {
 
 // Load support files from the includes directory.
 foreach ( glob( TSAP_PLUGIN_DIR . 'includes/*.php' ) as $file ) {
+    if ( 'class-tts-rest.php' === basename( $file ) ) {
+        continue;
+    }
     require_once $file;
 }
+
+// Load REST API endpoints after other includes.
+require_once TSAP_PLUGIN_DIR . 'includes/class-tts-rest.php';
 // Register activation hook.
 register_activation_hook( __FILE__, 'tts_create_logs_table' );
 
