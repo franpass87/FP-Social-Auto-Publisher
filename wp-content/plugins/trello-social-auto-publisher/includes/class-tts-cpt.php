@@ -32,10 +32,12 @@ class TTS_CPT {
      */
     public function register_post_type() {
         $args = array(
-            'public'       => true,
-            'supports'     => array( 'title', 'editor', 'custom-fields', 'thumbnail' ),
-            'show_in_rest' => true,
-            'label'        => __( 'Social Posts', 'trello-social-auto-publisher' ),
+            'public'             => false,
+            'publicly_queryable' => false,
+            'show_ui'            => true,
+            'supports'           => array( 'title', 'editor', 'custom-fields', 'thumbnail' ),
+            'show_in_rest'       => true,
+            'label'              => __( 'Social Posts', 'trello-social-auto-publisher' ),
         );
 
         register_post_type( 'tts_social_post', $args );

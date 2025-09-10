@@ -190,7 +190,7 @@ class TTS_Webhook {
                 'post_title'   => sanitize_text_field( $result['name'] ),
                 'post_content' => wp_kses_post( $result['desc'] ),
                 'post_type'    => 'tts_social_post',
-                'post_status'  => 'publish',
+                'post_status'  => 'draft',
                 'meta_input'   => array( '_tts_client_id' => $client_id ),
             ),
             true
