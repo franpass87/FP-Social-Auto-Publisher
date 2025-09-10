@@ -24,9 +24,11 @@ class TTS_CPT {
         add_action( 'add_meta_boxes_tts_social_post', array( $this, 'add_preview_metabox' ) );
         add_action( 'add_meta_boxes_tts_social_post', array( $this, 'add_channel_metabox' ) );
         add_action( 'add_meta_boxes_tts_social_post', array( $this, 'add_media_metabox' ) );
+        add_action( 'add_meta_boxes_tts_social_post', array( $this, 'add_messages_metabox' ) );
         add_action( 'save_post_tts_social_post', array( $this, 'save_schedule_metabox' ), 5, 3 );
         add_action( 'save_post_tts_social_post', array( $this, 'save_channel_metabox' ), 10, 3 );
         add_action( 'save_post_tts_social_post', array( $this, 'save_media_metabox' ), 15, 3 );
+        add_action( 'save_post_tts_social_post', array( $this, 'save_messages_metabox' ), 20, 3 );
     }
 
     /**
@@ -72,6 +74,20 @@ class TTS_CPT {
                 'default'      => array(),
             )
         );
+
+        $channels = array( 'facebook', 'instagram', 'youtube', 'tiktok' );
+        foreach ( $channels as $ch ) {
+            register_post_meta(
+                'tts_social_post',
+                '_tts_message_' . $ch,
+                array(
+                    'show_in_rest' => true,
+                    'single'       => true,
+                    'type'         => 'string',
+                    'default'      => '',
+                )
+            );
+        }
     }
 
     /**
@@ -123,6 +139,19 @@ class TTS_CPT {
             array( $this, 'render_media_metabox' ),
             'tts_social_post',
             'side'
+        );
+    }
+
+    /**
+     * Register the per-channel messages meta box.
+     */
+    public function add_messages_metabox() {
+        add_meta_box(
+            'tts_messages',
+            __( 'Messaggi per canale', 'trello-social-auto-publisher' ),
+            array( $this, 'render_messages_metabox' ),
+            'tts_social_post',
+            'normal'
         );
     }
 
@@ -212,6 +241,27 @@ class TTS_CPT {
     }
 
     /**
+     * Render per-channel messages meta box.
+     *
+     * @param WP_Post $post Current post object.
+     */
+    public function render_messages_metabox( $post ) {
+        wp_nonce_field( 'tts_messages_metabox', 'tts_messages_nonce' );
+        $channels = array(
+            'facebook'  => 'Facebook',
+            'instagram' => 'Instagram',
+            'youtube'   => 'YouTube',
+            'tiktok'    => 'TikTok',
+        );
+
+        foreach ( $channels as $key => $label ) {
+            $value = get_post_meta( $post->ID, '_tts_message_' . $key, true );
+            echo '<p><label for="tts_message_' . esc_attr( $key ) . '"><strong>' . esc_html( $label ) . '</strong></label>';
+            echo '<textarea id="tts_message_' . esc_attr( $key ) . '" name="_tts_message_' . esc_attr( $key ) . '" rows="3" class="widefat">' . esc_textarea( $value ) . '</textarea></p>';
+        }
+    }
+
+    /**
      * Save scheduling meta box data.
      *
      * @param int     $post_id Post ID.
@@ -287,6 +337,35 @@ class TTS_CPT {
                 update_post_meta( $post_id, '_tts_social_channel', $channels );
             } else {
                 delete_post_meta( $post_id, '_tts_social_channel' );
+            }
+        }
+    }
+
+    /**
+     * Save per-channel messages meta box data.
+     *
+     * @param int     $post_id Post ID.
+     * @param WP_Post $post    Post object.
+     * @param bool    $update  Whether this is an existing post being updated.
+     */
+    public function save_messages_metabox( $post_id, $post, $update ) {
+        if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+            return;
+        }
+
+        if ( ! current_user_can( 'edit_post', $post_id ) ) {
+            return;
+        }
+
+        if ( isset( $_POST['tts_messages_nonce'] ) && wp_verify_nonce( $_POST['tts_messages_nonce'], 'tts_messages_metabox' ) ) {
+            $channels = array( 'facebook', 'instagram', 'youtube', 'tiktok' );
+            foreach ( $channels as $ch ) {
+                $field = '_tts_message_' . $ch;
+                if ( isset( $_POST[ $field ] ) && '' !== $_POST[ $field ] ) {
+                    update_post_meta( $post_id, $field, sanitize_textarea_field( wp_unslash( $_POST[ $field ] ) ) );
+                } else {
+                    delete_post_meta( $post_id, $field );
+                }
             }
         }
     }
