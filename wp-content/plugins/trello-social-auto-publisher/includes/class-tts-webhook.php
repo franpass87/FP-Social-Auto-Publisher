@@ -29,8 +29,9 @@ class TTS_Webhook {
             'tts/v1',
             '/trello-webhook',
             array(
-                'methods'  => 'POST',
-                'callback' => array( $this, 'handle_trello_webhook' ),
+                'methods'             => array( 'POST', 'GET', 'HEAD' ),
+                'callback'            => array( $this, 'handle_trello_webhook' ),
+                'permission_callback' => '__return_true',
             )
         );
     }
@@ -43,6 +44,10 @@ class TTS_Webhook {
      * @return WP_REST_Response|WP_Error
      */
     public function handle_trello_webhook( WP_REST_Request $request ) {
+        if ( 'POST' !== $request->get_method() ) {
+            return rest_ensure_response( 'OK' );
+        }
+
         $data  = $request->get_json_params();
         $card  = isset( $data['action']['data']['card'] ) ? $data['action']['data']['card'] : array();
         $result = array(
