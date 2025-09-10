@@ -43,3 +43,30 @@ if ( is_admin() ) {
     require_once TSAP_PLUGIN_DIR . 'admin/class-tts-admin.php';
     require_once TSAP_PLUGIN_DIR . 'admin/class-tts-log-page.php';
 }
+
+// Add a weekly cron schedule.
+add_filter(
+    'cron_schedules',
+    function( $schedules ) {
+        if ( ! isset( $schedules['weekly'] ) ) {
+            $schedules['weekly'] = array(
+                'interval' => WEEK_IN_SECONDS,
+                'display'  => __( 'Once Weekly', 'trello-social-auto-publisher' ),
+            );
+        }
+        return $schedules;
+    }
+);
+
+// Schedule weekly token refreshes.
+add_action(
+    'init',
+    function () {
+        if ( ! wp_next_scheduled( 'tts_refresh_tokens' ) ) {
+            wp_schedule_event( time(), 'weekly', 'tts_refresh_tokens' );
+        }
+    }
+);
+
+// Attach the refresh action to the token refresh handler.
+add_action( 'tts_refresh_tokens', array( 'TTS_Token_Refresh', 'refresh_tokens' ) );
