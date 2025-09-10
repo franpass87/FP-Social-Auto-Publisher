@@ -215,6 +215,21 @@ class TTS_Webhook {
 
                     $response = wp_remote_get( $attachment['url'] );
                     if ( is_wp_error( $response ) ) {
+                        tts_log_event( $post_id, 'webhook', 'error', __( 'Failed to retrieve attachment.', 'trello-social-auto-publisher' ), $attachment['url'] );
+                        continue;
+                    }
+
+                    $code = wp_remote_retrieve_response_code( $response );
+                    if ( 200 !== (int) $code ) {
+                        tts_log_event( $post_id, 'webhook', 'error', sprintf( __( 'Unexpected HTTP response code: %d', 'trello-social-auto-publisher' ), $code ), $attachment['url'] );
+                        continue;
+                    }
+
+                    $content_type = wp_remote_retrieve_header( $response, 'content-type' );
+                    $filetype     = wp_check_filetype( basename( wp_parse_url( $attachment['url'], PHP_URL_PATH ) ) );
+
+                    if ( empty( $content_type ) || empty( $filetype['type'] ) || ( 0 !== strpos( $content_type, 'image/' ) && 0 !== strpos( $content_type, 'video/' ) ) ) {
+                        tts_log_event( $post_id, 'webhook', 'error', sprintf( __( 'Unsupported MIME type: %s', 'trello-social-auto-publisher' ), $content_type ), $attachment['url'] );
                         continue;
                     }
 
