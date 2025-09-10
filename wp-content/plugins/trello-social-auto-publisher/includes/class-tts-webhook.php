@@ -202,6 +202,22 @@ class TTS_Webhook {
             update_post_meta( $post_id, '_trello_attachments', $result['attachments'] );
             update_post_meta( $post_id, '_trello_due', $result['due'] );
 
+            if ( ! empty( $result['due'] ) ) {
+                $publish_at = sanitize_text_field( $result['due'] );
+                update_post_meta( $post_id, '_tts_publish_at', $publish_at );
+                $timestamp = strtotime( $publish_at );
+                if ( $timestamp ) {
+                    as_schedule_single_action( $timestamp, 'tts_publish_social_post', array( 'post_id' => $post_id ) );
+                    tts_log_event(
+                        $post_id,
+                        'webhook',
+                        'scheduled',
+                        sprintf( __( 'Publish scheduled for %s', 'trello-social-auto-publisher' ), $publish_at ),
+                        ''
+                    );
+                }
+            }
+
             $media_ids = array();
             if ( ! empty( $result['attachments'] ) && is_array( $result['attachments'] ) ) {
                 require_once ABSPATH . 'wp-admin/includes/file.php';
