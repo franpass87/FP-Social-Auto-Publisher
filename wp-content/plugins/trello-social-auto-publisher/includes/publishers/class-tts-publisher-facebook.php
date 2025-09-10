@@ -71,7 +71,13 @@ class TTS_Publisher_Facebook {
         }
 
         // Possible errors include expired tokens or insufficient permissions (e.g. missing "pages_manage_posts").
-        $result = wp_remote_post( $endpoint, array( 'body' => $body ) );
+        $result = wp_remote_post(
+            $endpoint,
+            array(
+                'body'    => $body,
+                'timeout' => 20,
+            )
+        );
 
         if ( is_wp_error( $result ) ) {
             $error = $result->get_error_message();
