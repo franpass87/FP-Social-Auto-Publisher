@@ -39,7 +39,13 @@ class TTS_Settings {
      * Register settings, sections, and fields.
      */
     public function register_settings() {
-        register_setting( 'tts_settings_group', 'tts_settings' );
+        register_setting(
+            'tts_settings_group',
+            'tts_settings',
+            array(
+                'sanitize_callback' => 'tts_sanitize_settings',
+            )
+        );
 
         // Trello API credentials.
         add_settings_section(
@@ -292,6 +298,53 @@ class TTS_Settings {
         $value   = isset( $options['log_retention_days'] ) ? intval( $options['log_retention_days'] ) : 30;
         echo '<input type="number" min="1" name="tts_settings[log_retention_days]" value="' . esc_attr( $value ) . '" class="small-text" />';
     }
+}
+
+/**
+ * Sanitize settings values.
+ *
+ * @param array $input Raw settings input.
+ * @return array Sanitized settings.
+ */
+function tts_sanitize_settings( $input ) {
+    $output = array();
+
+    if ( ! is_array( $input ) ) {
+        return $output;
+    }
+
+    $text_keys = array( 'trello_api_key', 'trello_api_token', 'social_access_token' );
+
+    foreach ( $text_keys as $key ) {
+        if ( isset( $input[ $key ] ) ) {
+            $output[ $key ] = sanitize_text_field( $input[ $key ] );
+        }
+    }
+
+    if ( isset( $input['column_mapping'] ) ) {
+        $decoded = json_decode( $input['column_mapping'], true );
+        if ( json_last_error() === JSON_ERROR_NONE && is_array( $decoded ) ) {
+            $output['column_mapping'] = wp_json_encode( $decoded );
+        } else {
+            $output['column_mapping'] = array();
+        }
+    }
+
+    if ( isset( $input['log_retention_days'] ) ) {
+        $output['log_retention_days'] = absint( $input['log_retention_days'] );
+    }
+
+    foreach ( $input as $key => $value ) {
+        if ( preg_match( '/_utm_/', $key ) ) {
+            $output[ $key ] = sanitize_text_field( $value );
+        } elseif ( substr( $key, -9 ) === '_template' ) {
+            $output[ $key ] = sanitize_text_field( $value );
+        } elseif ( substr( $key, -4 ) === '_url' ) {
+            $output[ $key ] = esc_url_raw( $value );
+        }
+    }
+
+    return $output;
 }
 
 /**
