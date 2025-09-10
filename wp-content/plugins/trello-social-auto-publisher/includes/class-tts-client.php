@@ -180,7 +180,7 @@ class TTS_Client {
 
         foreach ( $fields as $field => $meta_key ) {
             if ( isset( $_POST[ $field ] ) && '' !== $_POST[ $field ] ) {
-                update_post_meta( $post_id, $meta_key, sanitize_text_field( $_POST[ $field ] ) );
+                update_post_meta( $post_id, $meta_key, sanitize_text_field( wp_unslash( $_POST[ $field ] ) ) );
             } else {
                 delete_post_meta( $post_id, $meta_key );
             }
@@ -188,7 +188,7 @@ class TTS_Client {
 
         if ( isset( $_POST['tts_trello_map'] ) && is_array( $_POST['tts_trello_map'] ) ) {
             $map = array();
-            foreach ( $_POST['tts_trello_map'] as $row ) {
+            foreach ( wp_unslash( $_POST['tts_trello_map'] ) as $row ) {
                 if ( empty( $row['idList'] ) || empty( $row['canale_social'] ) ) {
                     continue;
                 }
@@ -259,7 +259,7 @@ class TTS_Client {
         }
 
         if ( isset( $_POST['tts_social_channel'] ) && is_array( $_POST['tts_social_channel'] ) ) {
-            $channels = array_map( 'sanitize_text_field', $_POST['tts_social_channel'] );
+            $channels = array_map( 'sanitize_text_field', wp_unslash( $_POST['tts_social_channel'] ) );
             update_post_meta( $post_id, '_tts_social_channel', $channels );
         } else {
             delete_post_meta( $post_id, '_tts_social_channel' );
