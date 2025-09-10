@@ -57,10 +57,21 @@ class TTS_Publisher_Facebook {
         );
 
         $attachments = get_attached_media( 'image', $post_id );
+        if ( empty( $attachments ) ) {
+            $manual_id = (int) get_post_meta( $post_id, '_tts_manual_media', true );
+            if ( $manual_id && 0 === strpos( (string) get_post_mime_type( $manual_id ), 'image/' ) ) {
+                $attachments = array( (object) array( 'ID' => $manual_id, 'manual' => true ) );
+            }
+        }
+
         if ( ! empty( $attachments ) ) {
             // Posting an image requires the photos edge and the "pages_manage_posts" permission.
-            $endpoint       = sprintf( 'https://graph.facebook.com/%s/photos', $page_id );
-            $body['source'] = wp_get_attachment_url( reset( $attachments )->ID );
+            $endpoint = sprintf( 'https://graph.facebook.com/%s/photos', $page_id );
+            $url      = wp_get_attachment_url( reset( $attachments )->ID );
+            if ( isset( reset( $attachments )->manual ) ) {
+                $url = wp_make_link_relative( $url );
+            }
+            $body['source'] = $url;
         } else {
             // Text or link posts use the feed edge.
             $endpoint = sprintf( 'https://graph.facebook.com/%s/feed', $page_id );
