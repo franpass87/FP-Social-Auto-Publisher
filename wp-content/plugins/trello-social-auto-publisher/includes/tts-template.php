@@ -53,6 +53,17 @@ function tts_apply_template( $template, $post_id, $channel ) {
 
     $url = get_permalink( $post_id );
     $url = tts_build_utm_url( $url, $channel );
+
+    if ( ! empty( $options['url_shortener'] ) && 'none' !== $options['url_shortener'] ) {
+        if ( 'wp' === $options['url_shortener'] ) {
+            $short = TTS_Shortener::shorten_wp( $post_id );
+            if ( $short ) {
+                $url = $short;
+            }
+        } elseif ( 'bitly' === $options['url_shortener'] && ! empty( $options['bitly_token'] ) ) {
+            $url = TTS_Shortener::shorten_bitly( $url, $options['bitly_token'] );
+        }
+    }
     $due         = get_post_meta( $post_id, '_trello_due', true );
     $labels_meta = get_post_meta( $post_id, '_trello_labels', true );
     $label_names = array();
