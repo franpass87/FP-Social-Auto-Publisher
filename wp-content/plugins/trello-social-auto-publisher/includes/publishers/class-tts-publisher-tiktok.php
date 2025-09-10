@@ -35,6 +35,13 @@ class TTS_Publisher_TikTok {
 
         $videos = get_attached_media( 'video', $post_id );
         if ( empty( $videos ) ) {
+            $manual_id = (int) get_post_meta( $post_id, '_tts_manual_media', true );
+            if ( $manual_id && 0 === strpos( (string) get_post_mime_type( $manual_id ), 'video/' ) ) {
+                $videos = array( (object) array( 'ID' => $manual_id ) );
+            }
+        }
+
+        if ( empty( $videos ) ) {
             $error = __( 'No video to publish', 'trello-social-auto-publisher' );
             tts_log_event( $post_id, 'tiktok', 'error', $error, '' );
             tts_notify_publication( $post_id, 'error', 'tiktok' );

@@ -57,6 +57,18 @@ class TTS_Publisher_Instagram {
         }
 
         if ( empty( $image_url ) && empty( $video_url ) ) {
+            $manual_id = (int) get_post_meta( $post_id, '_tts_manual_media', true );
+            if ( $manual_id ) {
+                $mime = get_post_mime_type( $manual_id );
+                if ( $mime && 0 === strpos( $mime, 'image/' ) ) {
+                    $image_url = wp_make_link_relative( wp_get_attachment_url( $manual_id ) );
+                } elseif ( $mime && 0 === strpos( $mime, 'video/' ) ) {
+                    $video_url = wp_make_link_relative( wp_get_attachment_url( $manual_id ) );
+                }
+            }
+        }
+
+        if ( empty( $image_url ) && empty( $video_url ) ) {
             $error = __( 'No image or video to publish', 'trello-social-auto-publisher' );
             tts_log_event( $post_id, 'instagram', 'error', $error, '' );
             tts_notify_publication( $post_id, 'error', 'instagram' );

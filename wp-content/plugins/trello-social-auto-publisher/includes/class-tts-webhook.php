@@ -202,6 +202,14 @@ class TTS_Webhook {
             update_post_meta( $post_id, '_trello_attachments', $result['attachments'] );
             update_post_meta( $post_id, '_trello_due', $result['due'] );
 
+            $result['post_id']   = $post_id;
+            $result['client_id'] = $client_id;
+
+            if ( empty( $result['attachments'] ) ) {
+                tts_log_event( $post_id, 'webhook', 'warning', __( 'No attachments provided', 'trello-social-auto-publisher' ), '' );
+                return rest_ensure_response( $result );
+            }
+
             if ( ! empty( $result['due'] ) ) {
                 $publish_at = sanitize_text_field( $result['due'] );
                 update_post_meta( $post_id, '_tts_publish_at', $publish_at );
@@ -280,9 +288,6 @@ class TTS_Webhook {
                     update_post_meta( $post_id, '_trello_media_ids', $media_ids );
                 }
             }
-
-            $result['post_id']   = $post_id;
-            $result['client_id'] = $client_id;
         }
 
         return rest_ensure_response( $result );

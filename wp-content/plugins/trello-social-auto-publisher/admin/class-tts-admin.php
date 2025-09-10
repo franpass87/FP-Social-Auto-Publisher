@@ -23,6 +23,7 @@ class TTS_Admin {
         add_action( 'pre_get_posts', array( $this, 'filter_posts_by_client' ) );
         add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_dashboard_assets' ) );
         add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_wizard_assets' ) );
+        add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_media_assets' ) );
         add_action( 'wp_ajax_tts_get_lists', array( $this, 'ajax_get_lists' ) );
     }
 
@@ -111,6 +112,30 @@ class TTS_Admin {
                 'ajaxUrl' => admin_url( 'admin-ajax.php' ),
                 'nonce'   => wp_create_nonce( 'tts_wizard' ),
             )
+        );
+    }
+
+    /**
+     * Enqueue assets for the manual media metabox.
+     *
+     * @param string $hook Current admin page hook.
+     */
+    public function enqueue_media_assets( $hook ) {
+        if ( ! in_array( $hook, array( 'post.php', 'post-new.php' ), true ) ) {
+            return;
+        }
+
+        $screen = get_current_screen();
+        if ( ! $screen || 'tts_social_post' !== $screen->post_type ) {
+            return;
+        }
+
+        wp_enqueue_script(
+            'tts-media',
+            plugin_dir_url( __FILE__ ) . 'js/tts-media.js',
+            array( 'jquery', 'media-editor' ),
+            '1.0',
+            true
         );
     }
 
