@@ -24,6 +24,8 @@ class TTS_Admin {
         add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_dashboard_assets' ) );
         add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_wizard_assets' ) );
         add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_media_assets' ) );
+        add_action( 'wp_dashboard_setup', array( $this, 'register_scheduled_posts_widget' ) );
+        add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_widget_assets' ) );
         add_action( 'wp_ajax_tts_get_lists', array( $this, 'ajax_get_lists' ) );
     }
 
@@ -136,6 +138,83 @@ class TTS_Admin {
             array( 'jquery', 'media-editor' ),
             '1.0',
             true
+        );
+    }
+
+    /**
+     * Register dashboard widget listing scheduled social posts.
+     */
+    public function register_scheduled_posts_widget() {
+        wp_add_dashboard_widget(
+            'tts_scheduled_posts',
+            __( 'Social Post programmati', 'trello-social-auto-publisher' ),
+            array( $this, 'render_scheduled_posts_widget' )
+        );
+    }
+
+    /**
+     * Render the scheduled social posts widget.
+     */
+    public function render_scheduled_posts_widget() {
+        $posts = get_posts(
+            array(
+                'post_type'      => 'tts_social_post',
+                'posts_per_page' => 5,
+                'post_status'    => 'any',
+                'meta_key'       => '_tts_publish_at',
+                'orderby'        => 'meta_value',
+                'order'          => 'ASC',
+                'meta_query'     => array(
+                    array(
+                        'key'     => '_tts_publish_at',
+                        'value'   => current_time( 'mysql' ),
+                        'compare' => '>=',
+                        'type'    => 'DATETIME',
+                    ),
+                ),
+            )
+        );
+
+        if ( empty( $posts ) ) {
+            echo '<p>' . esc_html__( 'Nessun post programmato.', 'trello-social-auto-publisher' ) . '</p>';
+            return;
+        }
+
+        echo '<ul>';
+        foreach ( $posts as $post ) {
+            $channel    = get_post_meta( $post->ID, '_tts_social_channel', true );
+            $publish_at = get_post_meta( $post->ID, '_tts_publish_at', true );
+            $edit_link  = get_edit_post_link( $post->ID );
+            echo '<li><a href="' . esc_url( $edit_link ) . '">' . esc_html( $post->post_title ) . '</a> - ' . esc_html( is_array( $channel ) ? implode( ', ', $channel ) : $channel ) . ' - ' . esc_html( date_i18n( 'Y-m-d H:i', strtotime( $publish_at ) ) ) . '</li>';
+        }
+        echo '</ul>';
+    }
+
+    /**
+     * Enqueue assets for the dashboard widget.
+     *
+     * @param string $hook Current admin page hook.
+     */
+    public function enqueue_widget_assets( $hook ) {
+        if ( 'index.php' !== $hook ) {
+            return;
+        }
+
+        wp_enqueue_script(
+            'tts-dashboard-widget',
+            plugin_dir_url( __FILE__ ) . 'js/tts-dashboard-widget.js',
+            array( 'jquery' ),
+            '1.0',
+            true
+        );
+
+        wp_localize_script(
+            'tts-dashboard-widget',
+            'ttsDashboardWidget',
+            array(
+                'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+                'nonce'   => wp_create_nonce( 'tts_dashboard_widget' ),
+            )
         );
     }
 
