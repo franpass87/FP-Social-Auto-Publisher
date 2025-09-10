@@ -177,6 +177,30 @@ class TTS_Settings {
             'tts_template_options'
         );
 
+        // URL shortener options.
+        add_settings_section(
+            'tts_url_shortener',
+            __( 'URL Shortener', 'trello-social-auto-publisher' ),
+            '__return_false',
+            'tts_settings'
+        );
+
+        add_settings_field(
+            'url_shortener',
+            __( 'URL Shortener', 'trello-social-auto-publisher' ),
+            array( $this, 'render_url_shortener_field' ),
+            'tts_settings',
+            'tts_url_shortener'
+        );
+
+        add_settings_field(
+            'bitly_token',
+            __( 'Bitly Token', 'trello-social-auto-publisher' ),
+            array( $this, 'render_bitly_token_field' ),
+            'tts_settings',
+            'tts_url_shortener'
+        );
+
         // Logging options.
         add_settings_section(
             'tts_logging_options',
@@ -312,6 +336,36 @@ class TTS_Settings {
     }
 
     /**
+     * Render the URL shortener select field.
+     */
+    public function render_url_shortener_field() {
+        $options = get_option( 'tts_settings', array() );
+        $value   = isset( $options['url_shortener'] ) ? $options['url_shortener'] : 'none';
+
+        $choices = array(
+            'none'  => __( 'None', 'trello-social-auto-publisher' ),
+            'wp'    => __( 'WordPress', 'trello-social-auto-publisher' ),
+            'bitly' => __( 'Bitly', 'trello-social-auto-publisher' ),
+        );
+
+        echo '<select name="tts_settings[url_shortener]">';
+        foreach ( $choices as $key => $label ) {
+            echo '<option value="' . esc_attr( $key ) . '"' . selected( $value, $key, false ) . '>' . esc_html( $label ) . '</option>';
+        }
+        echo '</select>';
+    }
+
+    /**
+     * Render field for Bitly token.
+     */
+    public function render_bitly_token_field() {
+        $options = get_option( 'tts_settings', array() );
+        $value   = isset( $options['bitly_token'] ) ? esc_attr( $options['bitly_token'] ) : '';
+        echo '<input type="text" name="tts_settings[bitly_token]" value="' . $value . '" class="regular-text" />';
+        echo '<p class="description">' . esc_html__( 'Required for Bitly shortening.', 'trello-social-auto-publisher' ) . '</p>';
+    }
+
+    /**
      * Render field for log retention period.
      */
     public function render_log_retention_days_field() {
@@ -334,7 +388,7 @@ function tts_sanitize_settings( $input ) {
         return $output;
     }
 
-    $text_keys = array( 'trello_api_key', 'trello_api_token', 'social_access_token' );
+    $text_keys = array( 'trello_api_key', 'trello_api_token', 'social_access_token', 'bitly_token' );
 
     foreach ( $text_keys as $key ) {
         if ( isset( $input[ $key ] ) ) {
@@ -353,6 +407,12 @@ function tts_sanitize_settings( $input ) {
 
     if ( isset( $input['log_retention_days'] ) ) {
         $output['log_retention_days'] = absint( $input['log_retention_days'] );
+    }
+
+    if ( isset( $input['url_shortener'] ) && in_array( $input['url_shortener'], array( 'none', 'wp', 'bitly' ), true ) ) {
+        $output['url_shortener'] = $input['url_shortener'];
+    } else {
+        $output['url_shortener'] = 'none';
     }
 
     $output['labels_as_hashtags'] = ! empty( $input['labels_as_hashtags'] ) ? 1 : 0;
