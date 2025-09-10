@@ -177,6 +177,11 @@ class TTS_Admin {
 
         // Handle publish now action.
         if ( isset( $_GET['action'], $_GET['post'] ) && 'publish' === $_GET['action'] ) {
+            if ( ! current_user_can( 'manage_options' ) ) {
+                wp_die( esc_html__( 'Sorry, you are not allowed to publish this post.', 'trello-social-auto-publisher' ) );
+            }
+
+            check_admin_referer( 'tts_publish_social_post_' . absint( $_GET['post'] ) );
             do_action( 'tts_publish_social_post', array( 'post_id' => absint( $_GET['post'] ) ) );
             echo '<div class="notice notice-success"><p>' . esc_html__( 'Post published.', 'trello-social-auto-publisher' ) . '</p></div>';
         }
@@ -261,8 +266,20 @@ class TTS_Social_Posts_Table extends WP_List_Table {
      * @return string
      */
     public function column_title( $item ) {
+        $publish_url = wp_nonce_url(
+            add_query_arg(
+                array(
+                    'page'   => 'tts-social-posts',
+                    'action' => 'publish',
+                    'post'   => $item['ID'],
+                ),
+                admin_url( 'admin.php' )
+            ),
+            'tts_publish_social_post_' . $item['ID']
+        );
+
         $actions = array(
-            'publish'  => sprintf( '<a href="%s">%s</a>', esc_url( add_query_arg( array( 'page' => 'tts-social-posts', 'action' => 'publish', 'post' => $item['ID'] ), admin_url( 'admin.php' ) ) ), __( 'Publish Now', 'trello-social-auto-publisher' ) ),
+            'publish'  => sprintf( '<a href="%s">%s</a>', esc_url( $publish_url ), __( 'Publish Now', 'trello-social-auto-publisher' ) ),
             'edit'     => sprintf( '<a href="%s">%s</a>', get_edit_post_link( $item['ID'] ), __( 'Edit', 'trello-social-auto-publisher' ) ),
             'view_log' => sprintf( '<a href="%s">%s</a>', esc_url( add_query_arg( array( 'page' => 'tts-social-posts', 'action' => 'log', 'post' => $item['ID'] ), admin_url( 'admin.php' ) ) ), __( 'View Log', 'trello-social-auto-publisher' ) ),
         );
