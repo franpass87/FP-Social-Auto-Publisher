@@ -177,7 +177,7 @@ class TTS_Admin {
 
         // Handle publish now action.
         if ( isset( $_GET['action'], $_GET['post'] ) && 'publish' === $_GET['action'] ) {
-            if ( ! current_user_can( 'manage_options' ) ) {
+            if ( ! current_user_can( 'publish_posts' ) ) {
                 wp_die( esc_html__( 'Sorry, you are not allowed to publish this post.', 'trello-social-auto-publisher' ) );
             }
 
