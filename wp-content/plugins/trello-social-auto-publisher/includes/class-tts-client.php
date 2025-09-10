@@ -21,8 +21,6 @@ class TTS_Client {
         add_action( 'init', array( $this, 'register_post_type' ) );
         add_action( 'add_meta_boxes_tts_client', array( $this, 'add_credentials_metabox' ) );
         add_action( 'save_post_tts_client', array( $this, 'save_credentials_metabox' ), 10, 2 );
-        add_action( 'add_meta_boxes_tts_social_post', array( $this, 'add_channel_metabox' ) );
-        add_action( 'save_post_tts_social_post', array( $this, 'save_channel_metabox' ), 10, 2 );
         add_action( 'admin_post_tts_oauth_facebook', array( $this, 'handle_oauth_facebook' ) );
         add_action( 'admin_post_tts_oauth_instagram', array( $this, 'handle_oauth_instagram' ) );
         add_action( 'admin_post_tts_oauth_youtube', array( $this, 'handle_oauth_youtube' ) );
@@ -204,65 +202,6 @@ class TTS_Client {
             }
         } else {
             delete_post_meta( $post_id, '_tts_trello_map' );
-        }
-    }
-
-    /**
-     * Add channel selection meta box for social posts.
-     */
-    public function add_channel_metabox() {
-        add_meta_box(
-            'tts_social_channel',
-            __( 'Preferred Channel', 'trello-social-auto-publisher' ),
-            array( $this, 'render_channel_metabox' ),
-            'tts_social_post',
-            'side'
-        );
-    }
-
-    /**
-     * Render channel selection field.
-     *
-     * @param WP_Post $post Current post object.
-     */
-    public function render_channel_metabox( $post ) {
-        wp_nonce_field( 'tts_channel_metabox', 'tts_channel_nonce' );
-        $channel  = get_post_meta( $post->ID, '_tts_social_channel', true );
-        $channel  = is_array( $channel ) ? $channel : ( $channel ? array( $channel ) : array() );
-        $options  = array(
-            'facebook'  => __( 'Facebook', 'trello-social-auto-publisher' ),
-            'instagram' => __( 'Instagram', 'trello-social-auto-publisher' ),
-            'youtube'   => __( 'YouTube', 'trello-social-auto-publisher' ),
-            'tiktok'    => __( 'TikTok', 'trello-social-auto-publisher' ),
-        );
-        foreach ( $options as $key => $label ) {
-            $checked = in_array( $key, $channel, true ) ? 'checked="checked"' : '';
-            echo '<p><label><input type="checkbox" name="tts_social_channel[]" value="' . esc_attr( $key ) . '" ' . $checked . ' /> ' . esc_html( $label ) . '</label></p>';
-        }
-    }
-
-    /**
-     * Save channel selection meta box.
-     *
-     * @param int     $post_id Post ID.
-     * @param WP_Post $post    Post object.
-     */
-    public function save_channel_metabox( $post_id, $post ) {
-        if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
-            return;
-        }
-        if ( ! isset( $_POST['tts_channel_nonce'] ) || ! wp_verify_nonce( $_POST['tts_channel_nonce'], 'tts_channel_metabox' ) ) {
-            return;
-        }
-        if ( ! current_user_can( 'edit_post', $post_id ) ) {
-            return;
-        }
-
-        if ( isset( $_POST['tts_social_channel'] ) && is_array( $_POST['tts_social_channel'] ) ) {
-            $channels = array_map( 'sanitize_text_field', wp_unslash( $_POST['tts_social_channel'] ) );
-            update_post_meta( $post_id, '_tts_social_channel', $channels );
-        } else {
-            delete_post_meta( $post_id, '_tts_social_channel' );
         }
     }
 

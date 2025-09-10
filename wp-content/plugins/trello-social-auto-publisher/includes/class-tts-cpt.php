@@ -24,6 +24,7 @@ class TTS_CPT {
         add_action( 'add_meta_boxes_tts_social_post', array( $this, 'add_preview_metabox' ) );
         add_action( 'add_meta_boxes_tts_social_post', array( $this, 'add_channel_metabox' ) );
         add_action( 'save_post_tts_social_post', array( $this, 'save_schedule_metabox' ), 5, 3 );
+        add_action( 'save_post_tts_social_post', array( $this, 'save_channel_metabox' ), 10, 3 );
     }
 
     /**
@@ -192,6 +193,23 @@ class TTS_CPT {
             } else {
                 delete_post_meta( $post_id, '_tts_publish_at' );
             }
+        }
+    }
+
+    /**
+     * Save channel selection meta box.
+     *
+     * @param int     $post_id Post ID.
+     * @param WP_Post $post    Post object.
+     * @param bool    $update  Whether this is an existing post being updated.
+     */
+    public function save_channel_metabox( $post_id, $post, $update ) {
+        if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+            return;
+        }
+
+        if ( ! current_user_can( 'edit_post', $post_id ) ) {
+            return;
         }
 
         if ( isset( $_POST['tts_channel_nonce'] ) && wp_verify_nonce( $_POST['tts_channel_nonce'], 'tts_channel_metabox' ) ) {
