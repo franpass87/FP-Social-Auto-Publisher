@@ -135,7 +135,7 @@ class TTS_Admin {
         wp_enqueue_script(
             'tts-media',
             plugin_dir_url( __FILE__ ) . 'js/tts-media.js',
-            array( 'jquery', 'media-editor' ),
+            array( 'jquery', 'media-editor', 'jquery-ui-sortable' ),
             '1.0',
             true
         );
