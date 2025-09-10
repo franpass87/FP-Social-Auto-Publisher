@@ -260,7 +260,8 @@ class TTS_Settings {
     public function render_facebook_template_field() {
         $options = get_option( 'tts_settings', array() );
         $value   = isset( $options['facebook_template'] ) ? esc_attr( $options['facebook_template'] ) : '';
-        echo '<input type="text" name="tts_settings[facebook_template]" value="' . $value . '" class="regular-text" placeholder="{title} {url}" />';
+        echo '<input type="text" name="tts_settings[facebook_template]" value="' . $value . '" class="regular-text" placeholder="{title} {url} {due}" />';
+        echo '<p class="description">' . esc_html__( 'Available placeholders: {title}, {url}, {due}, {labels}, {client_name}', 'trello-social-auto-publisher' ) . '</p>';
     }
 
     /**
@@ -269,7 +270,8 @@ class TTS_Settings {
     public function render_instagram_template_field() {
         $options = get_option( 'tts_settings', array() );
         $value   = isset( $options['instagram_template'] ) ? esc_attr( $options['instagram_template'] ) : '';
-        echo '<input type="text" name="tts_settings[instagram_template]" value="' . $value . '" class="regular-text" placeholder="{title} {url}" />';
+        echo '<input type="text" name="tts_settings[instagram_template]" value="' . $value . '" class="regular-text" placeholder="{title} {url} {due}" />';
+        echo '<p class="description">' . esc_html__( 'Available placeholders: {title}, {url}, {due}, {labels}, {client_name}', 'trello-social-auto-publisher' ) . '</p>';
     }
 
     /**
@@ -278,7 +280,8 @@ class TTS_Settings {
     public function render_youtube_template_field() {
         $options = get_option( 'tts_settings', array() );
         $value   = isset( $options['youtube_template'] ) ? esc_attr( $options['youtube_template'] ) : '';
-        echo '<input type="text" name="tts_settings[youtube_template]" value="' . $value . '" class="regular-text" placeholder="{title} {url}" />';
+        echo '<input type="text" name="tts_settings[youtube_template]" value="' . $value . '" class="regular-text" placeholder="{title} {url} {due}" />';
+        echo '<p class="description">' . esc_html__( 'Available placeholders: {title}, {url}, {due}, {labels}, {client_name}', 'trello-social-auto-publisher' ) . '</p>';
     }
 
     /**
@@ -287,7 +290,8 @@ class TTS_Settings {
     public function render_tiktok_template_field() {
         $options = get_option( 'tts_settings', array() );
         $value   = isset( $options['tiktok_template'] ) ? esc_attr( $options['tiktok_template'] ) : '';
-        echo '<input type="text" name="tts_settings[tiktok_template]" value="' . $value . '" class="regular-text" placeholder="{title} {url}" />';
+        echo '<input type="text" name="tts_settings[tiktok_template]" value="' . $value . '" class="regular-text" placeholder="{title} {url} {due}" />';
+        echo '<p class="description">' . esc_html__( 'Available placeholders: {title}, {url}, {due}, {labels}, {client_name}', 'trello-social-auto-publisher' ) . '</p>';
     }
 
     /**
