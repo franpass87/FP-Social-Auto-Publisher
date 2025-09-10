@@ -169,6 +169,14 @@ class TTS_Settings {
             'tts_template_options'
         );
 
+        add_settings_field(
+            'labels_as_hashtags',
+            __( 'Labels as Hashtags', 'trello-social-auto-publisher' ),
+            array( $this, 'render_labels_as_hashtags_field' ),
+            'tts_settings',
+            'tts_template_options'
+        );
+
         // Logging options.
         add_settings_section(
             'tts_logging_options',
@@ -295,6 +303,15 @@ class TTS_Settings {
     }
 
     /**
+     * Render field for labels-as-hashtags option.
+     */
+    public function render_labels_as_hashtags_field() {
+        $options = get_option( 'tts_settings', array() );
+        $checked = ! empty( $options['labels_as_hashtags'] );
+        echo '<label><input type="checkbox" name="tts_settings[labels_as_hashtags]" value="1"' . checked( $checked, true, false ) . ' /> ' . esc_html__( 'Append Trello labels as hashtags', 'trello-social-auto-publisher' ) . '</label>';
+    }
+
+    /**
      * Render field for log retention period.
      */
     public function render_log_retention_days_field() {
@@ -337,6 +354,8 @@ function tts_sanitize_settings( $input ) {
     if ( isset( $input['log_retention_days'] ) ) {
         $output['log_retention_days'] = absint( $input['log_retention_days'] );
     }
+
+    $output['labels_as_hashtags'] = ! empty( $input['labels_as_hashtags'] ) ? 1 : 0;
 
     foreach ( $input as $key => $value ) {
         if ( preg_match( '/_utm_/', $key ) ) {

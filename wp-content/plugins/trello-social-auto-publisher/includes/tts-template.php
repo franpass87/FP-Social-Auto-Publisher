@@ -48,19 +48,22 @@ function tts_apply_template( $template, $post_id, $channel ) {
         return $template;
     }
 
+    $options            = get_option( 'tts_settings', array() );
+    $labels_as_hashtags = ! empty( $options['labels_as_hashtags'] );
+
     $url = get_permalink( $post_id );
     $url = tts_build_utm_url( $url, $channel );
-    $due    = get_post_meta( $post_id, '_trello_due', true );
-    $labels = get_post_meta( $post_id, '_trello_labels', true );
-    if ( is_array( $labels ) ) {
-        $label_names = array();
-        foreach ( $labels as $label ) {
+    $due         = get_post_meta( $post_id, '_trello_due', true );
+    $labels_meta = get_post_meta( $post_id, '_trello_labels', true );
+    $label_names = array();
+    if ( is_array( $labels_meta ) ) {
+        foreach ( $labels_meta as $label ) {
             if ( is_array( $label ) && ! empty( $label['name'] ) ) {
                 $label_names[] = $label['name'];
             }
         }
-        $labels = implode( ', ', $label_names );
     }
+    $labels = implode( ', ', $label_names );
 
     $client_id   = get_post_meta( $post_id, '_tts_client_id', true );
     $client_name = $client_id ? get_the_title( $client_id ) : '';
@@ -71,12 +74,28 @@ function tts_apply_template( $template, $post_id, $channel ) {
         '{excerpt}'     => get_the_excerpt( $post_id ),
         '{url}'         => $url,
         '{due}'         => $due,
-        '{labels}'      => $labels,
+        '{labels}'      => $labels_as_hashtags ? '' : $labels,
         '{client_name}' => $client_name,
         '{publish_at}'  => get_post_meta( $post_id, '_tts_publish_at', true ),
         '{trello_id}'   => get_post_meta( $post_id, '_trello_card_id', true ),
         '{channel}'     => $channel,
     );
 
-    return strtr( $template, $replacements );
+    $message = strtr( $template, $replacements );
+
+    if ( $labels_as_hashtags && ! empty( $label_names ) ) {
+        $hashtags = array();
+        foreach ( $label_names as $label_name ) {
+            $sanitized = sanitize_title( $label_name );
+            $sanitized = str_replace( '-', '', $sanitized );
+            if ( '' !== $sanitized ) {
+                $hashtags[] = '#' . $sanitized;
+            }
+        }
+        if ( ! empty( $hashtags ) ) {
+            $message = trim( $message ) . ' ' . implode( ' ', $hashtags );
+        }
+    }
+
+    return $message;
 }
