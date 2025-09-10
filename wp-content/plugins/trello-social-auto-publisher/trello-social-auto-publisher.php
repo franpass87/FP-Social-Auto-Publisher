@@ -40,7 +40,6 @@ register_activation_hook( __FILE__, 'tts_create_logs_table' );
 
 // Load admin files when in the dashboard.
 if ( is_admin() ) {
-    foreach ( glob( TSAP_PLUGIN_DIR . 'admin/*.php' ) as $file ) {
-        require_once $file;
-    }
+    require_once TSAP_PLUGIN_DIR . 'admin/class-tts-admin.php';
+    require_once TSAP_PLUGIN_DIR . 'admin/class-tts-log-page.php';
 }
