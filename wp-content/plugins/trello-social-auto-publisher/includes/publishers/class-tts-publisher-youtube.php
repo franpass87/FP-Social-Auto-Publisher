@@ -42,13 +42,14 @@ class TTS_Publisher_YouTube {
                 $token_resp = wp_remote_post(
                     'https://oauth2.googleapis.com/token',
                     array(
-                        'body' => array(
+                        'body'    => array(
                             'client_id'     => $creds['client_id'],
                             'client_secret' => $creds['client_secret'],
                             'refresh_token' => $creds['refresh_token'],
                             'grant_type'    => 'refresh_token',
                             'scope'         => 'https://www.googleapis.com/auth/youtube.upload',
                         ),
+                        'timeout' => 20,
                     )
                 );
                 if ( ! is_wp_error( $token_resp ) ) {

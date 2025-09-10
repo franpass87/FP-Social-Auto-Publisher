@@ -128,7 +128,10 @@ class TTS_Admin {
             wp_send_json_error();
         }
 
-        $response = wp_remote_get( 'https://api.trello.com/1/boards/' . rawurlencode( $board ) . '/lists?key=' . rawurlencode( $key ) . '&token=' . rawurlencode( $token ) );
+        $response = wp_remote_get(
+            'https://api.trello.com/1/boards/' . rawurlencode( $board ) . '/lists?key=' . rawurlencode( $key ) . '&token=' . rawurlencode( $token ),
+            array( 'timeout' => 20 )
+        );
         if ( is_wp_error( $response ) ) {
             wp_send_json_error();
         }
@@ -205,7 +208,10 @@ class TTS_Admin {
 
             $boards = array();
             if ( $trello_key && $trello_token ) {
-                $response = wp_remote_get( 'https://api.trello.com/1/members/me/boards?key=' . rawurlencode( $trello_key ) . '&token=' . rawurlencode( $trello_token ) );
+                $response = wp_remote_get(
+                    'https://api.trello.com/1/members/me/boards?key=' . rawurlencode( $trello_key ) . '&token=' . rawurlencode( $trello_token ),
+                    array( 'timeout' => 20 )
+                );
                 if ( ! is_wp_error( $response ) ) {
                     $boards = json_decode( wp_remote_retrieve_body( $response ), true );
                 }

@@ -229,7 +229,12 @@ class TTS_Webhook {
                         continue;
                     }
 
-                    $response = wp_remote_get( $attachment['url'] );
+                    $response = wp_remote_get(
+                        $attachment['url'],
+                        array(
+                            'timeout' => 20,
+                        )
+                    );
                     if ( is_wp_error( $response ) ) {
                         tts_log_event( $post_id, 'webhook', 'error', __( 'Failed to retrieve attachment.', 'trello-social-auto-publisher' ), $attachment['url'] );
                         continue;

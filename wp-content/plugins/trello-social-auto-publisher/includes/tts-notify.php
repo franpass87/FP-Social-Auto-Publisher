@@ -35,6 +35,7 @@ function tts_notify_publication( $post_id, $status, $channel ) {
             array(
                 'headers' => array( 'Content-Type' => 'application/json' ),
                 'body'    => wp_json_encode( array( 'text' => $message ) ),
+                'timeout' => 20,
             )
         );
         return;

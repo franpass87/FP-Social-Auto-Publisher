@@ -76,7 +76,13 @@ class TTS_Publisher_Instagram {
             $body['video_url']  = $video_url;
         }
 
-        $result = wp_remote_post( $endpoint, array( 'body' => $body ) );
+        $result = wp_remote_post(
+            $endpoint,
+            array(
+                'body'    => $body,
+                'timeout' => 20,
+            )
+        );
 
         if ( is_wp_error( $result ) ) {
             $error = $result->get_error_message();
@@ -101,7 +107,13 @@ class TTS_Publisher_Instagram {
             'access_token' => $token,
         );
 
-        $publish_result = wp_remote_post( $publish_endpoint, array( 'body' => $publish_body ) );
+        $publish_result = wp_remote_post(
+            $publish_endpoint,
+            array(
+                'body'    => $publish_body,
+                'timeout' => 20,
+            )
+        );
 
         if ( is_wp_error( $publish_result ) ) {
             $error = $publish_result->get_error_message();

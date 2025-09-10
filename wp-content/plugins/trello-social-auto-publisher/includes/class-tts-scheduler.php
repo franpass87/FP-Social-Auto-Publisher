@@ -89,7 +89,7 @@ class TTS_Scheduler {
                 $trello_token = get_post_meta( $client_id, '_tts_trello_token', true );
                 if ( $card_id && $trello_key && $trello_token ) {
                     $url      = 'https://api.trello.com/1/cards/' . rawurlencode( $card_id ) . '?fields=idList&key=' . rawurlencode( $trello_key ) . '&token=' . rawurlencode( $trello_token );
-                    $response = wp_remote_get( $url );
+                    $response = wp_remote_get( $url, array( 'timeout' => 20 ) );
                     if ( ! is_wp_error( $response ) ) {
                         $body = json_decode( wp_remote_retrieve_body( $response ), true );
                         if ( isset( $body['idList'] ) ) {
