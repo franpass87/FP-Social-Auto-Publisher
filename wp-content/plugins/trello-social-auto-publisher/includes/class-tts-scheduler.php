@@ -134,7 +134,12 @@ class TTS_Scheduler {
                     $publisher   = new $class();
                     $credentials = isset( $tokens[ $ch ] ) ? $tokens[ $ch ] : '';
                     $template    = isset( $options[ $ch . '_template' ] ) ? $options[ $ch . '_template' ] : '';
-                    $message     = $template ? tts_apply_template( $template, $post_id, $ch ) : '';
+                    $custom_message = get_post_meta( $post_id, '_tts_message_' . $ch, true );
+                    if ( $custom_message ) {
+                        $message = $custom_message;
+                    } else {
+                        $message = $template ? tts_apply_template( $template, $post_id, $ch ) : '';
+                    }
 
                     try {
                         $log[ $ch ] = $publisher->publish( $post_id, $credentials, $message );
