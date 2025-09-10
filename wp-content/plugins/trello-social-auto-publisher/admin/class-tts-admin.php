@@ -483,6 +483,7 @@ class TTS_Social_Posts_Table extends WP_List_Table {
         $posts = get_posts(
             array(
                 'post_type'      => 'tts_social_post',
+                'post_status'    => 'any',
                 'posts_per_page' => -1,
             )
         );

@@ -45,7 +45,7 @@ const Dashboard = () => {
   const [ loading, setLoading ] = useState( true );
 
   useEffect( () => {
-    apiFetch( { path: '/wp/v2/tts_social_post?per_page=100&_fields=id,title,meta' } )
+    apiFetch( { path: '/wp/v2/tts_social_post?per_page=100&status=any&_fields=id,title,meta' } )
       .then( ( data ) => {
         setPosts( data );
         setLoading( false );
