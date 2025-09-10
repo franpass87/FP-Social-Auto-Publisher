@@ -22,6 +22,8 @@ class TTS_Admin {
         add_action( 'restrict_manage_posts', array( $this, 'add_client_filter' ) );
         add_action( 'pre_get_posts', array( $this, 'filter_posts_by_client' ) );
         add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_dashboard_assets' ) );
+        add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_wizard_assets' ) );
+        add_action( 'wp_ajax_tts_get_lists', array( $this, 'ajax_get_lists' ) );
     }
 
     /**
@@ -35,6 +37,15 @@ class TTS_Admin {
             'tts-clienti',
             array( $this, 'render_clients_page' ),
             'dashicons-groups'
+        );
+
+        add_submenu_page(
+            'tts-clienti',
+            __( 'Client Wizard', 'trello-social-auto-publisher' ),
+            __( 'Client Wizard', 'trello-social-auto-publisher' ),
+            'manage_options',
+            'tts-client-wizard',
+            array( $this, 'tts_render_client_wizard' )
         );
 
         add_menu_page(
@@ -76,6 +87,57 @@ class TTS_Admin {
     }
 
     /**
+     * Enqueue assets for the client wizard.
+     *
+     * @param string $hook Current admin page hook.
+     */
+    public function enqueue_wizard_assets( $hook ) {
+        if ( 'tts-clienti_page_tts-client-wizard' !== $hook ) {
+            return;
+        }
+
+        wp_enqueue_script(
+            'tts-wizard',
+            plugin_dir_url( __FILE__ ) . 'js/tts-wizard.js',
+            array( 'jquery' ),
+            '1.0',
+            true
+        );
+
+        wp_localize_script(
+            'tts-wizard',
+            'ttsWizard',
+            array(
+                'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+                'nonce'   => wp_create_nonce( 'tts_wizard' ),
+            )
+        );
+    }
+
+    /**
+     * AJAX callback: fetch lists for a Trello board.
+     */
+    public function ajax_get_lists() {
+        check_ajax_referer( 'tts_wizard', 'nonce' );
+
+        $board = isset( $_POST['board'] ) ? sanitize_text_field( $_POST['board'] ) : '';
+        $key   = isset( $_POST['key'] ) ? sanitize_text_field( $_POST['key'] ) : '';
+        $token = isset( $_POST['token'] ) ? sanitize_text_field( $_POST['token'] ) : '';
+
+        if ( empty( $board ) || empty( $key ) || empty( $token ) ) {
+            wp_send_json_error();
+        }
+
+        $response = wp_remote_get( 'https://api.trello.com/1/boards/' . rawurlencode( $board ) . '/lists?key=' . rawurlencode( $key ) . '&token=' . rawurlencode( $token ) );
+        if ( is_wp_error( $response ) ) {
+            wp_send_json_error();
+        }
+
+        $data = json_decode( wp_remote_retrieve_body( $response ), true );
+        wp_send_json_success( $data );
+    }
+
+    /**
      * Render the dashboard page.
      */
     public function render_dashboard_page() {
@@ -107,6 +169,191 @@ class TTS_Admin {
         } else {
             echo '<p>' . esc_html__( 'Nessun cliente trovato.', 'trello-social-auto-publisher' ) . '</p>';
         }
+        echo '</div>';
+    }
+
+    /**
+     * Render the client creation wizard.
+     */
+    public function tts_render_client_wizard() {
+        if ( ! session_id() ) {
+            session_start();
+        }
+
+        $step = isset( $_REQUEST['step'] ) ? absint( $_REQUEST['step'] ) : 1;
+
+        echo '<div class="wrap tts-client-wizard">';
+        echo '<h1>' . esc_html__( 'Client Wizard', 'trello-social-auto-publisher' ) . '</h1>';
+
+        $fb_token = get_transient( 'tts_oauth_facebook_token' );
+        $ig_token = get_transient( 'tts_oauth_instagram_token' );
+        $yt_token = get_transient( 'tts_oauth_youtube_token' );
+        $tt_token = get_transient( 'tts_oauth_tiktok_token' );
+
+        $trello_key   = isset( $_REQUEST['trello_key'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['trello_key'] ) ) : '';
+        $trello_token = isset( $_REQUEST['trello_token'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['trello_token'] ) ) : '';
+        $board        = isset( $_REQUEST['trello_board'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['trello_board'] ) ) : '';
+        $channels     = isset( $_REQUEST['channels'] ) ? array_map( 'sanitize_text_field', (array) $_REQUEST['channels'] ) : array();
+
+        if ( 1 === $step ) {
+            echo '<form method="post" class="tts-wizard-step tts-step-1">';
+            echo '<input type="hidden" name="step" value="2" />';
+            echo '<p><label>' . esc_html__( 'Trello API Key', 'trello-social-auto-publisher' ) . '<br />';
+            echo '<input type="text" name="trello_key" value="' . esc_attr( $trello_key ) . '" /></label></p>';
+            echo '<p><label>' . esc_html__( 'Trello Token', 'trello-social-auto-publisher' ) . '<br />';
+            echo '<input type="text" name="trello_token" value="' . esc_attr( $trello_token ) . '" /></label></p>';
+
+            $boards = array();
+            if ( $trello_key && $trello_token ) {
+                $response = wp_remote_get( 'https://api.trello.com/1/members/me/boards?key=' . rawurlencode( $trello_key ) . '&token=' . rawurlencode( $trello_token ) );
+                if ( ! is_wp_error( $response ) ) {
+                    $boards = json_decode( wp_remote_retrieve_body( $response ), true );
+                }
+            }
+
+            if ( ! empty( $boards ) ) {
+                echo '<p><label>' . esc_html__( 'Trello Board', 'trello-social-auto-publisher' ) . '<br />';
+                echo '<select name="trello_board">';
+                foreach ( $boards as $b ) {
+                    printf( '<option value="%s" %s>%s</option>', esc_attr( $b['id'] ), selected( $board, $b['id'], false ), esc_html( $b['name'] ) );
+                }
+                echo '</select></label></p>';
+            }
+
+            echo '<p><button type="submit" class="button button-primary">' . esc_html__( 'Next', 'trello-social-auto-publisher' ) . '</button></p>';
+            echo '</form>';
+        } elseif ( 2 === $step ) {
+            echo '<form method="post" class="tts-wizard-step tts-step-2">';
+            echo '<input type="hidden" name="step" value="3" />';
+            echo '<input type="hidden" name="trello_key" value="' . esc_attr( $trello_key ) . '" />';
+            echo '<input type="hidden" name="trello_token" value="' . esc_attr( $trello_token ) . '" />';
+            echo '<input type="hidden" name="trello_board" value="' . esc_attr( $board ) . '" />';
+
+            $opts = array(
+                'facebook'  => __( 'Facebook', 'trello-social-auto-publisher' ),
+                'instagram' => __( 'Instagram', 'trello-social-auto-publisher' ),
+                'youtube'   => __( 'YouTube', 'trello-social-auto-publisher' ),
+                'tiktok'    => __( 'TikTok', 'trello-social-auto-publisher' ),
+            );
+
+            foreach ( $opts as $slug => $label ) {
+                $token     = '';
+                $connected = false;
+                switch ( $slug ) {
+                    case 'facebook':
+                        $token     = $fb_token;
+                        $connected = ! empty( $fb_token );
+                        break;
+                    case 'instagram':
+                        $token     = $ig_token;
+                        $connected = ! empty( $ig_token );
+                        break;
+                    case 'youtube':
+                        $token     = $yt_token;
+                        $connected = ! empty( $yt_token );
+                        break;
+                    case 'tiktok':
+                        $token     = $tt_token;
+                        $connected = ! empty( $tt_token );
+                        break;
+                }
+
+                echo '<p><label><input type="checkbox" name="channels[]" value="' . esc_attr( $slug ) . '" ' . checked( in_array( $slug, $channels, true ) || $connected, true, false ) . ' /> ' . esc_html( $label ) . '</label>';
+                $url = add_query_arg( array( 'action' => 'tts_oauth_' . $slug, 'step' => 2 ), admin_url( 'admin-post.php' ) );
+                echo ' <a href="' . esc_url( $url ) . '" class="button">' . esc_html__( 'Connect', 'trello-social-auto-publisher' ) . '</a>';
+                if ( $connected ) {
+                    echo ' ' . esc_html__( 'Connected', 'trello-social-auto-publisher' );
+                }
+                echo '</p>';
+            }
+
+            echo '<p><button type="submit" class="button button-primary">' . esc_html__( 'Next', 'trello-social-auto-publisher' ) . '</button></p>';
+            echo '</form>';
+        } elseif ( 3 === $step ) {
+            echo '<form method="post" class="tts-wizard-step tts-step-3">';
+            echo '<input type="hidden" name="step" value="4" />';
+            echo '<input type="hidden" name="trello_key" value="' . esc_attr( $trello_key ) . '" />';
+            echo '<input type="hidden" name="trello_token" value="' . esc_attr( $trello_token ) . '" />';
+            echo '<input type="hidden" name="trello_board" value="' . esc_attr( $board ) . '" />';
+            foreach ( $channels as $ch ) {
+                echo '<input type="hidden" name="channels[]" value="' . esc_attr( $ch ) . '" />';
+            }
+            echo '<div id="tts-lists" data-board="' . esc_attr( $board ) . '" data-key="' . esc_attr( $trello_key ) . '" data-token="' . esc_attr( $trello_token ) . '"></div>';
+            echo '<p><button type="submit" class="button button-primary">' . esc_html__( 'Next', 'trello-social-auto-publisher' ) . '</button></p>';
+            echo '</form>';
+        } else {
+            if ( isset( $_POST['finalize'] ) ) {
+                $post_id = wp_insert_post(
+                    array(
+                        'post_type'   => 'tts_client',
+                        'post_status' => 'publish',
+                        'post_title'  => 'Client ' . $board,
+                    )
+                );
+                if ( $post_id ) {
+                    update_post_meta( $post_id, '_tts_trello_key', $trello_key );
+                    update_post_meta( $post_id, '_tts_trello_token', $trello_token );
+                    if ( $fb_token ) {
+                        update_post_meta( $post_id, '_tts_fb_token', $fb_token );
+                    }
+                    if ( $ig_token ) {
+                        update_post_meta( $post_id, '_tts_ig_token', $ig_token );
+                    }
+                    if ( $yt_token ) {
+                        update_post_meta( $post_id, '_tts_yt_token', $yt_token );
+                    }
+                    if ( $tt_token ) {
+                        update_post_meta( $post_id, '_tts_tt_token', $tt_token );
+                    }
+                    if ( isset( $_POST['tts_trello_map'] ) && is_array( $_POST['tts_trello_map'] ) ) {
+                        $map = array();
+                        foreach ( $_POST['tts_trello_map'] as $id_list => $row ) {
+                            if ( empty( $row['canale_social'] ) ) {
+                                continue;
+                            }
+                            $map[] = array(
+                                'idList'        => sanitize_text_field( $id_list ),
+                                'canale_social' => sanitize_text_field( $row['canale_social'] ),
+                            );
+                        }
+                        if ( ! empty( $map ) ) {
+                            update_post_meta( $post_id, '_tts_trello_map', $map );
+                        }
+                    }
+
+                    delete_transient( 'tts_oauth_facebook_token' );
+                    delete_transient( 'tts_oauth_instagram_token' );
+                    delete_transient( 'tts_oauth_youtube_token' );
+                    delete_transient( 'tts_oauth_tiktok_token' );
+
+                    echo '<p>' . esc_html__( 'Client created.', 'trello-social-auto-publisher' ) . '</p>';
+                }
+                echo '</div>';
+                return;
+            }
+
+            echo '<form method="post" class="tts-wizard-step tts-step-4">';
+            echo '<input type="hidden" name="step" value="4" />';
+            echo '<input type="hidden" name="finalize" value="1" />';
+            echo '<input type="hidden" name="trello_key" value="' . esc_attr( $trello_key ) . '" />';
+            echo '<input type="hidden" name="trello_token" value="' . esc_attr( $trello_token ) . '" />';
+            echo '<input type="hidden" name="trello_board" value="' . esc_attr( $board ) . '" />';
+            foreach ( $channels as $ch ) {
+                echo '<input type="hidden" name="channels[]" value="' . esc_attr( $ch ) . '" />';
+            }
+            if ( isset( $_POST['tts_trello_map'] ) && is_array( $_POST['tts_trello_map'] ) ) {
+                foreach ( $_POST['tts_trello_map'] as $id_list => $row ) {
+                    echo '<input type="hidden" name="tts_trello_map[' . esc_attr( $id_list ) . '][canale_social]" value="' . esc_attr( $row['canale_social'] ) . '" />';
+                }
+            }
+
+            echo '<h2>' . esc_html__( 'Summary', 'trello-social-auto-publisher' ) . '</h2>';
+            echo '<p>' . esc_html__( 'Trello Board:', 'trello-social-auto-publisher' ) . ' ' . esc_html( $board ) . '</p>';
+            echo '<p>' . esc_html__( 'Channels:', 'trello-social-auto-publisher' ) . ' ' . esc_html( implode( ', ', $channels ) ) . '</p>';
+            echo '<p><button type="submit" class="button button-primary">' . esc_html__( 'Create Client', 'trello-social-auto-publisher' ) . '</button></p>';
+            echo '</form>';
+        }
+
         echo '</div>';
     }
 

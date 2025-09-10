@@ -23,6 +23,10 @@ class TTS_Client {
         add_action( 'save_post_tts_client', array( $this, 'save_credentials_metabox' ), 10, 2 );
         add_action( 'add_meta_boxes_tts_social_post', array( $this, 'add_channel_metabox' ) );
         add_action( 'save_post_tts_social_post', array( $this, 'save_channel_metabox' ), 10, 2 );
+        add_action( 'admin_post_tts_oauth_facebook', array( $this, 'handle_oauth_facebook' ) );
+        add_action( 'admin_post_tts_oauth_instagram', array( $this, 'handle_oauth_instagram' ) );
+        add_action( 'admin_post_tts_oauth_youtube', array( $this, 'handle_oauth_youtube' ) );
+        add_action( 'admin_post_tts_oauth_tiktok', array( $this, 'handle_oauth_tiktok' ) );
     }
 
     /**
@@ -260,6 +264,72 @@ class TTS_Client {
         } else {
             delete_post_meta( $post_id, '_tts_social_channel' );
         }
+    }
+
+    /**
+     * Generic handler for OAuth callbacks.
+     *
+     * @param string $channel Social channel slug.
+     */
+    protected function handle_oauth( $channel ) {
+        if ( ! session_id() ) {
+            session_start();
+        }
+
+        $state   = isset( $_GET['state'] ) ? sanitize_text_field( wp_unslash( $_GET['state'] ) ) : '';
+        $expect  = isset( $_SESSION['tts_oauth_state'] ) ? $_SESSION['tts_oauth_state'] : '';
+        $token   = isset( $_GET['token'] ) ? sanitize_text_field( wp_unslash( $_GET['token'] ) ) : '';
+        $step    = isset( $_GET['step'] ) ? absint( $_GET['step'] ) : 2;
+        $client  = isset( $_GET['client_id'] ) ? absint( $_GET['client_id'] ) : 0;
+
+        if ( empty( $token ) || $state !== $expect ) {
+            wp_die( esc_html__( 'OAuth verification failed.', 'trello-social-auto-publisher' ) );
+        }
+
+        if ( $client ) {
+            $meta_key = '';
+            switch ( $channel ) {
+                case 'facebook':
+                    $meta_key = '_tts_fb_token';
+                    break;
+                case 'instagram':
+                    $meta_key = '_tts_ig_token';
+                    break;
+                case 'youtube':
+                    $meta_key = '_tts_yt_token';
+                    break;
+                case 'tiktok':
+                    $meta_key = '_tts_tt_token';
+                    break;
+            }
+            if ( $meta_key ) {
+                update_post_meta( $client, $meta_key, $token );
+            }
+        } else {
+            set_transient( 'tts_oauth_' . $channel . '_token', $token, 15 * MINUTE_IN_SECONDS );
+        }
+
+        wp_safe_redirect( add_query_arg( array( 'page' => 'tts-client-wizard', 'step' => $step ), admin_url( 'admin.php' ) ) );
+        exit;
+    }
+
+    /**
+     * Specific OAuth handlers.
+     */
+    public function handle_oauth_facebook() {
+        $this->handle_oauth( 'facebook' );
+    }
+
+    public function handle_oauth_instagram() {
+        $this->handle_oauth( 'instagram' );
+    }
+
+    public function handle_oauth_youtube() {
+        $this->handle_oauth( 'youtube' );
+    }
+
+    public function handle_oauth_tiktok() {
+        $this->handle_oauth( 'tiktok' );
     }
 }
 
