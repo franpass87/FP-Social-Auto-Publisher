@@ -196,6 +196,16 @@ class TTS_CPT {
     public function render_media_metabox( $post ) {
         wp_nonce_field( 'tts_media_metabox', 'tts_media_nonce' );
         wp_enqueue_media();
+        wp_enqueue_script( 'jquery-ui-sortable' );
+        $attachments = get_post_meta( $post->ID, '_tts_attachment_ids', true );
+        $attachments = is_array( $attachments ) ? $attachments : array();
+        echo '<ul id="tts_attachments_list">';
+        foreach ( $attachments as $id ) {
+            $thumb = wp_get_attachment_image( $id, array( 80, 80 ) );
+            echo '<li class="tts-attachment-item"><label><input type="checkbox" class="tts-attachment-select" value="' . esc_attr( $id ) . '" checked />' . $thumb . '</label></li>';
+        }
+        echo '</ul>';
+        echo '<input type="hidden" id="tts_attachment_ids" name="_tts_attachment_ids" value="' . esc_attr( implode( ',', $attachments ) ) . '" />';
         $value = get_post_meta( $post->ID, '_tts_manual_media', true );
         echo '<input type="hidden" id="tts_manual_media" name="_tts_manual_media" value="' . esc_attr( $value ) . '" />';
         echo '<button type="button" class="button tts-select-media">' . esc_html__( 'Seleziona/Carica file', 'trello-social-auto-publisher' ) . '</button>';
@@ -243,6 +253,10 @@ class TTS_CPT {
         }
 
         if ( isset( $_POST['tts_media_nonce'] ) && wp_verify_nonce( $_POST['tts_media_nonce'], 'tts_media_metabox' ) ) {
+            if ( isset( $_POST['_tts_attachment_ids'] ) ) {
+                $ids = array_filter( array_map( 'intval', explode( ',', sanitize_text_field( wp_unslash( $_POST['_tts_attachment_ids'] ) ) ) ) );
+                update_post_meta( $post_id, '_tts_attachment_ids', $ids );
+            }
             if ( isset( $_POST['_tts_manual_media'] ) && '' !== $_POST['_tts_manual_media'] ) {
                 update_post_meta( $post_id, '_tts_manual_media', (int) $_POST['_tts_manual_media'] );
             } else {

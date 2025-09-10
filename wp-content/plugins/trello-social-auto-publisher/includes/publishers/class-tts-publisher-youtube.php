@@ -75,113 +75,107 @@ class TTS_Publisher_YouTube {
             return new \WP_Error( 'youtube_no_access_token', $error );
         }
 
-        $videos = get_attached_media( 'video', $post_id );
+        $attachment_ids = get_post_meta( $post_id, '_tts_attachment_ids', true );
+        $attachment_ids = is_array( $attachment_ids ) ? array_map( 'intval', $attachment_ids ) : array();
+        $videos         = array();
+        foreach ( $attachment_ids as $att_id ) {
+            $mime = get_post_mime_type( $att_id );
+            if ( $mime && 0 === strpos( $mime, 'video/' ) ) {
+                $videos[] = $att_id;
+            }
+        }
         if ( empty( $videos ) ) {
             $manual_id = (int) get_post_meta( $post_id, '_tts_manual_media', true );
             if ( $manual_id && 0 === strpos( (string) get_post_mime_type( $manual_id ), 'video/' ) ) {
-                $videos = array( (object) array( 'ID' => $manual_id ) );
+                $videos[] = $manual_id;
             }
         }
-
         if ( empty( $videos ) ) {
             $error = __( 'No video to publish', 'trello-social-auto-publisher' );
             tts_log_event( $post_id, 'youtube', 'error', $error, '' );
             tts_notify_publication( $post_id, 'error', 'youtube' );
             return new \WP_Error( 'youtube_no_video', $error );
         }
-
-        $video      = reset( $videos );
-        $video_path = get_attached_file( $video->ID );
-        if ( empty( $video_path ) || ! file_exists( $video_path ) ) {
-            $error = __( 'Video file not found', 'trello-social-auto-publisher' );
-            tts_log_event( $post_id, 'youtube', 'error', $error, '' );
-            tts_notify_publication( $post_id, 'error', 'youtube' );
-            return new \WP_Error( 'youtube_video_missing', $error );
+        foreach ( $videos as $video_id ) {
+            $video_path = get_attached_file( $video_id );
+            if ( empty( $video_path ) || ! file_exists( $video_path ) ) {
+                $error = __( 'Video file not found', 'trello-social-auto-publisher' );
+                tts_log_event( $post_id, 'youtube', 'error', $error, '' );
+                tts_notify_publication( $post_id, 'error', 'youtube' );
+                return new \WP_Error( 'youtube_video_missing', $error );
+            }
+            $snippet = array(
+                'title'           => get_the_title( $post_id ),
+                'description'     => $message,
+                'categoryId'      => '22',
+                'shortsVideoType' => 'SHORTS',
+            );
+            $status = array(
+                'privacyStatus'  => 'public',
+                'shortsEligible' => true,
+            );
+            $metadata = array(
+                'snippet' => $snippet,
+                'status'  => $status,
+            );
+            $endpoint = 'https://www.googleapis.com/upload/youtube/v3/videos?part=snippet,status&uploadType=resumable';
+            $init     = wp_remote_request(
+                $endpoint,
+                array(
+                    'method'  => 'POST',
+                    'headers' => array(
+                        'Authorization'           => 'Bearer ' . $access_tok,
+                        'Content-Type'            => 'application/json; charset=UTF-8',
+                        'X-Upload-Content-Type'   => 'video/mp4',
+                        'X-Upload-Content-Length' => filesize( $video_path ),
+                    ),
+                    'body'    => wp_json_encode( $metadata ),
+                    'timeout' => 60,
+                )
+            );
+            if ( is_wp_error( $init ) ) {
+                $error = $init->get_error_message();
+                tts_log_event( $post_id, 'youtube', 'error', $error, '' );
+                tts_notify_publication( $post_id, 'error', 'youtube' );
+                return $init;
+            }
+            $upload_url = wp_remote_retrieve_header( $init, 'location' );
+            if ( empty( $upload_url ) ) {
+                $error = __( 'Upload URL missing', 'trello-social-auto-publisher' );
+                tts_log_event( $post_id, 'youtube', 'error', $error, '' );
+                tts_notify_publication( $post_id, 'error', 'youtube' );
+                return new \WP_Error( 'youtube_no_upload_url', $error );
+            }
+            $upload = wp_remote_request(
+                $upload_url,
+                array(
+                    'method'  => 'PUT',
+                    'headers' => array(
+                        'Content-Type'   => 'video/mp4',
+                        'Content-Length' => filesize( $video_path ),
+                    ),
+                    'body'    => file_get_contents( $video_path ),
+                    'timeout' => 60,
+                )
+            );
+            if ( is_wp_error( $upload ) ) {
+                $error = $upload->get_error_message();
+                tts_log_event( $post_id, 'youtube', 'error', $error, '' );
+                tts_notify_publication( $post_id, 'error', 'youtube' );
+                return $upload;
+            }
+            $code = wp_remote_retrieve_response_code( $upload );
+            $data = json_decode( wp_remote_retrieve_body( $upload ), true );
+            if ( 200 !== $code || empty( $data['id'] ) ) {
+                $error = isset( $data['error']['message'] ) ? $data['error']['message'] : __( 'Unknown error', 'trello-social-auto-publisher' );
+                tts_log_event( $post_id, 'youtube', 'error', $error, $data );
+                tts_notify_publication( $post_id, 'error', 'youtube' );
+                return new \WP_Error( 'youtube_error', $error, $data );
+            }
         }
-
-        $snippet = array(
-            'title'           => get_the_title( $post_id ),
-            'description'     => $message,
-            'categoryId'      => '22',
-            'shortsVideoType' => 'SHORTS',
-        );
-
-        $status = array(
-            'privacyStatus'  => 'public',
-            'shortsEligible' => true,
-        );
-
-        $metadata = array(
-            'snippet' => $snippet,
-            'status'  => $status,
-        );
-
-        // Step 1: initiate resumable upload.
-        $endpoint = 'https://www.googleapis.com/upload/youtube/v3/videos?part=snippet,status&uploadType=resumable';
-        $init     = wp_remote_request(
-            $endpoint,
-            array(
-                'method'  => 'POST',
-                'headers' => array(
-                    'Authorization'           => 'Bearer ' . $access_tok,
-                    'Content-Type'            => 'application/json; charset=UTF-8',
-                    'X-Upload-Content-Type'   => 'video/mp4',
-                    'X-Upload-Content-Length' => filesize( $video_path ),
-                ),
-                'body'    => wp_json_encode( $metadata ),
-                'timeout' => 60,
-            )
-        );
-
-        if ( is_wp_error( $init ) ) {
-            $error = $init->get_error_message();
-            tts_log_event( $post_id, 'youtube', 'error', $error, '' );
-            tts_notify_publication( $post_id, 'error', 'youtube' );
-            return $init;
-        }
-
-        $upload_url = wp_remote_retrieve_header( $init, 'location' );
-        if ( empty( $upload_url ) ) {
-            $error = __( 'Upload URL missing', 'trello-social-auto-publisher' );
-            tts_log_event( $post_id, 'youtube', 'error', $error, '' );
-            tts_notify_publication( $post_id, 'error', 'youtube' );
-            return new \WP_Error( 'youtube_no_upload_url', $error );
-        }
-
-        // Step 2: upload the actual video file.
-        $upload = wp_remote_request(
-            $upload_url,
-            array(
-                'method'  => 'PUT',
-                'headers' => array(
-                    'Content-Type'   => 'video/mp4',
-                    'Content-Length' => filesize( $video_path ),
-                ),
-                'body'    => file_get_contents( $video_path ),
-                'timeout' => 60,
-            )
-        );
-
-        if ( is_wp_error( $upload ) ) {
-            $error = $upload->get_error_message();
-            tts_log_event( $post_id, 'youtube', 'error', $error, '' );
-            tts_notify_publication( $post_id, 'error', 'youtube' );
-            return $upload;
-        }
-
-        $code = wp_remote_retrieve_response_code( $upload );
-        $data = json_decode( wp_remote_retrieve_body( $upload ), true );
-
-        if ( 200 === $code && ! empty( $data['id'] ) ) {
-            $response = __( 'Published to YouTube', 'trello-social-auto-publisher' );
-            tts_log_event( $post_id, 'youtube', 'success', $response, $data );
-            tts_notify_publication( $post_id, 'success', 'youtube' );
-            return $response;
-        }
-
-        $error = isset( $data['error']['message'] ) ? $data['error']['message'] : __( 'Unknown error', 'trello-social-auto-publisher' );
-        tts_log_event( $post_id, 'youtube', 'error', $error, $data );
-        tts_notify_publication( $post_id, 'error', 'youtube' );
-        return new \WP_Error( 'youtube_error', $error, $data );
+        $response = __( 'Published to YouTube', 'trello-social-auto-publisher' );
+        tts_log_event( $post_id, 'youtube', 'success', $response, '' );
+        tts_notify_publication( $post_id, 'success', 'youtube' );
+        return $response;
     }
 }

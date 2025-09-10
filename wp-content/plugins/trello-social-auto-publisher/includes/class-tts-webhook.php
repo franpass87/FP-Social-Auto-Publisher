@@ -286,6 +286,7 @@ class TTS_Webhook {
                 if ( ! empty( $media_ids ) ) {
                     set_post_thumbnail( $post_id, $media_ids[0] );
                     update_post_meta( $post_id, '_trello_media_ids', $media_ids );
+                    update_post_meta( $post_id, '_tts_attachment_ids', $media_ids );
                 }
             }
         }
