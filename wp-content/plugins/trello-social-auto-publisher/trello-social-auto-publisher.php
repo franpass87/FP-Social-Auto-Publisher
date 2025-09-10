@@ -48,6 +48,26 @@ register_activation_hook( __FILE__, 'tts_create_logs_table' );
 if ( is_admin() ) {
     require_once TSAP_PLUGIN_DIR . 'admin/class-tts-admin.php';
     require_once TSAP_PLUGIN_DIR . 'admin/class-tts-log-page.php';
+    require_once TSAP_PLUGIN_DIR . 'admin/class-tts-calendar-page.php';
+
+    new TTS_Calendar_Page();
+
+    add_action(
+        'admin_enqueue_scripts',
+        function( $hook ) {
+            if ( 'toplevel_page_tts-calendar' !== $hook ) {
+                return;
+            }
+
+            wp_enqueue_script(
+                'tts-calendar',
+                plugin_dir_url( __FILE__ ) . 'admin/js/tts-calendar.js',
+                array( 'jquery' ),
+                '1.0',
+                true
+            );
+        }
+    );
 }
 
 // Add a weekly cron schedule.
