@@ -458,3 +458,31 @@
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(19, 94, 150, 0.3);
 }
+
+/* Performance Card Styles */
+.tts-performance-card {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-left: 4px solid #17a2b8;
+}
+
+.tts-perf-metrics {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8px;
+}
+
+.tts-perf-item {
+    font-size: 12px;
+    font-weight: 600;
+    color: #495057;
+    background: rgba(255, 255, 255, 0.8);
+    padding: 4px 8px;
+    border-radius: 12px;
+    text-align: center;
+    flex: 1;
+    margin: 0 2px;
+}
+
+.tts-performance-card .tts-stat-number {
+    display: none;
+}

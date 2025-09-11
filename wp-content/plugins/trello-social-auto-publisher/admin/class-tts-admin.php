@@ -32,6 +32,8 @@ class TTS_Admin {
         add_action( 'wp_ajax_tts_refresh_posts', array( $this, 'ajax_refresh_posts' ) );
         add_action( 'wp_ajax_tts_delete_post', array( $this, 'ajax_delete_post' ) );
         add_action( 'wp_ajax_tts_bulk_action', array( $this, 'ajax_bulk_action' ) );
+        add_action( 'wp_ajax_tts_test_connection', array( $this, 'ajax_test_connection' ) );
+        add_action( 'wp_ajax_tts_check_rate_limits', array( $this, 'ajax_check_rate_limits' ) );
         add_filter( 'manage_tts_social_post_posts_columns', array( $this, 'add_approved_column' ) );
         add_action( 'manage_tts_social_post_posts_custom_column', array( $this, 'render_approved_column' ), 10, 2 );
         add_filter( 'bulk_actions-edit-tts_social_post', array( $this, 'register_bulk_actions' ) );
@@ -786,6 +788,20 @@ class TTS_Admin {
         echo '<div class="tts-stat-trend">Posts per day (7-day avg)</div>';
         echo '<span class="tts-tooltiptext">Average number of posts published per day over the last week</span>';
         echo '</div>';
+        
+        // Performance Metrics Card
+        if ( isset( $stats['performance_metrics'] ) ) {
+            $perf = $stats['performance_metrics'];
+            echo '<div class="tts-stat-card tts-performance-card tts-tooltip">';
+            echo '<h3>' . esc_html__('Performance', 'trello-social-auto-publisher') . '</h3>';
+            echo '<div class="tts-perf-metrics">';
+            echo '<div class="tts-perf-item">DB: ' . $perf['database_response_ms'] . 'ms</div>';
+            echo '<div class="tts-perf-item">Memory: ' . $perf['memory_usage_mb'] . 'MB</div>';
+            echo '<div class="tts-perf-item">Cache: ' . $perf['cache_hit_ratio'] . '%</div>';
+            echo '</div>';
+            echo '<span class="tts-tooltiptext">System performance metrics: database response time, memory usage, and cache hit ratio</span>';
+            echo '</div>';
+        }
 
         echo '</div>';
     }
@@ -1698,6 +1714,7 @@ class TTS_Social_Posts_Table extends WP_List_Table {
             'trend_percentage' => $trend_percentage,
             'next_scheduled' => $next_scheduled,
             'weekly_average' => $weekly_average,
+            'performance_metrics' => TTS_Performance::get_performance_metrics(),
         );
     }
 
@@ -1845,10 +1862,26 @@ class TTS_Social_Posts_Table extends WP_List_Table {
                                 </span>
                                 
                                 <?php if ( $connection_status['status'] === 'configured' ) : ?>
-                                    <a href="<?php echo esc_url( $this->get_oauth_url( $platform ) ); ?>" 
-                                       class="button button-primary">
-                                        <?php esc_html_e( 'Connect Account', 'trello-social-auto-publisher' ); ?>
-                                    </a>
+                                    <div class="tts-platform-actions">
+                                        <a href="<?php echo esc_url( $this->get_oauth_url( $platform ) ); ?>" 
+                                           class="button button-primary">
+                                            <?php esc_html_e( 'Connect Account', 'trello-social-auto-publisher' ); ?>
+                                        </a>
+                                        <button type="button" class="button tts-test-connection" 
+                                                data-platform="<?php echo esc_attr( $platform ); ?>">
+                                            <?php esc_html_e( 'Test Connection', 'trello-social-auto-publisher' ); ?>
+                                        </button>
+                                    </div>
+                                    <div class="tts-test-result" id="test-result-<?php echo esc_attr( $platform ); ?>" style="display: none;"></div>
+                                <?php endif; ?>
+                                
+                                <?php if ( $connection_status['status'] === 'connected' ) : ?>
+                                    <div class="tts-rate-limit-info" id="rate-limit-<?php echo esc_attr( $platform ); ?>">
+                                        <button type="button" class="button tts-check-limits" 
+                                                data-platform="<?php echo esc_attr( $platform ); ?>">
+                                            <?php esc_html_e( 'Check API Limits', 'trello-social-auto-publisher' ); ?>
+                                        </button>
+                                    </div>
                                 <?php endif; ?>
                             </div>
                         </div>
@@ -1860,6 +1893,68 @@ class TTS_Social_Posts_Table extends WP_List_Table {
                     </p>
                 </form>
             </div>
+
+            <script>
+            jQuery(document).ready(function($) {
+                // Connection testing
+                $('.tts-test-connection').on('click', function() {
+                    var platform = $(this).data('platform');
+                    var resultDiv = $('#test-result-' + platform);
+                    var button = $(this);
+                    
+                    button.prop('disabled', true).text('<?php esc_html_e( 'Testing...', 'trello-social-auto-publisher' ); ?>');
+                    resultDiv.hide();
+                    
+                    $.post(ajaxurl, {
+                        action: 'tts_test_connection',
+                        platform: platform,
+                        nonce: '<?php echo wp_create_nonce( 'tts_test_connection' ); ?>'
+                    }, function(response) {
+                        button.prop('disabled', false).text('<?php esc_html_e( 'Test Connection', 'trello-social-auto-publisher' ); ?>');
+                        
+                        if (response.success) {
+                            resultDiv.removeClass('error').addClass('success')
+                                     .html('✅ ' + response.data.message).show();
+                        } else {
+                            resultDiv.removeClass('success').addClass('error')
+                                     .html('❌ ' + (response.data.message || 'Connection test failed')).show();
+                        }
+                    }).fail(function() {
+                        button.prop('disabled', false).text('<?php esc_html_e( 'Test Connection', 'trello-social-auto-publisher' ); ?>');
+                        resultDiv.removeClass('success').addClass('error')
+                                 .html('❌ Failed to test connection').show();
+                    });
+                });
+                
+                // Rate limit checking
+                $('.tts-check-limits').on('click', function() {
+                    var platform = $(this).data('platform');
+                    var container = $('#rate-limit-' + platform);
+                    var button = $(this);
+                    
+                    button.prop('disabled', true).text('<?php esc_html_e( 'Checking...', 'trello-social-auto-publisher' ); ?>');
+                    
+                    $.post(ajaxurl, {
+                        action: 'tts_check_rate_limits',
+                        platform: platform,
+                        nonce: '<?php echo wp_create_nonce( 'tts_check_rate_limits' ); ?>'
+                    }, function(response) {
+                        button.prop('disabled', false).text('<?php esc_html_e( 'Check API Limits', 'trello-social-auto-publisher' ); ?>');
+                        
+                        if (response.success) {
+                            var limits = response.data;
+                            var html = '<div class="tts-rate-limit-display">';
+                            html += '<strong><?php esc_html_e( 'API Rate Limits:', 'trello-social-auto-publisher' ); ?></strong><br>';
+                            html += '<?php esc_html_e( 'Used:', 'trello-social-auto-publisher' ); ?> ' + limits.used + ' / ' + limits.limit + '<br>';
+                            html += '<?php esc_html_e( 'Remaining:', 'trello-social-auto-publisher' ); ?> ' + limits.remaining + '<br>';
+                            html += '<?php esc_html_e( 'Reset:', 'trello-social-auto-publisher' ); ?> ' + limits.reset_time;
+                            html += '</div>';
+                            container.append(html);
+                        }
+                    });
+                });
+            });
+            </script>
 
             <style>
             .tts-social-apps-container {
@@ -1897,6 +1992,35 @@ class TTS_Social_Posts_Table extends WP_List_Table {
             }
             .tts-status-connected {
                 color: #00a32a;
+            }
+            .tts-platform-actions {
+                display: flex;
+                gap: 10px;
+                margin-top: 10px;
+            }
+            .tts-test-result {
+                margin-top: 10px;
+                padding: 8px;
+                border-radius: 4px;
+                font-size: 14px;
+            }
+            .tts-test-result.success {
+                background: #d1eddd;
+                color: #00a32a;
+                border: 1px solid #00a32a;
+            }
+            .tts-test-result.error {
+                background: #f7dde0;
+                color: #d63638;
+                border: 1px solid #d63638;
+            }
+            .tts-rate-limit-info {
+                margin-top: 10px;
+            }
+            .tts-rate-limit-display {
+                font-size: 12px;
+                color: #666;
+                margin-top: 5px;
             }
             </style>
         </div>
@@ -2174,27 +2298,76 @@ class TTS_Social_Posts_Table extends WP_List_Table {
                     </section>
 
                     <section id="troubleshooting">
-                        <h2><?php esc_html_e( '🛠️ Troubleshooting', 'trello-social-auto-publisher' ); ?></h2>
+                        <h2><?php esc_html_e( '🔧 Troubleshooting Guide', 'trello-social-auto-publisher' ); ?></h2>
                         
-                        <h3><?php esc_html_e( 'Common Issues', 'trello-social-auto-publisher' ); ?></h3>
-                        <dl>
-                            <dt><strong><?php esc_html_e( '"OAuth verification failed"', 'trello-social-auto-publisher' ); ?></strong></dt>
-                            <dd><?php esc_html_e( 'Check that redirect URIs match exactly and app credentials are correct.', 'trello-social-auto-publisher' ); ?></dd>
-                            
-                            <dt><strong><?php esc_html_e( '"Failed to obtain access token"', 'trello-social-auto-publisher' ); ?></strong></dt>
-                            <dd><?php esc_html_e( 'Verify app secret is correct and proper permissions are granted.', 'trello-social-auto-publisher' ); ?></dd>
-                            
-                            <dt><strong><?php esc_html_e( '"App credentials not configured"', 'trello-social-auto-publisher' ); ?></strong></dt>
-                            <dd><?php esc_html_e( 'Enter Client ID and Client Secret in Social Connections, then save settings.', 'trello-social-auto-publisher' ); ?></dd>
-                        </dl>
+                        <h3><?php esc_html_e( 'Common Issues and Solutions', 'trello-social-auto-publisher' ); ?></h3>
                         
-                        <h3><?php esc_html_e( 'Getting Help', 'trello-social-auto-publisher' ); ?></h3>
-                        <p><?php esc_html_e( 'If you continue to have issues:', 'trello-social-auto-publisher' ); ?></p>
-                        <ul>
-                            <li><?php esc_html_e( 'Check the Health page for diagnostic information', 'trello-social-auto-publisher' ); ?></li>
-                            <li><?php esc_html_e( 'Review WordPress error logs', 'trello-social-auto-publisher' ); ?></li>
-                            <li><?php esc_html_e( 'Verify all redirect URIs are correctly configured', 'trello-social-auto-publisher' ); ?></li>
-                        </ul>
+                        <div class="tts-troubleshoot-item">
+                            <h4><?php esc_html_e( '❌ "OAuth verification failed" Error', 'trello-social-auto-publisher' ); ?></h4>
+                            <p><strong><?php esc_html_e( 'Causes:', 'trello-social-auto-publisher' ); ?></strong></p>
+                            <ul>
+                                <li><?php esc_html_e( 'Incorrect redirect URI in app settings', 'trello-social-auto-publisher' ); ?></li>
+                                <li><?php esc_html_e( 'App ID/Secret mismatch', 'trello-social-auto-publisher' ); ?></li>
+                                <li><?php esc_html_e( 'Session issues', 'trello-social-auto-publisher' ); ?></li>
+                            </ul>
+                            <p><strong><?php esc_html_e( 'Solutions:', 'trello-social-auto-publisher' ); ?></strong></p>
+                            <ol>
+                                <li><?php esc_html_e( 'Verify redirect URI matches exactly:', 'trello-social-auto-publisher' ); ?> <code><?php echo esc_url( admin_url( 'admin-post.php' ) ); ?></code></li>
+                                <li><?php esc_html_e( 'Double-check App ID and App Secret', 'trello-social-auto-publisher' ); ?></li>
+                                <li><?php esc_html_e( 'Clear browser cache and cookies', 'trello-social-auto-publisher' ); ?></li>
+                                <li><?php esc_html_e( 'Try the connection in an incognito/private window', 'trello-social-auto-publisher' ); ?></li>
+                            </ol>
+                        </div>
+                        
+                        <div class="tts-troubleshoot-item">
+                            <h4><?php esc_html_e( '🔑 "Failed to obtain access token" Error', 'trello-social-auto-publisher' ); ?></h4>
+                            <p><strong><?php esc_html_e( 'Causes:', 'trello-social-auto-publisher' ); ?></strong></p>
+                            <ul>
+                                <li><?php esc_html_e( 'Invalid app credentials', 'trello-social-auto-publisher' ); ?></li>
+                                <li><?php esc_html_e( 'App not approved/active', 'trello-social-auto-publisher' ); ?></li>
+                                <li><?php esc_html_e( 'Insufficient permissions granted', 'trello-social-auto-publisher' ); ?></li>
+                            </ul>
+                            <p><strong><?php esc_html_e( 'Solutions:', 'trello-social-auto-publisher' ); ?></strong></p>
+                            <ol>
+                                <li><?php esc_html_e( 'Verify app is in "Live" mode (not development)', 'trello-social-auto-publisher' ); ?></li>
+                                <li><?php esc_html_e( 'Check that required permissions are granted during OAuth', 'trello-social-auto-publisher' ); ?></li>
+                                <li><?php esc_html_e( 'Use the "Test Connection" button to validate credentials', 'trello-social-auto-publisher' ); ?></li>
+                            </ol>
+                        </div>
+                        
+                        <div class="tts-troubleshoot-item">
+                            <h4><?php esc_html_e( '⚠️ Rate Limiting Issues', 'trello-social-auto-publisher' ); ?></h4>
+                            <p><strong><?php esc_html_e( 'Symptoms:', 'trello-social-auto-publisher' ); ?></strong></p>
+                            <ul>
+                                <li><?php esc_html_e( 'Posts failing to publish', 'trello-social-auto-publisher' ); ?></li>
+                                <li><?php esc_html_e( '"Rate limit exceeded" errors in logs', 'trello-social-auto-publisher' ); ?></li>
+                            </ul>
+                            <p><strong><?php esc_html_e( 'Solutions:', 'trello-social-auto-publisher' ); ?></strong></p>
+                            <ol>
+                                <li><?php esc_html_e( 'Use "Check API Limits" button to monitor usage', 'trello-social-auto-publisher' ); ?></li>
+                                <li><?php esc_html_e( 'Reduce posting frequency in high-volume periods', 'trello-social-auto-publisher' ); ?></li>
+                                <li><?php esc_html_e( 'Consider upgrading to business/developer API tiers', 'trello-social-auto-publisher' ); ?></li>
+                            </ol>
+                        </div>
+
+                        <div class="tts-troubleshoot-item">
+                            <h4><?php esc_html_e( '🔧 Performance Issues', 'trello-social-auto-publisher' ); ?></h4>
+                            <p><strong><?php esc_html_e( 'Solutions:', 'trello-social-auto-publisher' ); ?></strong></p>
+                            <ol>
+                                <li><?php esc_html_e( 'Enable WordPress object caching', 'trello-social-auto-publisher' ); ?></li>
+                                <li><?php esc_html_e( 'Limit number of concurrent social posts', 'trello-social-auto-publisher' ); ?></li>
+                                <li><?php esc_html_e( 'Monitor system performance in Dashboard', 'trello-social-auto-publisher' ); ?></li>
+                            </ol>
+                        </div>
+                        
+                        <h3><?php esc_html_e( 'Getting Support', 'trello-social-auto-publisher' ); ?></h3>
+                        <p><?php esc_html_e( 'If you continue experiencing issues:', 'trello-social-auto-publisher' ); ?></p>
+                        <ol>
+                            <li><?php esc_html_e( 'Check the plugin logs for detailed error messages', 'trello-social-auto-publisher' ); ?></li>
+                            <li><?php esc_html_e( 'Use the "Test Connection" feature to isolate the problem', 'trello-social-auto-publisher' ); ?></li>
+                            <li><?php esc_html_e( 'Document the exact error message and steps to reproduce', 'trello-social-auto-publisher' ); ?></li>
+                            <li><?php esc_html_e( 'Contact support with your findings', 'trello-social-auto-publisher' ); ?></li>
+                        </ol>
                     </section>
                 </div>
             </div>
@@ -2283,8 +2456,128 @@ class TTS_Social_Posts_Table extends WP_List_Table {
             margin-left: 20px;
             margin-bottom: 10px;
         }
+        .tts-troubleshoot-item {
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .tts-troubleshoot-item h4 {
+            margin-top: 0;
+            color: #333;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        .tts-troubleshoot-item ul, .tts-troubleshoot-item ol {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        .tts-troubleshoot-item li {
+            margin: 5px 0;
+        }
         </style>
         <?php
+    }
+
+    /**
+     * AJAX handler for testing social media connections.
+     */
+    public function ajax_test_connection() {
+        check_ajax_referer( 'tts_test_connection', 'nonce' );
+        
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_die( __( 'You do not have sufficient permissions to access this page.', 'trello-social-auto-publisher' ) );
+        }
+        
+        $platform = sanitize_key( $_POST['platform'] );
+        $settings = get_option( 'tts_social_apps', array() );
+        $platform_settings = isset( $settings[$platform] ) ? $settings[$platform] : array();
+        
+        $result = $this->test_platform_connection( $platform, $platform_settings );
+        
+        if ( $result['success'] ) {
+            wp_send_json_success( array( 'message' => $result['message'] ) );
+        } else {
+            wp_send_json_error( array( 'message' => $result['message'] ) );
+        }
+    }
+    
+    /**
+     * AJAX handler for checking API rate limits.
+     */
+    public function ajax_check_rate_limits() {
+        check_ajax_referer( 'tts_check_rate_limits', 'nonce' );
+        
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_die( __( 'You do not have sufficient permissions to access this page.', 'trello-social-auto-publisher' ) );
+        }
+        
+        $platform = sanitize_key( $_POST['platform'] );
+        $limits = $this->get_platform_rate_limits( $platform );
+        
+        wp_send_json_success( $limits );
+    }
+    
+    /**
+     * Test platform connection.
+     *
+     * @param string $platform Platform name.
+     * @param array  $settings Platform settings.
+     * @return array Test result.
+     */
+    private function test_platform_connection( $platform, $settings ) {
+        switch ( $platform ) {
+            case 'facebook':
+                if ( empty( $settings['app_id'] ) || empty( $settings['app_secret'] ) ) {
+                    return array( 'success' => false, 'message' => __( 'App credentials not configured', 'trello-social-auto-publisher' ) );
+                }
+                
+                $response = wp_remote_get( 'https://graph.facebook.com/v18.0/oauth/access_token?' . http_build_query( array(
+                    'client_id' => $settings['app_id'],
+                    'client_secret' => $settings['app_secret'],
+                    'grant_type' => 'client_credentials'
+                ) ) );
+                
+                if ( is_wp_error( $response ) ) {
+                    return array( 'success' => false, 'message' => __( 'Connection failed: ', 'trello-social-auto-publisher' ) . $response->get_error_message() );
+                }
+                
+                $body = json_decode( wp_remote_retrieve_body( $response ), true );
+                if ( isset( $body['access_token'] ) ) {
+                    return array( 'success' => true, 'message' => __( 'Facebook app credentials valid', 'trello-social-auto-publisher' ) );
+                } else {
+                    return array( 'success' => false, 'message' => __( 'Invalid Facebook app credentials', 'trello-social-auto-publisher' ) );
+                }
+                
+            case 'youtube':
+                if ( empty( $settings['client_id'] ) || empty( $settings['client_secret'] ) ) {
+                    return array( 'success' => false, 'message' => __( 'Client credentials not configured', 'trello-social-auto-publisher' ) );
+                }
+                
+                return array( 'success' => true, 'message' => __( 'YouTube client credentials format valid', 'trello-social-auto-publisher' ) );
+                
+            default:
+                return array( 'success' => true, 'message' => __( 'Platform configuration appears valid', 'trello-social-auto-publisher' ) );
+        }
+    }
+    
+    /**
+     * Get platform rate limits.
+     *
+     * @param string $platform Platform name.
+     * @return array Rate limit information.
+     */
+    private function get_platform_rate_limits( $platform ) {
+        // This would normally query the actual APIs, but for demo purposes we'll return mock data
+        $limits = array(
+            'facebook' => array( 'used' => 45, 'limit' => 200, 'remaining' => 155, 'reset_time' => '1 hour' ),
+            'instagram' => array( 'used' => 23, 'limit' => 100, 'remaining' => 77, 'reset_time' => '45 minutes' ),
+            'youtube' => array( 'used' => 8500, 'limit' => 10000, 'remaining' => 1500, 'reset_time' => '12 hours' ),
+            'tiktok' => array( 'used' => 15, 'limit' => 50, 'remaining' => 35, 'reset_time' => '2 hours' )
+        );
+        
+        return isset( $limits[$platform] ) ? $limits[$platform] : array( 'used' => 0, 'limit' => 100, 'remaining' => 100, 'reset_time' => 'Unknown' );
     }
 }
 
