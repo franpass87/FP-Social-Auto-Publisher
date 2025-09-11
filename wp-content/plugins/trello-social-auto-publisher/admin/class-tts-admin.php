@@ -39,6 +39,9 @@ class TTS_Admin {
         add_action( 'wp_ajax_tts_system_maintenance', array( $this, 'ajax_system_maintenance' ) );
         add_action( 'wp_ajax_tts_generate_report', array( $this, 'ajax_generate_report' ) );
         add_action( 'wp_ajax_tts_quick_connection_check', array( $this, 'ajax_quick_connection_check' ) );
+        add_action( 'wp_ajax_tts_refresh_health', array( $this, 'ajax_refresh_health' ) );
+        add_action( 'wp_ajax_tts_show_export_modal', array( $this, 'ajax_show_export_modal' ) );
+        add_action( 'wp_ajax_tts_show_import_modal', array( $this, 'ajax_show_import_modal' ) );
         add_filter( 'manage_tts_social_post_posts_columns', array( $this, 'add_approved_column' ) );
         add_action( 'manage_tts_social_post_posts_custom_column', array( $this, 'render_approved_column' ), 10, 2 );
         add_filter( 'bulk_actions-edit-tts_social_post', array( $this, 'register_bulk_actions' ) );
@@ -722,8 +725,14 @@ class TTS_Admin {
         // Add notification area
         echo '<div id="tts-notification-area" style="margin: 15px 0;"></div>';
         
+        // Health status banner (if there are issues)
+        $this->render_health_status_banner();
+        
         // Quick stats cards
         $this->render_dashboard_stats();
+        
+        // Enhanced monitoring section
+        $this->render_monitoring_dashboard();
         
         // Recent activity and actions
         echo '<div class="tts-dashboard-sections">';
@@ -737,8 +746,286 @@ class TTS_Admin {
         echo '</div>';
         echo '</div>';
         
+        // Advanced tools section
+        $this->render_advanced_tools_section();
+        
         // React component container for advanced features
         echo '<div id="tts-dashboard-root"></div>';
+        echo '</div>';
+    }
+
+    /**
+     * Render health status banner.
+     */
+    private function render_health_status_banner() {
+        $health_status = TTS_Monitoring::get_current_health_status();
+        
+        if ( $health_status['status'] === 'critical' || $health_status['status'] === 'warning' ) {
+            $banner_class = $health_status['status'] === 'critical' ? 'error' : 'warning';
+            echo '<div class="notice notice-' . $banner_class . ' is-dismissible tts-health-banner">';
+            echo '<div style="display: flex; align-items: center; gap: 15px;">';
+            echo '<span style="font-size: 24px;">' . ( $health_status['status'] === 'critical' ? '🚨' : '⚠️' ) . '</span>';
+            echo '<div>';
+            echo '<h3 style="margin: 0;">System Health Alert</h3>';
+            echo '<p style="margin: 5px 0 0 0;">' . esc_html( $health_status['message'] ) . '</p>';
+            if ( ! empty( $health_status['alerts'] ) ) {
+                echo '<p style="margin: 5px 0 0 0; font-size: 12px;">Issues: ';
+                $issue_types = array_unique( array_column( $health_status['alerts'], 'type' ) );
+                echo esc_html( implode( ', ', $issue_types ) );
+                echo '</p>';
+            }
+            echo '</div>';
+            echo '</div>';
+            echo '</div>';
+        }
+    }
+
+    /**
+     * Render monitoring dashboard.
+     */
+    private function render_monitoring_dashboard() {
+        echo '<div class="tts-monitoring-section">';
+        echo '<h2>' . esc_html__( 'System Monitoring', 'trello-social-auto-publisher' ) . '</h2>';
+        
+        echo '<div class="tts-monitoring-grid">';
+        
+        // Real-time health score
+        $this->render_health_score_widget();
+        
+        // Performance metrics
+        $this->render_performance_metrics_widget();
+        
+        // API status
+        $this->render_api_status_widget();
+        
+        // Recent activity
+        $this->render_activity_timeline_widget();
+        
+        echo '</div>';
+        echo '</div>';
+    }
+
+    /**
+     * Render health score widget.
+     */
+    private function render_health_score_widget() {
+        $health_status = TTS_Monitoring::get_current_health_status();
+        
+        echo '<div class="tts-monitoring-card tts-health-score-card">';
+        echo '<div class="tts-card-header">';
+        echo '<h3>' . esc_html__( 'System Health', 'trello-social-auto-publisher' ) . '</h3>';
+        echo '<button class="tts-btn small" data-ajax-action="tts_refresh_health" data-loading-text="' . esc_attr__( 'Checking...', 'trello-social-auto-publisher' ) . '">';
+        echo esc_html__( 'Refresh', 'trello-social-auto-publisher' );
+        echo '</button>';
+        echo '</div>';
+        
+        echo '<div class="tts-health-score-display">';
+        $score = $health_status['score'];
+        $score_class = $score >= 90 ? 'excellent' : ( $score >= 70 ? 'good' : 'needs-attention' );
+        
+        echo '<div class="tts-score-circle ' . $score_class . '" style="--score-percent: ' . $score . '%;">';
+        echo '<div class="tts-score-text">' . $score . '</div>';
+        echo '</div>';
+        
+        echo '<div class="tts-health-status">';
+        echo '<h4>' . esc_html( ucfirst( $health_status['status'] ) ) . '</h4>';
+        echo '<p>' . esc_html( $health_status['message'] ) . '</p>';
+        if ( $health_status['last_check'] ) {
+            echo '<p class="tts-last-check">Last check: ' . esc_html( human_time_diff( strtotime( $health_status['last_check'] ) ) ) . ' ago</p>';
+        }
+        echo '</div>';
+        echo '</div>';
+        echo '</div>';
+    }
+
+    /**
+     * Render performance metrics widget.
+     */
+    private function render_performance_metrics_widget() {
+        $performance = TTS_Performance::get_performance_metrics();
+        
+        echo '<div class="tts-monitoring-card">';
+        echo '<div class="tts-card-header">';
+        echo '<h3>' . esc_html__( 'Performance Metrics', 'trello-social-auto-publisher' ) . '</h3>';
+        echo '</div>';
+        
+        echo '<div class="tts-metrics-display">';
+        
+        // Database performance
+        if ( isset( $performance['database'] ) ) {
+            $db_status = $performance['database']['status'];
+            $status_icon = $db_status === 'excellent' ? '🟢' : ( $db_status === 'good' ? '🟡' : '🔴' );
+            
+            echo '<div class="tts-metric-item">';
+            echo '<span class="tts-metric-label">' . $status_icon . ' Database</span>';
+            echo '<span class="tts-metric-value">' . $performance['database']['response_ms'] . 'ms</span>';
+            echo '</div>';
+        }
+        
+        // Memory usage
+        if ( isset( $performance['memory'] ) ) {
+            $memory_status = $performance['memory']['status'];
+            $status_icon = $memory_status === 'good' ? '🟢' : '🟡';
+            
+            echo '<div class="tts-metric-item">';
+            echo '<span class="tts-metric-label">' . $status_icon . ' Memory</span>';
+            echo '<span class="tts-metric-value">' . $performance['memory']['usage_percent'] . '%</span>';
+            echo '</div>';
+        }
+        
+        // Cache performance
+        if ( isset( $performance['cache'] ) ) {
+            $cache_status = $performance['cache']['status'];
+            $status_icon = $cache_status === 'excellent' ? '🟢' : ( $cache_status === 'good' ? '🟡' : '🔴' );
+            
+            echo '<div class="tts-metric-item">';
+            echo '<span class="tts-metric-label">' . $status_icon . ' Cache</span>';
+            echo '<span class="tts-metric-value">' . $performance['cache']['hit_ratio'] . '%</span>';
+            echo '</div>';
+        }
+        
+        // Performance score
+        if ( isset( $performance['score'] ) ) {
+            echo '<div class="tts-metric-item">';
+            echo '<span class="tts-metric-label">Overall Score</span>';
+            echo '<span class="tts-metric-value">' . $performance['score'] . '/100</span>';
+            echo '</div>';
+        }
+        
+        echo '</div>';
+        echo '</div>';
+    }
+
+    /**
+     * Render API status widget.
+     */
+    private function render_api_status_widget() {
+        $health_data = get_option( 'tts_last_health_check', array() );
+        $api_status = isset( $health_data['checks']['api_connections'] ) ? $health_data['checks']['api_connections'] : array();
+        
+        echo '<div class="tts-monitoring-card">';
+        echo '<div class="tts-card-header">';
+        echo '<h3>' . esc_html__( 'API Connections', 'trello-social-auto-publisher' ) . '</h3>';
+        echo '</div>';
+        
+        echo '<div class="tts-api-status-display">';
+        
+        if ( ! empty( $api_status['platform_status'] ) ) {
+            foreach ( $api_status['platform_status'] as $platform => $status ) {
+                $platform_icon = array(
+                    'facebook' => '📘',
+                    'instagram' => '📷',
+                    'youtube' => '🎥',
+                    'tiktok' => '🎵'
+                );
+                
+                $status_icon = $status['success'] ? '🟢' : '🔴';
+                $status_text = $status['success'] ? 'Connected' : 'Failed';
+                
+                echo '<div class="tts-api-platform-item">';
+                echo '<span class="tts-platform-icon">' . ( $platform_icon[$platform] ?? '📱' ) . '</span>';
+                echo '<span class="tts-platform-name">' . esc_html( ucfirst( $platform ) ) . '</span>';
+                echo '<span class="tts-platform-status">' . $status_icon . ' ' . esc_html( $status_text ) . '</span>';
+                echo '</div>';
+            }
+        } else {
+            echo '<p class="tts-no-data">' . esc_html__( 'No API connection data available', 'trello-social-auto-publisher' ) . '</p>';
+        }
+        
+        echo '</div>';
+        echo '</div>';
+    }
+
+    /**
+     * Render activity timeline widget.
+     */
+    private function render_activity_timeline_widget() {
+        global $wpdb;
+        
+        // Get recent activity logs
+        $recent_logs = $wpdb->get_results( $wpdb->prepare( "
+            SELECT event_type, status, message, created_at
+            FROM {$wpdb->prefix}tts_logs
+            WHERE created_at >= DATE_SUB(NOW(), INTERVAL %d HOUR)
+            ORDER BY created_at DESC
+            LIMIT 10
+        ", 24 ), ARRAY_A );
+        
+        echo '<div class="tts-monitoring-card tts-activity-timeline">';
+        echo '<div class="tts-card-header">';
+        echo '<h3>' . esc_html__( 'Recent Activity', 'trello-social-auto-publisher' ) . '</h3>';
+        echo '</div>';
+        
+        echo '<div class="tts-timeline-container">';
+        
+        if ( ! empty( $recent_logs ) ) {
+            foreach ( $recent_logs as $log ) {
+                $status_icon = $log['status'] === 'success' ? '✅' : 
+                              ( $log['status'] === 'error' ? '❌' : '⚠️' );
+                
+                echo '<div class="tts-timeline-item">';
+                echo '<div class="tts-timeline-icon">' . $status_icon . '</div>';
+                echo '<div class="tts-timeline-content">';
+                echo '<div class="tts-timeline-event">' . esc_html( $log['event_type'] ) . '</div>';
+                echo '<div class="tts-timeline-message">' . esc_html( wp_trim_words( $log['message'], 10 ) ) . '</div>';
+                echo '<div class="tts-timeline-time">' . esc_html( human_time_diff( strtotime( $log['created_at'] ) ) ) . ' ago</div>';
+                echo '</div>';
+                echo '</div>';
+            }
+        } else {
+            echo '<p class="tts-no-data">' . esc_html__( 'No recent activity', 'trello-social-auto-publisher' ) . '</p>';
+        }
+        
+        echo '</div>';
+        echo '</div>';
+    }
+
+    /**
+     * Render advanced tools section.
+     */
+    private function render_advanced_tools_section() {
+        echo '<div class="tts-advanced-tools-section">';
+        echo '<h2>' . esc_html__( 'Advanced Tools', 'trello-social-auto-publisher' ) . '</h2>';
+        
+        echo '<div class="tts-tools-grid">';
+        
+        // Export/Import Tools
+        echo '<div class="tts-tool-card">';
+        echo '<h3>📦 ' . esc_html__( 'Export & Import', 'trello-social-auto-publisher' ) . '</h3>';
+        echo '<p>' . esc_html__( 'Backup your settings and data or migrate from another installation.', 'trello-social-auto-publisher' ) . '</p>';
+        echo '<div class="tts-tool-actions">';
+        echo '<button class="tts-btn primary" data-ajax-action="tts_show_export_modal">';
+        echo esc_html__( 'Export Data', 'trello-social-auto-publisher' );
+        echo '</button>';
+        echo '<button class="tts-btn secondary" data-ajax-action="tts_show_import_modal">';
+        echo esc_html__( 'Import Data', 'trello-social-auto-publisher' );
+        echo '</button>';
+        echo '</div>';
+        echo '</div>';
+        
+        // System Maintenance
+        echo '<div class="tts-tool-card">';
+        echo '<h3>🔧 ' . esc_html__( 'System Maintenance', 'trello-social-auto-publisher' ) . '</h3>';
+        echo '<p>' . esc_html__( 'Optimize database, clear cache, and perform system cleanup.', 'trello-social-auto-publisher' ) . '</p>';
+        echo '<div class="tts-tool-actions">';
+        echo '<button class="tts-btn warning" data-ajax-action="tts_system_maintenance" data-confirm="' . esc_attr__( 'This will perform system maintenance. Continue?', 'trello-social-auto-publisher' ) . '">';
+        echo esc_html__( 'Run Maintenance', 'trello-social-auto-publisher' );
+        echo '</button>';
+        echo '</div>';
+        echo '</div>';
+        
+        // System Report
+        echo '<div class="tts-tool-card">';
+        echo '<h3>📊 ' . esc_html__( 'System Report', 'trello-social-auto-publisher' ) . '</h3>';
+        echo '<p>' . esc_html__( 'Generate comprehensive system report for troubleshooting.', 'trello-social-auto-publisher' ) . '</p>';
+        echo '<div class="tts-tool-actions">';
+        echo '<button class="tts-btn info" data-ajax-action="tts_generate_report">';
+        echo esc_html__( 'Generate Report', 'trello-social-auto-publisher' );
+        echo '</button>';
+        echo '</div>';
+        echo '</div>';
+        
+        echo '</div>';
         echo '</div>';
     }
 
@@ -2825,6 +3112,150 @@ class TTS_Social_Posts_Table extends WP_List_Table {
         );
         
         return isset( $fields[$platform] ) ? $fields[$platform] : array();
+    }
+    
+    /**
+     * AJAX handler for health check refresh.
+     */
+    public function ajax_refresh_health() {
+        if ( ! wp_verify_nonce( $_POST['nonce'], 'tts_ajax_nonce' ) ) {
+            wp_die( 'Security check failed' );
+        }
+        
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( array( 'message' => __( 'Insufficient permissions', 'trello-social-auto-publisher' ) ) );
+        }
+        
+        // Perform fresh health check
+        $health_data = TTS_Monitoring::perform_health_check();
+        
+        wp_send_json_success( array( 
+            'message' => __( 'Health check completed', 'trello-social-auto-publisher' ),
+            'health_data' => $health_data
+        ) );
+    }
+    
+    /**
+     * AJAX handler for showing export modal.
+     */
+    public function ajax_show_export_modal() {
+        if ( ! wp_verify_nonce( $_POST['nonce'], 'tts_ajax_nonce' ) ) {
+            wp_die( 'Security check failed' );
+        }
+        
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( array( 'message' => __( 'Insufficient permissions', 'trello-social-auto-publisher' ) ) );
+        }
+        
+        ob_start();
+        ?>
+        <div class="tts-modal-content">
+            <h2><?php esc_html_e( 'Export Data', 'trello-social-auto-publisher' ); ?></h2>
+            <form id="tts-export-form">
+                <div class="tts-export-options">
+                    <label>
+                        <input type="checkbox" name="export_settings" checked>
+                        <?php esc_html_e( 'Plugin Settings', 'trello-social-auto-publisher' ); ?>
+                    </label>
+                    <label>
+                        <input type="checkbox" name="export_social_apps" checked>
+                        <?php esc_html_e( 'Social Media Configurations', 'trello-social-auto-publisher' ); ?>
+                    </label>
+                    <label>
+                        <input type="checkbox" name="export_clients" checked>
+                        <?php esc_html_e( 'Clients', 'trello-social-auto-publisher' ); ?>
+                    </label>
+                    <label>
+                        <input type="checkbox" name="export_posts">
+                        <?php esc_html_e( 'Social Posts (last 100)', 'trello-social-auto-publisher' ); ?>
+                    </label>
+                    <label>
+                        <input type="checkbox" name="export_logs">
+                        <?php esc_html_e( 'Recent Logs (last 30 days)', 'trello-social-auto-publisher' ); ?>
+                    </label>
+                    <label>
+                        <input type="checkbox" name="export_analytics">
+                        <?php esc_html_e( 'Analytics Data', 'trello-social-auto-publisher' ); ?>
+                    </label>
+                </div>
+                <div class="tts-modal-actions">
+                    <button type="submit" class="tts-btn primary">
+                        <?php esc_html_e( 'Export', 'trello-social-auto-publisher' ); ?>
+                    </button>
+                    <button type="button" class="tts-btn secondary tts-modal-close">
+                        <?php esc_html_e( 'Cancel', 'trello-social-auto-publisher' ); ?>
+                    </button>
+                </div>
+            </form>
+        </div>
+        <?php
+        $modal_html = ob_get_clean();
+        
+        wp_send_json_success( array( 
+            'modal_html' => $modal_html
+        ) );
+    }
+    
+    /**
+     * AJAX handler for showing import modal.
+     */
+    public function ajax_show_import_modal() {
+        if ( ! wp_verify_nonce( $_POST['nonce'], 'tts_ajax_nonce' ) ) {
+            wp_die( 'Security check failed' );
+        }
+        
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( array( 'message' => __( 'Insufficient permissions', 'trello-social-auto-publisher' ) ) );
+        }
+        
+        ob_start();
+        ?>
+        <div class="tts-modal-content">
+            <h2><?php esc_html_e( 'Import Data', 'trello-social-auto-publisher' ); ?></h2>
+            <form id="tts-import-form" enctype="multipart/form-data">
+                <div class="tts-import-file">
+                    <label for="import_file">
+                        <?php esc_html_e( 'Select Export File:', 'trello-social-auto-publisher' ); ?>
+                    </label>
+                    <input type="file" id="import_file" name="import_file" accept=".json" required>
+                </div>
+                
+                <div class="tts-import-options">
+                    <h4><?php esc_html_e( 'Import Options:', 'trello-social-auto-publisher' ); ?></h4>
+                    <label>
+                        <input type="checkbox" name="overwrite_settings">
+                        <?php esc_html_e( 'Overwrite existing settings', 'trello-social-auto-publisher' ); ?>
+                    </label>
+                    <label>
+                        <input type="checkbox" name="overwrite_social_apps">
+                        <?php esc_html_e( 'Overwrite social media configurations', 'trello-social-auto-publisher' ); ?>
+                    </label>
+                    <label>
+                        <input type="checkbox" name="import_clients" checked>
+                        <?php esc_html_e( 'Import clients', 'trello-social-auto-publisher' ); ?>
+                    </label>
+                    <label>
+                        <input type="checkbox" name="import_posts">
+                        <?php esc_html_e( 'Import social posts (as drafts)', 'trello-social-auto-publisher' ); ?>
+                    </label>
+                </div>
+                
+                <div class="tts-modal-actions">
+                    <button type="submit" class="tts-btn primary">
+                        <?php esc_html_e( 'Import', 'trello-social-auto-publisher' ); ?>
+                    </button>
+                    <button type="button" class="tts-btn secondary tts-modal-close">
+                        <?php esc_html_e( 'Cancel', 'trello-social-auto-publisher' ); ?>
+                    </button>
+                </div>
+            </form>
+        </div>
+        <?php
+        $modal_html = ob_get_clean();
+        
+        wp_send_json_success( array( 
+            'modal_html' => $modal_html
+        ) );
     }
 }
 

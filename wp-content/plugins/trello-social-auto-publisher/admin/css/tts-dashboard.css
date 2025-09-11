@@ -1,4 +1,308 @@
-/* Social Auto Publisher Dashboard Styles */
+/* Social Auto Publisher Dashboard Styles with Enhanced Monitoring */
+
+/* Health Status Banner */
+.tts-health-banner {
+    margin-bottom: 20px;
+}
+
+.tts-health-banner h3 {
+    margin: 0;
+    font-size: 16px;
+}
+
+.tts-health-banner p {
+    margin: 5px 0 0 0;
+    font-size: 14px;
+}
+
+/* Monitoring Section */
+.tts-monitoring-section {
+    margin: 30px 0;
+    padding: 20px;
+    background: #f9f9f9;
+    border-radius: 8px;
+    border-left: 4px solid #135e96;
+}
+
+.tts-monitoring-section h2 {
+    margin-top: 0;
+    color: #135e96;
+}
+
+.tts-monitoring-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.tts-monitoring-card {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    overflow: hidden;
+}
+
+.tts-monitoring-card .tts-card-header {
+    background: #f6f7f7;
+    padding: 15px 20px;
+    border-bottom: 1px solid #ddd;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.tts-monitoring-card .tts-card-header h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+/* Health Score Widget */
+.tts-health-score-display {
+    padding: 30px 20px;
+    text-align: center;
+}
+
+.tts-score-circle {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    margin: 0 auto 20px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.tts-score-circle.excellent {
+    background: conic-gradient(#00a32a calc(var(--score-percent) * 1%), #eee 0);
+}
+
+.tts-score-circle.good {
+    background: conic-gradient(#f6c23e calc(var(--score-percent) * 1%), #eee 0);
+}
+
+.tts-score-circle.needs-attention {
+    background: conic-gradient(#dc3545 calc(var(--score-percent) * 1%), #eee 0);
+}
+
+.tts-score-text {
+    position: absolute;
+    inset: 10px;
+    border-radius: 50%;
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    font-weight: bold;
+    color: #1d2327;
+}
+
+.tts-health-status h4 {
+    margin: 0 0 10px 0;
+    font-size: 18px;
+}
+
+.tts-health-status p {
+    margin: 0 0 10px 0;
+    color: #666;
+}
+
+.tts-last-check {
+    font-size: 12px;
+    color: #999;
+}
+
+/* Performance Metrics */
+.tts-metrics-display {
+    padding: 20px;
+}
+
+.tts-metric-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.tts-metric-item:last-child {
+    border-bottom: none;
+}
+
+.tts-metric-label {
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.tts-metric-value {
+    font-weight: bold;
+    color: #135e96;
+}
+
+/* API Status */
+.tts-api-status-display {
+    padding: 20px;
+}
+
+.tts-api-platform-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.tts-api-platform-item:last-child {
+    border-bottom: none;
+}
+
+.tts-platform-icon {
+    font-size: 20px;
+    margin-right: 12px;
+    width: 30px;
+}
+
+.tts-platform-name {
+    flex: 1;
+    font-weight: 500;
+}
+
+.tts-platform-status {
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* Activity Timeline */
+.tts-timeline-container {
+    padding: 20px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.tts-timeline-item {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 15px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #eee;
+}
+
+.tts-timeline-item:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.tts-timeline-icon {
+    font-size: 16px;
+    width: 20px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.tts-timeline-content {
+    flex: 1;
+}
+
+.tts-timeline-event {
+    font-weight: 600;
+    margin-bottom: 2px;
+    text-transform: capitalize;
+}
+
+.tts-timeline-message {
+    color: #666;
+    font-size: 14px;
+    margin-bottom: 2px;
+}
+
+.tts-timeline-time {
+    color: #999;
+    font-size: 12px;
+}
+
+/* Advanced Tools Section */
+.tts-advanced-tools-section {
+    margin: 30px 0;
+    padding: 20px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.tts-advanced-tools-section h2 {
+    margin-top: 0;
+    color: #1d2327;
+}
+
+.tts-tools-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.tts-tool-card {
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background: #fafafa;
+}
+
+.tts-tool-card h3 {
+    margin: 0 0 10px 0;
+    font-size: 16px;
+    color: #1d2327;
+}
+
+.tts-tool-card p {
+    margin: 0 0 15px 0;
+    color: #666;
+    font-size: 14px;
+}
+
+.tts-tool-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.tts-no-data {
+    text-align: center;
+    color: #999;
+    font-style: italic;
+    padding: 40px 20px;
+}
+
+/* Responsive adjustments for monitoring */
+@media (max-width: 768px) {
+    .tts-monitoring-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .tts-tools-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .tts-tool-actions {
+        flex-direction: column;
+    }
+    
+    .tts-score-circle {
+        width: 100px;
+        height: 100px;
+    }
+    
+    .tts-score-text {
+        font-size: 24px;
+    }
+}
+
+/* Original dashboard styles continue below... */
 
 .tts-stats-row {
     display: -webkit-box;
