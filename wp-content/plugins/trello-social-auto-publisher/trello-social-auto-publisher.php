@@ -52,6 +52,7 @@ if ( is_admin() ) {
     require_once TSAP_PLUGIN_DIR . 'admin/class-tts-analytics-page.php';
     require_once TSAP_PLUGIN_DIR . 'admin/class-tts-health-page.php';
 
+    new TTS_Admin();
     new TTS_Calendar_Page();
     new TTS_Health_Page();
 
