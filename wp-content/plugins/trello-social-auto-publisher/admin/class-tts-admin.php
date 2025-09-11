@@ -105,12 +105,20 @@ class TTS_Admin {
             return;
         }
 
+        // Enqueue accessibility styles (global for all TTS pages)
+        wp_enqueue_style(
+            'tts-accessibility',
+            plugin_dir_url( __FILE__ ) . 'css/tts-accessibility.css',
+            array(),
+            '1.2'
+        );
+
         // Enqueue enhanced notification system (global for all TTS pages)
         wp_enqueue_script(
             'tts-notifications',
             plugin_dir_url( __FILE__ ) . 'js/tts-notifications.js',
             array(),
-            '1.1',
+            '1.2',
             true
         );
 
@@ -119,7 +127,7 @@ class TTS_Admin {
             'tts-admin-utils',
             plugin_dir_url( __FILE__ ) . 'js/tts-admin-utils.js',
             array( 'tts-notifications' ),
-            '1.1',
+            '1.2',
             true
         );
 
@@ -128,7 +136,7 @@ class TTS_Admin {
             'tts-advanced-features',
             plugin_dir_url( __FILE__ ) . 'js/tts-advanced-features.js',
             array( 'tts-notifications', 'tts-admin-utils' ),
-            '1.1',
+            '1.2',
             true
         );
 
@@ -137,7 +145,7 @@ class TTS_Admin {
             'tts-help-system',
             plugin_dir_url( __FILE__ ) . 'js/tts-help-system.js',
             array( 'tts-notifications', 'tts-admin-utils' ),
-            '1.1',
+            '1.2',
             true
         );
 
@@ -378,19 +386,29 @@ class TTS_Admin {
     public function ajax_delete_post() {
         check_ajax_referer( 'tts_dashboard', 'nonce' );
 
+        // Rate limiting check
+        if (!$this->check_rate_limit('delete_post', 20, 60)) {
+            wp_send_json_error(__('Too many delete requests. Please wait a moment and try again.', 'trello-social-auto-publisher'));
+        }
+
         if (!current_user_can('delete_posts')) {
             wp_send_json_error(__('You do not have permission to delete posts.', 'trello-social-auto-publisher'));
         }
 
         $post_id = isset($_POST['postId']) ? intval($_POST['postId']) : 0;
         
-        if (!$post_id) {
+        if (!$post_id || $post_id <= 0) {
             wp_send_json_error(__('Invalid post ID.', 'trello-social-auto-publisher'));
         }
 
         $post = get_post($post_id);
         if (!$post || $post->post_type !== 'tts_social_post') {
             wp_send_json_error(__('Post not found.', 'trello-social-auto-publisher'));
+        }
+
+        // Check specific delete permission for this post
+        if (!current_user_can('delete_post', $post_id)) {
+            wp_send_json_error(__('You do not have permission to delete this specific post.', 'trello-social-auto-publisher'));
         }
 
         $result = wp_delete_post($post_id, true);
@@ -411,6 +429,11 @@ class TTS_Admin {
     public function ajax_bulk_action() {
         check_ajax_referer( 'tts_dashboard', 'nonce' );
 
+        // Rate limiting check
+        if (!$this->check_rate_limit('bulk_action', 10, 60)) {
+            wp_send_json_error(__('Too many requests. Please wait a moment and try again.', 'trello-social-auto-publisher'));
+        }
+
         if (!current_user_can('edit_posts')) {
             wp_send_json_error(__('You do not have permission to perform this action.', 'trello-social-auto-publisher'));
         }
@@ -418,14 +441,32 @@ class TTS_Admin {
         $action = isset($_POST['bulkAction']) ? sanitize_text_field($_POST['bulkAction']) : '';
         $post_ids = isset($_POST['postIds']) ? array_map('intval', $_POST['postIds']) : array();
 
+        // Input validation
         if (!$action || empty($post_ids)) {
             wp_send_json_error(__('Invalid action or no posts selected.', 'trello-social-auto-publisher'));
+        }
+
+        // Validate action is allowed
+        $allowed_actions = array('delete', 'approve', 'revoke');
+        if (!in_array($action, $allowed_actions, true)) {
+            wp_send_json_error(__('Invalid action specified.', 'trello-social-auto-publisher'));
+        }
+
+        // Limit number of posts that can be processed at once
+        if (count($post_ids) > 100) {
+            wp_send_json_error(__('Too many posts selected. Please select 100 or fewer posts.', 'trello-social-auto-publisher'));
         }
 
         $processed = 0;
         $errors = array();
 
         foreach ($post_ids as $post_id) {
+            // Additional validation for each post ID
+            if ($post_id <= 0) {
+                $errors[] = __('Invalid post ID provided.', 'trello-social-auto-publisher');
+                continue;
+            }
+
             $post = get_post($post_id);
             if (!$post || $post->post_type !== 'tts_social_post') {
                 $errors[] = sprintf(__('Post ID %d not found.', 'trello-social-auto-publisher'), $post_id);
@@ -434,32 +475,36 @@ class TTS_Admin {
 
             switch ($action) {
                 case 'delete':
-                    if (current_user_can('delete_posts')) {
+                    if (current_user_can('delete_post', $post_id)) {
                         if (wp_delete_post($post_id, true)) {
                             $processed++;
                         } else {
                             $errors[] = sprintf(__('Failed to delete post ID %d.', 'trello-social-auto-publisher'), $post_id);
                         }
                     } else {
-                        $errors[] = __('You do not have permission to delete posts.', 'trello-social-auto-publisher');
+                        $errors[] = sprintf(__('You do not have permission to delete post ID %d.', 'trello-social-auto-publisher'), $post_id);
                     }
                     break;
 
                 case 'approve':
-                    update_post_meta($post_id, '_tts_approved', true);
-                    do_action('save_post_tts_social_post', $post_id, $post, true);
-                    do_action('tts_post_approved', $post_id);
-                    $processed++;
+                    if (current_user_can('edit_post', $post_id)) {
+                        update_post_meta($post_id, '_tts_approved', true);
+                        do_action('save_post_tts_social_post', $post_id, $post, true);
+                        do_action('tts_post_approved', $post_id);
+                        $processed++;
+                    } else {
+                        $errors[] = sprintf(__('You do not have permission to approve post ID %d.', 'trello-social-auto-publisher'), $post_id);
+                    }
                     break;
 
                 case 'revoke':
-                    delete_post_meta($post_id, '_tts_approved');
-                    do_action('save_post_tts_social_post', $post_id, $post, true);
-                    $processed++;
-                    break;
-
-                default:
-                    $errors[] = sprintf(__('Unknown action: %s', 'trello-social-auto-publisher'), $action);
+                    if (current_user_can('edit_post', $post_id)) {
+                        delete_post_meta($post_id, '_tts_approved');
+                        do_action('save_post_tts_social_post', $post_id, $post, true);
+                        $processed++;
+                    } else {
+                        $errors[] = sprintf(__('You do not have permission to revoke approval for post ID %d.', 'trello-social-auto-publisher'), $post_id);
+                    }
                     break;
             }
         }
@@ -521,64 +566,19 @@ class TTS_Admin {
     }
 
     /**
-     * Render dashboard statistics cards.
+     * Render dashboard statistics cards with optimized queries and caching.
      */
     private function render_dashboard_stats() {
-        $total_posts = wp_count_posts('tts_social_post');
-        $total_clients = wp_count_posts('tts_client');
+        // Use transient caching for expensive queries (cache for 5 minutes)
+        $cache_key = 'tts_dashboard_stats_' . get_current_user_id();
+        $stats = get_transient($cache_key);
         
-        $scheduled_posts = get_posts(array(
-            'post_type' => 'tts_social_post',
-            'post_status' => 'any',
-            'meta_key' => '_tts_publish_at',
-            'meta_value' => current_time('mysql'),
-            'meta_compare' => '>=',
-            'fields' => 'ids'
-        ));
+        if (false === $stats) {
+            $stats = $this->get_optimized_dashboard_statistics();
+            set_transient($cache_key, $stats, 5 * MINUTE_IN_SECONDS);
+        }
         
-        $published_today = get_posts(array(
-            'post_type' => 'tts_social_post',
-            'post_status' => 'any',
-            'date_query' => array(
-                array(
-                    'after' => 'today',
-                    'before' => 'tomorrow',
-                )
-            ),
-            'meta_key' => '_published_status',
-            'meta_value' => 'published',
-            'fields' => 'ids'
-        ));
-
-        // Get yesterday's published posts for trend analysis
-        $published_yesterday = get_posts(array(
-            'post_type' => 'tts_social_post',
-            'post_status' => 'any',
-            'date_query' => array(
-                array(
-                    'after' => '1 day ago',
-                    'before' => 'today',
-                )
-            ),
-            'meta_key' => '_published_status',
-            'meta_value' => 'published',
-            'fields' => 'ids'
-        ));
-
-        // Get failed posts today
-        $failed_today = get_posts(array(
-            'post_type' => 'tts_social_post',
-            'post_status' => 'any',
-            'date_query' => array(
-                array(
-                    'after' => 'today',
-                    'before' => 'tomorrow',
-                )
-            ),
-            'meta_key' => '_published_status',
-            'meta_value' => 'failed',
-            'fields' => 'ids'
-        ));
+        extract($stats); // Extract variables for use below
 
         echo '<div class="tts-stats-row">';
         
@@ -601,22 +601,20 @@ class TTS_Admin {
         // Scheduled Posts Card
         echo '<div class="tts-stat-card tts-tooltip">';
         echo '<h3>' . esc_html__('Scheduled Posts', 'trello-social-auto-publisher') . '</h3>';
-        echo '<span class="tts-stat-number">' . count($scheduled_posts) . '</span>';
+        echo '<span class="tts-stat-number">' . $scheduled_posts . '</span>';
         echo '<div class="tts-stat-trend">Awaiting publication</div>';
         echo '<span class="tts-tooltiptext">Posts scheduled for future publication</span>';
         echo '</div>';
         
         // Published Today Card with Trend
-        $today_count = count($published_today);
-        $yesterday_count = count($published_yesterday);
-        $trend_percentage = $yesterday_count > 0 ? round((($today_count - $yesterday_count) / $yesterday_count) * 100) : 0;
+        $today_count = $published_today;
         $trend_class = $trend_percentage > 0 ? 'positive' : ($trend_percentage < 0 ? 'negative' : '');
         $trend_icon = $trend_percentage > 0 ? '↗' : ($trend_percentage < 0 ? '↘' : '→');
         
         echo '<div class="tts-stat-card tts-tooltip">';
         echo '<h3>' . esc_html__('Published Today', 'trello-social-auto-publisher') . '</h3>';
         echo '<span class="tts-stat-number">' . $today_count . '</span>';
-        if ($yesterday_count > 0) {
+        if ($published_yesterday > 0) {
             echo '<div class="tts-stat-trend ' . $trend_class . '">';
             echo $trend_icon . ' ' . abs($trend_percentage) . '% vs yesterday';
             echo '</div>';
@@ -634,14 +632,12 @@ class TTS_Admin {
         // Failed Posts Today
         echo '<div class="tts-stat-card tts-tooltip">';
         echo '<h3>' . esc_html__('Failed Today', 'trello-social-auto-publisher') . '</h3>';
-        echo '<span class="tts-stat-number" style="color: #d63638;">' . count($failed_today) . '</span>';
+        echo '<span class="tts-stat-number" style="color: #d63638;">' . $failed_today . '</span>';
         echo '<div class="tts-stat-trend">Requires attention</div>';
         echo '<span class="tts-tooltiptext">Posts that failed to publish today and need attention</span>';
         echo '</div>';
 
-        // Success Rate
-        $total_today = $today_count + count($failed_today);
-        $success_rate = $total_today > 0 ? round(($today_count / $total_today) * 100) : 100;
+        // Success Rate (already calculated in optimized method)
         echo '<div class="tts-stat-card tts-tooltip">';
         echo '<h3>' . esc_html__('Success Rate', 'trello-social-auto-publisher') . '</h3>';
         echo '<span class="tts-stat-number" style="color: ' . ($success_rate >= 95 ? '#00a32a' : ($success_rate >= 80 ? '#f56e28' : '#d63638')) . ';">' . $success_rate . '%</span>';
@@ -649,25 +645,13 @@ class TTS_Admin {
         echo '<span class="tts-tooltiptext">Percentage of successful publications today</span>';
         echo '</div>';
 
-        // Next Scheduled
-        $next_scheduled = get_posts(array(
-            'post_type' => 'tts_social_post',
-            'posts_per_page' => 1,
-            'post_status' => 'any',
-            'meta_key' => '_tts_publish_at',
-            'meta_value' => current_time('mysql'),
-            'meta_compare' => '>=',
-            'orderby' => 'meta_value',
-            'order' => 'ASC'
-        ));
-
+        // Next Scheduled (already fetched in optimized method)
         echo '<div class="tts-stat-card tts-tooltip">';
         echo '<h3>' . esc_html__('Next Post', 'trello-social-auto-publisher') . '</h3>';
-        if (!empty($next_scheduled)) {
-            $next_time = get_post_meta($next_scheduled[0]->ID, '_tts_publish_at', true);
-            $time_diff = human_time_diff(current_time('timestamp'), strtotime($next_time));
+        if ($next_scheduled) {
+            $time_diff = human_time_diff(current_time('timestamp'), strtotime($next_scheduled->publish_at));
             echo '<span class="tts-stat-number" style="font-size: 20px;">in ' . $time_diff . '</span>';
-            echo '<div class="tts-stat-trend">' . esc_html($next_scheduled[0]->post_title) . '</div>';
+            echo '<div class="tts-stat-trend">' . esc_html($next_scheduled->post_title) . '</div>';
         } else {
             echo '<span class="tts-stat-number" style="font-size: 20px;">None</span>';
             echo '<div class="tts-stat-trend">No posts scheduled</div>';
@@ -675,20 +659,7 @@ class TTS_Admin {
         echo '<span class="tts-tooltiptext">Time until the next scheduled post publication</span>';
         echo '</div>';
 
-        // Weekly Average
-        $week_posts = get_posts(array(
-            'post_type' => 'tts_social_post',
-            'date_query' => array(
-                array(
-                    'after' => '1 week ago'
-                )
-            ),
-            'meta_key' => '_published_status',
-            'meta_value' => 'published',
-            'fields' => 'ids'
-        ));
-        $weekly_average = round(count($week_posts) / 7, 1);
-
+        // Weekly Average (already calculated in optimized method)
         echo '<div class="tts-stat-card tts-tooltip">';
         echo '<h3>' . esc_html__('Daily Average', 'trello-social-auto-publisher') . '</h3>';
         echo '<span class="tts-stat-number">' . $weekly_average . '</span>';
@@ -994,6 +965,13 @@ class TTS_Admin {
             session_start();
         }
 
+        // Security: Verify nonce for form submissions
+        if ( isset( $_POST['step'] ) && $_POST['step'] > 1 ) {
+            if ( ! wp_verify_nonce( $_POST['tts_wizard_nonce'], 'tts_client_wizard' ) ) {
+                wp_die( esc_html__( 'Security verification failed. Please try again.', 'trello-social-auto-publisher' ) );
+            }
+        }
+
         $step = isset( $_REQUEST['step'] ) ? absint( $_REQUEST['step'] ) : 1;
 
         echo '<div class="wrap tts-client-wizard">';
@@ -1011,11 +989,12 @@ class TTS_Admin {
 
         if ( 1 === $step ) {
             echo '<form method="post" class="tts-wizard-step tts-step-1">';
+            wp_nonce_field( 'tts_client_wizard', 'tts_wizard_nonce' );
             echo '<input type="hidden" name="step" value="2" />';
             echo '<p><label>' . esc_html__( 'Trello API Key', 'trello-social-auto-publisher' ) . '<br />';
-            echo '<input type="text" name="trello_key" value="' . esc_attr( $trello_key ) . '" /></label></p>';
+            echo '<input type="text" name="trello_key" value="' . esc_attr( $trello_key ) . '" required /></label></p>';
             echo '<p><label>' . esc_html__( 'Trello Token', 'trello-social-auto-publisher' ) . '<br />';
-            echo '<input type="text" name="trello_token" value="' . esc_attr( $trello_token ) . '" /></label></p>';
+            echo '<input type="text" name="trello_token" value="' . esc_attr( $trello_token ) . '" required /></label></p>';
 
             $boards = array();
             if ( $trello_key && $trello_token ) {
@@ -1041,6 +1020,7 @@ class TTS_Admin {
             echo '</form>';
         } elseif ( 2 === $step ) {
             echo '<form method="post" class="tts-wizard-step tts-step-2">';
+            wp_nonce_field( 'tts_client_wizard', 'tts_wizard_nonce' );
             echo '<input type="hidden" name="step" value="3" />';
             echo '<input type="hidden" name="trello_key" value="' . esc_attr( $trello_key ) . '" />';
             echo '<input type="hidden" name="trello_token" value="' . esc_attr( $trello_token ) . '" />';
@@ -1468,6 +1448,139 @@ class TTS_Social_Posts_Table extends WP_List_Table {
      */
     public function column_default( $item, $column_name ) {
         return isset( $item[ $column_name ] ) ? esc_html( $item[ $column_name ] ) : '';
+    }
+
+    /**
+     * Get optimized dashboard statistics with single database query.
+     *
+     * @return array Optimized statistics data.
+     */
+    private function get_optimized_dashboard_statistics() {
+        global $wpdb;
+
+        // Get basic post counts
+        $total_posts = wp_count_posts('tts_social_post');
+        $total_clients = wp_count_posts('tts_client');
+
+        // Single optimized query to get all post statistics by date and status
+        $today = current_time('Y-m-d');
+        $yesterday = date('Y-m-d', strtotime('-1 day', current_time('timestamp')));
+        $current_time = current_time('mysql');
+
+        $query = $wpdb->prepare("
+            SELECT 
+                pm.meta_value as status,
+                DATE(p.post_date) as post_date,
+                pm2.meta_value as publish_at,
+                COUNT(*) as count
+            FROM {$wpdb->posts} p
+            LEFT JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id AND pm.meta_key = '_published_status'
+            LEFT JOIN {$wpdb->postmeta} pm2 ON p.ID = pm2.post_id AND pm2.meta_key = '_tts_publish_at'
+            WHERE p.post_type = 'tts_social_post'
+            AND (
+                DATE(p.post_date) = %s 
+                OR DATE(p.post_date) = %s
+                OR (pm2.meta_value IS NOT NULL AND pm2.meta_value >= %s)
+            )
+            GROUP BY pm.meta_value, DATE(p.post_date)
+        ", $today, $yesterday, $current_time);
+
+        $results = $wpdb->get_results($query);
+
+        // Process results
+        $published_today = 0;
+        $published_yesterday = 0;
+        $failed_today = 0;
+        $scheduled_posts = 0;
+
+        foreach ($results as $row) {
+            if ($row->post_date === $today) {
+                if ($row->status === 'published') {
+                    $published_today = $row->count;
+                } elseif ($row->status === 'failed') {
+                    $failed_today = $row->count;
+                }
+            } elseif ($row->post_date === $yesterday && $row->status === 'published') {
+                $published_yesterday = $row->count;
+            }
+            
+            // Count scheduled posts (those with future publish_at)
+            if ($row->publish_at && $row->publish_at >= $current_time) {
+                $scheduled_posts += $row->count;
+            }
+        }
+
+        // Calculate additional metrics
+        $total_today = $published_today + $failed_today;
+        $success_rate = $total_today > 0 ? round(($published_today / $total_today) * 100) : 100;
+        $trend_percentage = $published_yesterday > 0 ? round((($published_today - $published_yesterday) / $published_yesterday) * 100) : 0;
+
+        // Get next scheduled post
+        $next_scheduled = $wpdb->get_row($wpdb->prepare("
+            SELECT p.ID, p.post_title, pm.meta_value as publish_at
+            FROM {$wpdb->posts} p
+            INNER JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id 
+            WHERE p.post_type = 'tts_social_post'
+            AND pm.meta_key = '_tts_publish_at'
+            AND pm.meta_value >= %s
+            ORDER BY pm.meta_value ASC
+            LIMIT 1
+        ", $current_time));
+
+        // Weekly average
+        $week_published = $wpdb->get_var($wpdb->prepare("
+            SELECT COUNT(*)
+            FROM {$wpdb->posts} p
+            INNER JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id
+            WHERE p.post_type = 'tts_social_post'
+            AND pm.meta_key = '_published_status'
+            AND pm.meta_value = 'published'
+            AND p.post_date >= %s
+        ", date('Y-m-d H:i:s', strtotime('-1 week', current_time('timestamp')))));
+
+        $weekly_average = round($week_published / 7, 1);
+
+        return array(
+            'total_posts' => $total_posts,
+            'total_clients' => $total_clients,
+            'scheduled_posts' => $scheduled_posts,
+            'published_today' => $published_today,
+            'published_yesterday' => $published_yesterday,
+            'failed_today' => $failed_today,
+            'success_rate' => $success_rate,
+            'trend_percentage' => $trend_percentage,
+            'next_scheduled' => $next_scheduled,
+            'weekly_average' => $weekly_average,
+        );
+    }
+
+    /**
+     * Simple rate limiting for AJAX endpoints.
+     *
+     * @param string $action Action being performed.
+     * @param int $limit Maximum number of requests.
+     * @param int $window Time window in seconds.
+     * @return bool Whether the request is within limits.
+     */
+    private function check_rate_limit($action, $limit = 10, $window = 60) {
+        $user_id = get_current_user_id();
+        $transient_key = "tts_rate_limit_{$action}_{$user_id}";
+        
+        $current_count = get_transient($transient_key);
+        
+        if (false === $current_count) {
+            // First request in this window
+            set_transient($transient_key, 1, $window);
+            return true;
+        }
+        
+        if ($current_count >= $limit) {
+            return false; // Rate limit exceeded
+        }
+        
+        // Increment counter
+        set_transient($transient_key, $current_count + 1, $window);
+        return true;
     }
 }
 

@@ -31,12 +31,40 @@ class TTSAdvancedFeatures {
         this.shortcuts.set('ctrl+shift+k', () => this.showKeyboardShortcuts());
         this.shortcuts.set('ctrl+shift+t', () => this.toggleDarkMode());
 
-        // Global keyboard event listener
+        // Global keyboard event listener with improved error handling
         document.addEventListener('keydown', (e) => {
-            const key = this.getKeyboardShortcut(e);
-            if (this.shortcuts.has(key)) {
+            try {
+                // Skip if user is typing in an input field
+                const activeElement = document.activeElement;
+                if (activeElement && (
+                    activeElement.tagName === 'INPUT' ||
+                    activeElement.tagName === 'TEXTAREA' ||
+                    activeElement.tagName === 'SELECT' ||
+                    activeElement.contentEditable === 'true'
+                )) {
+                    return;
+                }
+
+                const key = this.getKeyboardShortcut(e);
+                if (this.shortcuts.has(key)) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    const action = this.shortcuts.get(key);
+                    if (typeof action === 'function') {
+                        action();
+                    }
+                }
+            } catch (error) {
+                console.error('TTSAdvancedFeatures: Error in keyboard event handler:', error);
+            }
+        });
+
+        // Add help for keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'F1') {
                 e.preventDefault();
-                this.shortcuts.get(key)();
+                this.showContextualHelp();
             }
         });
 
@@ -61,14 +89,49 @@ class TTSAdvancedFeatures {
     }
 
     navigateTo(page) {
-        window.location.href = `admin.php?page=${page}`;
+        try {
+            // Validate page parameter
+            if (!page || typeof page !== 'string') {
+                console.error('TTSAdvancedFeatures: Invalid page parameter for navigation');
+                return;
+            }
+            
+            // Check if we're already on the target page
+            const currentParams = new URLSearchParams(window.location.search);
+            if (currentParams.get('page') === page) {
+                window.TTSNotifications?.info('Already on this page', { duration: 2000 });
+                return;
+            }
+            
+            if (window.TTSNotifications) {
+                window.TTSNotifications.info(`Navigating to ${page}...`, { duration: 1000 });
+            }
+            
+            // Add loading state
+            document.body.classList.add('tts-navigating');
+            
+            window.location.href = `admin.php?page=${encodeURIComponent(page)}`;
+        } catch (error) {
+            console.error('TTSAdvancedFeatures: Navigation error:', error);
+            if (window.TTSNotifications) {
+                window.TTSNotifications.error('Navigation failed. Please try again.');
+            }
+        }
     }
 
     refreshCurrentPage() {
-        if (window.TTSAdminUtils) {
-            window.TTSNotifications.info('Refreshing page...', { duration: 1000 });
-            setTimeout(() => window.location.reload(), 500);
-        } else {
+        try {
+            if (window.TTSNotifications) {
+                window.TTSNotifications.info('Refreshing page...', { duration: 1000 });
+                setTimeout(() => {
+                    window.location.reload();
+                }, 500);
+            } else {
+                window.location.reload();
+            }
+        } catch (error) {
+            console.error('TTSAdvancedFeatures: Refresh error:', error);
+            // Fallback refresh
             window.location.reload();
         }
     }
@@ -140,25 +203,87 @@ class TTSAdvancedFeatures {
     }
 
     enhanceAccessibility() {
-        // Add ARIA labels and roles
-        document.querySelectorAll('.tts-stat-card').forEach((card, index) => {
-            card.setAttribute('role', 'region');
-            card.setAttribute('aria-label', `Statistics card ${index + 1}`);
-            card.setAttribute('tabindex', '0');
-        });
+        try {
+            // Add ARIA labels and roles to statistics cards
+            document.querySelectorAll('.tts-stat-card').forEach((card, index) => {
+                if (!card.hasAttribute('role')) {
+                    card.setAttribute('role', 'region');
+                    const heading = card.querySelector('h3');
+                    const number = card.querySelector('.tts-stat-number');
+                    
+                    if (heading && number) {
+                        const label = `${heading.textContent}: ${number.textContent}`;
+                        card.setAttribute('aria-label', label);
+                    } else {
+                        card.setAttribute('aria-label', `Statistics card ${index + 1}`);
+                    }
+                    card.setAttribute('tabindex', '0');
+                }
+            });
 
-        // Add focus indicators
+            // Enhance table accessibility
+            document.querySelectorAll('.tts-enhanced-table').forEach(table => {
+                if (!table.getAttribute('role')) {
+                    table.setAttribute('role', 'table');
+                    table.setAttribute('aria-label', 'Social media posts');
+                }
+                
+                // Add table headers association
+                const headers = table.querySelectorAll('th');
+                const rows = table.querySelectorAll('tbody tr');
+                
+                headers.forEach((header, index) => {
+                    if (!header.id) {
+                        header.id = `tts-header-${index}`;
+                    }
+                });
+                
+                rows.forEach(row => {
+                    const cells = row.querySelectorAll('td');
+                    cells.forEach((cell, cellIndex) => {
+                        if (headers[cellIndex] && !cell.getAttribute('headers')) {
+                            cell.setAttribute('headers', headers[cellIndex].id);
+                        }
+                    });
+                });
+            });
+
+            // Add improved focus styles and accessibility styles
+            this.addAccessibilityStyles();
+
+            // Add skip to content link
+            this.addSkipToContentLink();
+
+            // Enhance form accessibility
+            this.enhanceFormAccessibility();
+
+        } catch (error) {
+            console.error('TTSAdvancedFeatures: Error enhancing accessibility:', error);
+        }
+    }
+
+    addAccessibilityStyles() {
+        if (document.getElementById('tts-accessibility-styles')) {
+            return; // Styles already added
+        }
+
         const focusStyle = document.createElement('style');
+        focusStyle.id = 'tts-accessibility-styles';
         focusStyle.textContent = `
+            /* Enhanced focus indicators */
             .tts-stat-card:focus,
             .tts-quick-action:focus,
-            .tts-btn:focus {
-                outline: 2px solid #005cee;
+            .tts-btn:focus,
+            .tts-bulk-select-item:focus,
+            .tts-bulk-select-all:focus {
+                outline: 3px solid #005cee;
                 outline-offset: 2px;
+                box-shadow: 0 0 0 1px #fff, 0 0 0 4px #005cee;
             }
             
             .tts-enhanced-table tr:focus-within {
                 background-color: #e6f3ff;
+                outline: 2px solid #005cee;
             }
             
             /* Skip to content link */
@@ -168,11 +293,13 @@ class TTSAdvancedFeatures {
                 left: 6px;
                 background: #000;
                 color: #fff;
-                padding: 8px;
+                padding: 8px 12px;
                 text-decoration: none;
                 z-index: 100000;
                 border-radius: 4px;
-                transition: top 0.3s;
+                transition: top 0.3s ease;
+                font-size: 14px;
+                font-weight: 600;
             }
             
             .tts-skip-link:focus {
@@ -183,9 +310,14 @@ class TTSAdvancedFeatures {
             @media (prefers-contrast: high) {
                 .tts-stat-card,
                 .tts-dashboard-section,
-                .tts-quick-action {
-                    border-width: 2px;
-                    border-color: #000;
+                .tts-quick-action,
+                .tts-notification {
+                    border-width: 2px !important;
+                    border-color: #000 !important;
+                }
+                
+                .tts-status-badge {
+                    border: 2px solid #000 !important;
                 }
             }
             
@@ -198,15 +330,40 @@ class TTSAdvancedFeatures {
                     animation-iteration-count: 1 !important;
                     transition-duration: 0.01ms !important;
                 }
+                
+                .tts-notification {
+                    transition: none !important;
+                }
+            }
+            
+            /* Screen reader only content */
+            .sr-only {
+                position: absolute !important;
+                width: 1px !important;
+                height: 1px !important;
+                padding: 0 !important;
+                margin: -1px !important;
+                overflow: hidden !important;
+                clip: rect(0, 0, 0, 0) !important;
+                white-space: nowrap !important;
+                border: 0 !important;
             }
         `;
         document.head.appendChild(focusStyle);
+    }
 
-        // Add skip to content link
+    addSkipToContentLink() {
+        // Don't add if already exists
+        if (document.querySelector('.tts-skip-link')) {
+            return;
+        }
+
         const skipLink = document.createElement('a');
         skipLink.href = '#main-content';
         skipLink.className = 'tts-skip-link';
         skipLink.textContent = 'Skip to main content';
+        skipLink.setAttribute('aria-label', 'Skip to main content');
+        
         document.body.insertBefore(skipLink, document.body.firstChild);
 
         // Add main content wrapper
@@ -214,6 +371,41 @@ class TTSAdvancedFeatures {
         if (wrap && !wrap.id) {
             wrap.id = 'main-content';
             wrap.setAttribute('role', 'main');
+            wrap.setAttribute('aria-label', 'Main content area');
+        }
+    }
+
+    enhanceFormAccessibility() {
+        // Add labels and descriptions to form controls
+        document.querySelectorAll('select, input[type="checkbox"], input[type="radio"]').forEach(control => {
+            if (!control.getAttribute('aria-label') && !control.labels?.length) {
+                const parentLabel = control.closest('label');
+                const siblingLabel = control.previousElementSibling?.tagName === 'LABEL' ? 
+                    control.previousElementSibling : 
+                    control.nextElementSibling?.tagName === 'LABEL' ? 
+                    control.nextElementSibling : null;
+                
+                if (parentLabel || siblingLabel) {
+                    const labelText = (parentLabel || siblingLabel).textContent.trim();
+                    if (labelText) {
+                        control.setAttribute('aria-label', labelText);
+                    }
+                }
+            }
+        });
+
+        // Enhance bulk action controls
+        const bulkSelect = document.querySelector('.tts-bulk-select-all');
+        if (bulkSelect) {
+            bulkSelect.setAttribute('aria-label', 'Select all posts');
+            bulkSelect.addEventListener('change', (e) => {
+                const items = document.querySelectorAll('.tts-bulk-select-item');
+                items.forEach(item => {
+                    item.checked = e.target.checked;
+                    // Announce change to screen readers
+                    item.setAttribute('aria-checked', e.target.checked);
+                });
+            });
         }
     }
 
@@ -823,6 +1015,139 @@ class TTSAdvancedFeatures {
 
     delay(ms) {
         return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    showContextualHelp() {
+        try {
+            const currentPage = new URLSearchParams(window.location.search).get('page');
+            let helpContent = '';
+            
+            switch (currentPage) {
+                case 'tts-main':
+                    helpContent = this.getDashboardHelp();
+                    break;
+                case 'tts-calendar':
+                    helpContent = this.getCalendarHelp();
+                    break;
+                case 'tts-analytics':
+                    helpContent = this.getAnalyticsHelp();
+                    break;
+                case 'tts-health':
+                    helpContent = this.getHealthHelp();
+                    break;
+                case 'tts-log':
+                    helpContent = this.getLogHelp();
+                    break;
+                default:
+                    helpContent = this.getGeneralHelp();
+            }
+
+            if (window.TTSAdminUtils && window.TTSAdminUtils.createModal) {
+                const modal = window.TTSAdminUtils.createModal({
+                    title: 'Contextual Help',
+                    body: helpContent,
+                    size: 'large'
+                });
+                modal.setAttribute('aria-label', 'Help dialog');
+            } else {
+                // Fallback if modal system is not available
+                window.TTSNotifications?.info('Help system loading...');
+            }
+        } catch (error) {
+            console.error('TTSAdvancedFeatures: Error showing contextual help:', error);
+            window.TTSNotifications?.error('Unable to load help content');
+        }
+    }
+
+    getDashboardHelp() {
+        return `
+            <div class="tts-help-content">
+                <h3>Dashboard Help</h3>
+                <p>The dashboard provides an overview of your social media publishing activity:</p>
+                <ul>
+                    <li><strong>Statistics Cards:</strong> View key metrics like total posts, active clients, and success rates</li>
+                    <li><strong>Recent Posts:</strong> Review and manage your latest social media posts</li>
+                    <li><strong>Quick Actions:</strong> Access frequently used features quickly</li>
+                    <li><strong>Bulk Operations:</strong> Select multiple posts to perform batch actions</li>
+                </ul>
+                <h4>Keyboard Shortcuts:</h4>
+                <ul>
+                    <li><kbd>Ctrl+Shift+D</kbd> - Go to Dashboard</li>
+                    <li><kbd>Ctrl+Shift+R</kbd> - Refresh current page</li>
+                    <li><kbd>F1</kbd> - Show this help</li>
+                </ul>
+            </div>
+        `;
+    }
+
+    getCalendarHelp() {
+        return `
+            <div class="tts-help-content">
+                <h3>Calendar Help</h3>
+                <p>The calendar view shows your scheduled social media posts:</p>
+                <ul>
+                    <li><strong>Monthly View:</strong> See all posts scheduled for the current month</li>
+                    <li><strong>Post Details:</strong> Click on any post to view details</li>
+                    <li><strong>Navigation:</strong> Use arrows to navigate between months</li>
+                </ul>
+            </div>
+        `;
+    }
+
+    getAnalyticsHelp() {
+        return `
+            <div class="tts-help-content">
+                <h3>Analytics Help</h3>
+                <p>View detailed analytics and performance metrics:</p>
+                <ul>
+                    <li><strong>Charts:</strong> Visual representation of your posting activity</li>
+                    <li><strong>Filters:</strong> Filter data by date range, client, or status</li>
+                    <li><strong>Export:</strong> Download analytics data for further analysis</li>
+                </ul>
+            </div>
+        `;
+    }
+
+    getHealthHelp() {
+        return `
+            <div class="tts-help-content">
+                <h3>System Health Help</h3>
+                <p>Monitor the health and status of your social publishing system:</p>
+                <ul>
+                    <li><strong>Overall Status:</strong> Green indicates all systems operational</li>
+                    <li><strong>Individual Checks:</strong> View specific system components</li>
+                    <li><strong>Troubleshooting:</strong> Get recommendations for issues</li>
+                </ul>
+            </div>
+        `;
+    }
+
+    getLogHelp() {
+        return `
+            <div class="tts-help-content">
+                <h3>Logs Help</h3>
+                <p>Review system logs and publishing history:</p>
+                <ul>
+                    <li><strong>Activity Logs:</strong> See all system activities and events</li>
+                    <li><strong>Error Logs:</strong> Review any errors or issues</li>
+                    <li><strong>Search:</strong> Find specific log entries</li>
+                </ul>
+            </div>
+        `;
+    }
+
+    getGeneralHelp() {
+        return `
+            <div class="tts-help-content">
+                <h3>General Help</h3>
+                <p>Welcome to the Social Auto Publisher plugin!</p>
+                <ul>
+                    <li><strong>Navigation:</strong> Use the left sidebar menu to access different sections</li>
+                    <li><strong>Keyboard Shortcuts:</strong> Press <kbd>Ctrl+Shift+K</kbd> to see all shortcuts</li>
+                    <li><strong>Accessibility:</strong> This plugin supports screen readers and keyboard navigation</li>
+                </ul>
+            </div>
+        `;
     }
 }
 

@@ -199,6 +199,12 @@ class TTSNotificationSystem {
             persistent = false
         } = options;
 
+        // Input validation and sanitization
+        if (!message && !title) {
+            console.warn('TTSNotificationSystem: Empty notification message and title');
+            return null;
+        }
+
         const notificationId = id || 'notification_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
 
         // Remove existing notification with same ID
@@ -206,41 +212,49 @@ class TTSNotificationSystem {
             this.dismiss(notificationId);
         }
 
-        const notification = this.createNotificationElement({
-            id: notificationId,
-            title,
-            message,
-            type,
-            actions,
-            persistent,
-            duration
-        });
+        try {
+            const notification = this.createNotificationElement({
+                id: notificationId,
+                title: this.escapeHtml(title),
+                message: this.escapeHtml(message),
+                type,
+                actions,
+                persistent,
+                duration
+            });
 
-        this.container.appendChild(notification);
-        this.notifications.set(notificationId, notification);
+            this.container.appendChild(notification);
+            this.notifications.set(notificationId, notification);
 
-        // Trigger animation
-        requestAnimationFrame(() => {
-            notification.classList.add('show');
-        });
+            // Announce to screen readers
+            this.announceToScreenReader(message || title, type);
 
-        // Auto dismiss
-        if (!persistent && duration > 0) {
-            const progressBar = notification.querySelector('.tts-notification-progress');
-            if (progressBar) {
-                progressBar.style.width = '100%';
-                progressBar.style.transition = `width ${duration}ms linear`;
-                requestAnimationFrame(() => {
-                    progressBar.style.width = '0%';
-                });
+            // Trigger animation
+            requestAnimationFrame(() => {
+                notification.classList.add('show');
+            });
+
+            // Auto dismiss
+            if (!persistent && duration > 0) {
+                const progressBar = notification.querySelector('.tts-notification-progress');
+                if (progressBar) {
+                    progressBar.style.width = '100%';
+                    progressBar.style.transition = `width ${duration}ms linear`;
+                    requestAnimationFrame(() => {
+                        progressBar.style.width = '0%';
+                    });
+                }
+
+                setTimeout(() => {
+                    this.dismiss(notificationId);
+                }, duration);
             }
 
-            setTimeout(() => {
-                this.dismiss(notificationId);
-            }, duration);
+            return notificationId;
+        } catch (error) {
+            console.error('TTSNotificationSystem: Error creating notification:', error);
+            return null;
         }
-
-        return notificationId;
     }
 
     createNotificationElement(options) {
@@ -345,6 +359,40 @@ class TTSNotificationSystem {
                 notice.classList.add('tts-enhanced');
             }
         });
+    }
+
+    // Helper methods for improved error handling and accessibility
+    escapeHtml(text) {
+        if (!text) return '';
+        const map = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        };
+        return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+    }
+
+    announceToScreenReader(message, type) {
+        if (!message) return;
+        
+        // Create temporary element for screen reader announcement
+        const announcement = document.createElement('div');
+        announcement.setAttribute('aria-live', type === 'error' ? 'assertive' : 'polite');
+        announcement.setAttribute('aria-atomic', 'true');
+        announcement.className = 'sr-only';
+        announcement.style.cssText = 'position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden;';
+        announcement.textContent = `${type}: ${message}`;
+        
+        document.body.appendChild(announcement);
+        
+        // Remove after announcement
+        setTimeout(() => {
+            if (announcement.parentNode) {
+                announcement.parentNode.removeChild(announcement);
+            }
+        }, 1000);
     }
 
     // Convenience methods
