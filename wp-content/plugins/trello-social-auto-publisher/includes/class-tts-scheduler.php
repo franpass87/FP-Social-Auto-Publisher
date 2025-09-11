@@ -179,6 +179,85 @@ class TTS_Scheduler {
         update_post_meta( $post_id, '_published_status', 'published' );
         update_post_meta( $post_id, '_tts_publish_log', $log );
 
+        $card_id       = get_post_meta( $post_id, '_trello_card_id', true );
+        $trello_key    = get_post_meta( $client_id, '_tts_trello_key', true );
+        $trello_token  = get_post_meta( $client_id, '_tts_trello_token', true );
+        $published_list = get_post_meta( $client_id, '_tts_trello_published_list', true );
+
+        if ( $card_id && $trello_key && $trello_token && $published_list ) {
+            $first_url = '';
+            $links     = array();
+            foreach ( $log as $channel => $entry ) {
+                $link = '';
+                if ( is_string( $entry ) && preg_match( '/https?:\/\/[^\s]+/', $entry, $match ) ) {
+                    $link = $match[0];
+                } elseif ( is_array( $entry ) ) {
+                    if ( isset( $entry['url'] ) ) {
+                        $link = $entry['url'];
+                    } else {
+                        foreach ( $entry as $val ) {
+                            if ( is_string( $val ) && preg_match( '/https?:\/\/[^\s]+/', $val, $match ) ) {
+                                $link = $match[0];
+                                break;
+                            }
+                        }
+                    }
+                }
+                if ( $link ) {
+                    if ( empty( $first_url ) ) {
+                        $first_url = $link;
+                    }
+                    $links[] = ucfirst( $channel ) . ': ' . $link;
+                }
+            }
+
+            $base = 'https://api.trello.com/1/cards/' . rawurlencode( $card_id );
+            $move_response = wp_remote_request(
+                $base . '?key=' . rawurlencode( $trello_key ) . '&token=' . rawurlencode( $trello_token ),
+                array(
+                    'method'  => 'PUT',
+                    'body'    => array( 'idList' => $published_list ),
+                    'timeout' => 20,
+                )
+            );
+            if ( is_wp_error( $move_response ) ) {
+                tts_log_event( $post_id, 'trello', 'error', $move_response->get_error_message(), '' );
+            } else {
+                $comment_url = sprintf(
+                    'https://api.trello.com/1/cards/%s/actions/comments?key=%s&token=%s',
+                    rawurlencode( $card_id ),
+                    rawurlencode( $trello_key ),
+                    rawurlencode( $trello_token )
+                );
+
+                if ( $first_url ) {
+                    $comment_response = wp_remote_post(
+                        $comment_url,
+                        array(
+                            'body'    => array( 'text' => $first_url ),
+                            'timeout' => 20,
+                        )
+                    );
+                    if ( is_wp_error( $comment_response ) ) {
+                        tts_log_event( $post_id, 'trello', 'error', $comment_response->get_error_message(), '' );
+                    }
+                }
+
+                if ( $links ) {
+                    $comment_response2 = wp_remote_post(
+                        $comment_url,
+                        array(
+                            'body'    => array( 'text' => implode( "\n", $links ) ),
+                            'timeout' => 20,
+                        )
+                    );
+                    if ( is_wp_error( $comment_response2 ) ) {
+                        tts_log_event( $post_id, 'trello', 'error', $comment_response2->get_error_message(), '' );
+                    }
+                }
+            }
+        }
+
         tts_log_event( $post_id, 'scheduler', 'complete', __( 'Publish process completed', 'trello-social-auto-publisher' ), $log );
     }
 
