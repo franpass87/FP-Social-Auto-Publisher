@@ -26,13 +26,8 @@ class TTS_Settings {
      * Register the settings page.
      */
     public function add_menu() {
-        add_options_page(
-            __( 'Trello Social Settings', 'trello-social-auto-publisher' ),
-            __( 'Trello Social', 'trello-social-auto-publisher' ),
-            'manage_options',
-            'tts-settings',
-            array( $this, 'render_settings_page' )
-        );
+        // We no longer add a separate settings page since it's now integrated
+        // into the main plugin menu structure
     }
 
     /**

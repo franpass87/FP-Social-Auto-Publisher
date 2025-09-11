@@ -92,6 +92,36 @@ class TTS_Admin {
             'tts-social-posts',
             array( $this, 'render_social_posts_page' )
         );
+
+        // Settings submenu
+        add_submenu_page(
+            'tts-main',
+            __( 'Settings', 'trello-social-auto-publisher' ),
+            __( 'Settings', 'trello-social-auto-publisher' ),
+            'manage_options',
+            'tts-settings',
+            array( $this, 'render_settings_page' )
+        );
+
+        // Social Connections submenu
+        add_submenu_page(
+            'tts-main',
+            __( 'Social Connections', 'trello-social-auto-publisher' ),
+            __( 'Social Connections', 'trello-social-auto-publisher' ),
+            'manage_options',
+            'tts-social-connections',
+            array( $this, 'render_social_connections_page' )
+        );
+
+        // Help submenu
+        add_submenu_page(
+            'tts-main',
+            __( 'Help & Setup', 'trello-social-auto-publisher' ),
+            __( 'Help & Setup', 'trello-social-auto-publisher' ),
+            'manage_options',
+            'tts-help',
+            array( $this, 'render_help_page' )
+        );
     }
 
     /**
@@ -1067,6 +1097,16 @@ class TTS_Admin {
         echo '<div class="wrap tts-client-wizard">';
         echo '<h1>' . esc_html__( 'Client Wizard', 'trello-social-auto-publisher' ) . '</h1>';
 
+        // Add helpful notice about social media setup
+        if ( 2 === $step ) {
+            echo '<div class="notice notice-info">';
+            echo '<h3>' . esc_html__( 'Social Media Setup Required', 'trello-social-auto-publisher' ) . '</h3>';
+            echo '<p>' . esc_html__( 'To connect social media accounts, you must first configure OAuth apps for each platform. Click "Configure App" for platforms that are not set up.', 'trello-social-auto-publisher' ) . '</p>';
+            echo '<p><a href="' . esc_url( admin_url( 'admin.php?page=tts-social-connections' ) ) . '" class="button">' . esc_html__( 'Manage Social Connections', 'trello-social-auto-publisher' ) . '</a> ';
+            echo '<a href="' . esc_url( admin_url( 'admin.php?page=tts-main' ) ) . '" target="_blank">' . esc_html__( 'View Setup Guide', 'trello-social-auto-publisher' ) . '</a></p>';
+            echo '</div>';
+        }
+
         $fb_token = get_transient( 'tts_oauth_facebook_token' );
         $ig_token = get_transient( 'tts_oauth_instagram_token' );
         $yt_token = get_transient( 'tts_oauth_youtube_token' );
@@ -1126,32 +1166,49 @@ class TTS_Admin {
             foreach ( $opts as $slug => $label ) {
                 $token     = '';
                 $connected = false;
+                $app_configured = false;
+                
+                // Check if app is configured
+                $settings = get_option( 'tts_social_apps', array() );
+                $platform_settings = isset( $settings[$slug] ) ? $settings[$slug] : array();
+                
                 switch ( $slug ) {
                     case 'facebook':
                         $token     = $fb_token;
                         $connected = ! empty( $fb_token );
+                        $app_configured = ! empty( $platform_settings['app_id'] ) && ! empty( $platform_settings['app_secret'] );
                         break;
                     case 'instagram':
                         $token     = $ig_token;
                         $connected = ! empty( $ig_token );
+                        $app_configured = ! empty( $platform_settings['app_id'] ) && ! empty( $platform_settings['app_secret'] );
                         break;
                     case 'youtube':
                         $token     = $yt_token;
                         $connected = ! empty( $yt_token );
+                        $app_configured = ! empty( $platform_settings['client_id'] ) && ! empty( $platform_settings['client_secret'] );
                         break;
                     case 'tiktok':
                         $token     = $tt_token;
                         $connected = ! empty( $tt_token );
+                        $app_configured = ! empty( $platform_settings['client_key'] ) && ! empty( $platform_settings['client_secret'] );
                         break;
                 }
 
-                echo '<p><label><input type="checkbox" name="channels[]" value="' . esc_attr( $slug ) . '" ' . checked( in_array( $slug, $channels, true ) || $connected, true, false ) . ' /> ' . esc_html( $label ) . '</label>';
-                $url = add_query_arg( array( 'action' => 'tts_oauth_' . $slug, 'step' => 2 ), admin_url( 'admin-post.php' ) );
-                echo ' <a href="' . esc_url( $url ) . '" class="button">' . esc_html__( 'Connect', 'trello-social-auto-publisher' ) . '</a>';
-                if ( $connected ) {
-                    echo ' ' . esc_html__( 'Connected', 'trello-social-auto-publisher' );
+                echo '<div style="border: 1px solid #ddd; padding: 15px; margin: 10px 0; border-radius: 5px;">';
+                echo '<p><label><input type="checkbox" name="channels[]" value="' . esc_attr( $slug ) . '" ' . checked( in_array( $slug, $channels, true ) || $connected, true, false ) . ' /> <strong>' . esc_html( $label ) . '</strong></label>';
+                
+                if ( ! $app_configured ) {
+                    echo '<br><span style="color: #d63638;">⚠️ ' . esc_html__( 'App not configured', 'trello-social-auto-publisher' ) . '</span>';
+                    echo '<br><a href="' . esc_url( admin_url( 'admin.php?page=tts-social-connections' ) ) . '" class="button">' . esc_html__( 'Configure App', 'trello-social-auto-publisher' ) . '</a>';
+                } elseif ( $connected ) {
+                    echo '<br><span style="color: #00a32a;">✅ ' . esc_html__( 'Connected', 'trello-social-auto-publisher' ) . '</span>';
+                } else {
+                    $url = add_query_arg( array( 'action' => 'tts_oauth_' . $slug, 'step' => 2 ), admin_url( 'admin-post.php' ) );
+                    echo '<br><span style="color: #f56e28;">🟡 ' . esc_html__( 'Ready to connect', 'trello-social-auto-publisher' ) . '</span>';
+                    echo '<br><a href="' . esc_url( $url ) . '" class="button button-primary">' . esc_html__( 'Connect Account', 'trello-social-auto-publisher' ) . '</a>';
                 }
-                echo '</p>';
+                echo '</div>';
             }
 
             echo '<p><button type="submit" class="button button-primary">' . esc_html__( 'Next', 'trello-social-auto-publisher' ) . '</button></p>';
@@ -1671,6 +1728,563 @@ class TTS_Social_Posts_Table extends WP_List_Table {
         // Increment counter
         set_transient($transient_key, $current_count + 1, $window);
         return true;
+    }
+
+    /**
+     * Render the settings page.
+     */
+    public function render_settings_page() {
+        ?>
+        <div class="wrap">
+            <h1><?php esc_html_e( 'Social Auto Publisher Settings', 'trello-social-auto-publisher' ); ?></h1>
+            
+            <div class="notice notice-info">
+                <p><?php esc_html_e( 'Configure your global plugin settings here. For social media connections, please visit the Social Connections page.', 'trello-social-auto-publisher' ); ?></p>
+            </div>
+
+            <form action="options.php" method="post">
+                <?php
+                settings_fields( 'tts_settings_group' );
+                do_settings_sections( 'tts_settings' );
+                submit_button();
+                ?>
+            </form>
+        </div>
+        <?php
+    }
+
+    /**
+     * Render the social connections page.
+     */
+    public function render_social_connections_page() {
+        // Handle form submissions
+        if ( isset( $_POST['action'] ) && $_POST['action'] === 'save_social_apps' ) {
+            if ( wp_verify_nonce( $_POST['tts_social_nonce'], 'tts_save_social_apps' ) ) {
+                $this->save_social_app_settings();
+                echo '<div class="notice notice-success"><p>' . esc_html__( 'Social media app settings saved successfully!', 'trello-social-auto-publisher' ) . '</p></div>';
+            }
+        }
+
+        $settings = get_option( 'tts_social_apps', array() );
+        ?>
+        <div class="wrap">
+            <h1><?php esc_html_e( 'Social Media Connections', 'trello-social-auto-publisher' ); ?></h1>
+            
+            <div class="notice notice-info">
+                <h3><?php esc_html_e( 'Setup Instructions', 'trello-social-auto-publisher' ); ?></h3>
+                <p><?php esc_html_e( 'To connect your social media accounts, you need to create apps on each platform and configure OAuth credentials:', 'trello-social-auto-publisher' ); ?></p>
+                <ol>
+                    <li><strong>Facebook:</strong> <?php esc_html_e( 'Create an app at', 'trello-social-auto-publisher' ); ?> <a href="https://developers.facebook.com/apps/" target="_blank">Facebook Developers</a></li>
+                    <li><strong>Instagram:</strong> <?php esc_html_e( 'Use Facebook app with Instagram Basic Display product', 'trello-social-auto-publisher' ); ?></li>
+                    <li><strong>YouTube:</strong> <?php esc_html_e( 'Create a project at', 'trello-social-auto-publisher' ); ?> <a href="https://console.developers.google.com/" target="_blank">Google Developers Console</a></li>
+                    <li><strong>TikTok:</strong> <?php esc_html_e( 'Apply for TikTok for Developers at', 'trello-social-auto-publisher' ); ?> <a href="https://developers.tiktok.com/" target="_blank">TikTok Developers</a></li>
+                </ol>
+                <p><strong><?php esc_html_e( 'Redirect URI:', 'trello-social-auto-publisher' ); ?></strong> <code><?php echo esc_url( admin_url( 'admin-post.php' ) ); ?></code></p>
+            </div>
+
+            <div class="tts-social-apps-container">
+                <form method="post" action="">
+                    <?php wp_nonce_field( 'tts_save_social_apps', 'tts_social_nonce' ); ?>
+                    <input type="hidden" name="action" value="save_social_apps" />
+
+                    <div class="tts-social-platforms">
+                        <?php
+                        $platforms = array(
+                            'facebook' => array(
+                                'name' => 'Facebook',
+                                'icon' => '📘',
+                                'fields' => array( 'app_id', 'app_secret' )
+                            ),
+                            'instagram' => array(
+                                'name' => 'Instagram',
+                                'icon' => '📷',
+                                'fields' => array( 'app_id', 'app_secret' )
+                            ),
+                            'youtube' => array(
+                                'name' => 'YouTube',
+                                'icon' => '🎥',
+                                'fields' => array( 'client_id', 'client_secret' )
+                            ),
+                            'tiktok' => array(
+                                'name' => 'TikTok',
+                                'icon' => '🎵',
+                                'fields' => array( 'client_key', 'client_secret' )
+                            )
+                        );
+
+                        foreach ( $platforms as $platform => $config ) :
+                            $platform_settings = isset( $settings[$platform] ) ? $settings[$platform] : array();
+                        ?>
+                        <div class="tts-platform-config">
+                            <h2><?php echo esc_html( $config['icon'] . ' ' . $config['name'] ); ?></h2>
+                            
+                            <?php foreach ( $config['fields'] as $field ) : 
+                                $field_value = isset( $platform_settings[$field] ) ? $platform_settings[$field] : '';
+                                $field_label = ucwords( str_replace( '_', ' ', $field ) );
+                            ?>
+                            <p>
+                                <label for="<?php echo esc_attr( $platform . '_' . $field ); ?>">
+                                    <?php echo esc_html( $field_label ); ?>:
+                                </label>
+                                <input type="text" 
+                                       id="<?php echo esc_attr( $platform . '_' . $field ); ?>"
+                                       name="social_apps[<?php echo esc_attr( $platform ); ?>][<?php echo esc_attr( $field ); ?>]"
+                                       value="<?php echo esc_attr( $field_value ); ?>"
+                                       class="regular-text" />
+                            </p>
+                            <?php endforeach; ?>
+
+                            <?php 
+                            // Check connection status
+                            $connection_status = $this->check_platform_connection_status( $platform );
+                            ?>
+                            <div class="tts-connection-status">
+                                <strong><?php esc_html_e( 'Status:', 'trello-social-auto-publisher' ); ?></strong>
+                                <span class="tts-status-<?php echo esc_attr( $connection_status['status'] ); ?>">
+                                    <?php echo esc_html( $connection_status['message'] ); ?>
+                                </span>
+                                
+                                <?php if ( $connection_status['status'] === 'configured' ) : ?>
+                                    <a href="<?php echo esc_url( $this->get_oauth_url( $platform ) ); ?>" 
+                                       class="button button-primary">
+                                        <?php esc_html_e( 'Connect Account', 'trello-social-auto-publisher' ); ?>
+                                    </a>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                        <?php endforeach; ?>
+                    </div>
+
+                    <p class="submit">
+                        <input type="submit" class="button-primary" value="<?php esc_attr_e( 'Save App Settings', 'trello-social-auto-publisher' ); ?>" />
+                    </p>
+                </form>
+            </div>
+
+            <style>
+            .tts-social-apps-container {
+                margin-top: 20px;
+            }
+            .tts-social-platforms {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+                gap: 20px;
+                margin-bottom: 20px;
+            }
+            .tts-platform-config {
+                border: 1px solid #ddd;
+                padding: 20px;
+                border-radius: 8px;
+                background: #fff;
+            }
+            .tts-platform-config h2 {
+                margin-top: 0;
+                font-size: 1.3em;
+                border-bottom: 1px solid #eee;
+                padding-bottom: 10px;
+            }
+            .tts-connection-status {
+                margin-top: 15px;
+                padding: 10px;
+                background: #f9f9f9;
+                border-radius: 4px;
+            }
+            .tts-status-not-configured {
+                color: #d63638;
+            }
+            .tts-status-configured {
+                color: #f56e28;
+            }
+            .tts-status-connected {
+                color: #00a32a;
+            }
+            </style>
+        </div>
+        <?php
+    }
+
+    /**
+     * Save social media app settings.
+     */
+    private function save_social_app_settings() {
+        if ( ! current_user_can( 'manage_options' ) ) {
+            return;
+        }
+
+        $social_apps = isset( $_POST['social_apps'] ) ? $_POST['social_apps'] : array();
+        $sanitized_apps = array();
+
+        foreach ( $social_apps as $platform => $settings ) {
+            $platform = sanitize_key( $platform );
+            $sanitized_apps[$platform] = array();
+            
+            foreach ( $settings as $key => $value ) {
+                $key = sanitize_key( $key );
+                $sanitized_apps[$platform][$key] = sanitize_text_field( $value );
+            }
+        }
+
+        update_option( 'tts_social_apps', $sanitized_apps );
+    }
+
+    /**
+     * Check the connection status for a platform.
+     *
+     * @param string $platform Platform name.
+     * @return array Status information.
+     */
+    private function check_platform_connection_status( $platform ) {
+        $settings = get_option( 'tts_social_apps', array() );
+        $platform_settings = isset( $settings[$platform] ) ? $settings[$platform] : array();
+
+        // Check if app credentials are configured
+        $required_fields = array();
+        switch ( $platform ) {
+            case 'facebook':
+            case 'instagram':
+                $required_fields = array( 'app_id', 'app_secret' );
+                break;
+            case 'youtube':
+                $required_fields = array( 'client_id', 'client_secret' );
+                break;
+            case 'tiktok':
+                $required_fields = array( 'client_key', 'client_secret' );
+                break;
+        }
+
+        $configured = true;
+        foreach ( $required_fields as $field ) {
+            if ( empty( $platform_settings[$field] ) ) {
+                $configured = false;
+                break;
+            }
+        }
+
+        if ( ! $configured ) {
+            return array(
+                'status' => 'not-configured',
+                'message' => __( 'App credentials not configured', 'trello-social-auto-publisher' )
+            );
+        }
+
+        // Check if there are any connected accounts
+        $connected_clients = get_posts( array(
+            'post_type' => 'tts_client',
+            'meta_query' => array(
+                array(
+                    'key' => '_tts_' . substr( $platform, 0, 2 ) . '_token',
+                    'compare' => 'EXISTS'
+                )
+            ),
+            'fields' => 'ids'
+        ) );
+
+        if ( ! empty( $connected_clients ) ) {
+            return array(
+                'status' => 'connected',
+                'message' => sprintf( __( '%d account(s) connected', 'trello-social-auto-publisher' ), count( $connected_clients ) )
+            );
+        }
+
+        return array(
+            'status' => 'configured',
+            'message' => __( 'Ready to connect accounts', 'trello-social-auto-publisher' )
+        );
+    }
+
+    /**
+     * Generate OAuth URL for a platform.
+     *
+     * @param string $platform Platform name.
+     * @return string OAuth URL.
+     */
+    private function get_oauth_url( $platform ) {
+        $settings = get_option( 'tts_social_apps', array() );
+        $platform_settings = isset( $settings[$platform] ) ? $settings[$platform] : array();
+        $redirect_uri = admin_url( 'admin-post.php?action=tts_oauth_' . $platform );
+        $state = wp_generate_password( 20, false );
+        
+        // Store state for verification
+        if ( ! session_id() ) {
+            session_start();
+        }
+        $_SESSION['tts_oauth_state'] = $state;
+
+        switch ( $platform ) {
+            case 'facebook':
+                if ( ! empty( $platform_settings['app_id'] ) ) {
+                    return 'https://www.facebook.com/v18.0/dialog/oauth?' . http_build_query( array(
+                        'client_id' => $platform_settings['app_id'],
+                        'redirect_uri' => $redirect_uri,
+                        'scope' => 'pages_manage_posts,pages_read_engagement,pages_show_list',
+                        'state' => $state,
+                        'response_type' => 'code'
+                    ) );
+                }
+                break;
+            case 'instagram':
+                if ( ! empty( $platform_settings['app_id'] ) ) {
+                    return 'https://api.instagram.com/oauth/authorize?' . http_build_query( array(
+                        'client_id' => $platform_settings['app_id'],
+                        'redirect_uri' => $redirect_uri,
+                        'scope' => 'user_profile,user_media',
+                        'state' => $state,
+                        'response_type' => 'code'
+                    ) );
+                }
+                break;
+            case 'youtube':
+                if ( ! empty( $platform_settings['client_id'] ) ) {
+                    return 'https://accounts.google.com/o/oauth2/auth?' . http_build_query( array(
+                        'client_id' => $platform_settings['client_id'],
+                        'redirect_uri' => $redirect_uri,
+                        'scope' => 'https://www.googleapis.com/auth/youtube.upload',
+                        'state' => $state,
+                        'response_type' => 'code',
+                        'access_type' => 'offline'
+                    ) );
+                }
+                break;
+            case 'tiktok':
+                if ( ! empty( $platform_settings['client_key'] ) ) {
+                    return 'https://www.tiktok.com/auth/authorize/?' . http_build_query( array(
+                        'client_key' => $platform_settings['client_key'],
+                        'redirect_uri' => $redirect_uri,
+                        'scope' => 'user.info.basic,video.upload',
+                        'state' => $state,
+                        'response_type' => 'code'
+                    ) );
+                }
+                break;
+        }
+
+        return '#';
+    }
+
+    /**
+     * Render the help and setup page.
+     */
+    public function render_help_page() {
+        ?>
+        <div class="wrap">
+            <h1><?php esc_html_e( 'Help & Setup Guide', 'trello-social-auto-publisher' ); ?></h1>
+            
+            <div class="tts-help-container">
+                <div class="tts-help-sidebar">
+                    <h3><?php esc_html_e( 'Quick Links', 'trello-social-auto-publisher' ); ?></h3>
+                    <ul>
+                        <li><a href="#overview"><?php esc_html_e( 'Overview', 'trello-social-auto-publisher' ); ?></a></li>
+                        <li><a href="#facebook"><?php esc_html_e( 'Facebook Setup', 'trello-social-auto-publisher' ); ?></a></li>
+                        <li><a href="#instagram"><?php esc_html_e( 'Instagram Setup', 'trello-social-auto-publisher' ); ?></a></li>
+                        <li><a href="#youtube"><?php esc_html_e( 'YouTube Setup', 'trello-social-auto-publisher' ); ?></a></li>
+                        <li><a href="#tiktok"><?php esc_html_e( 'TikTok Setup', 'trello-social-auto-publisher' ); ?></a></li>
+                        <li><a href="#troubleshooting"><?php esc_html_e( 'Troubleshooting', 'trello-social-auto-publisher' ); ?></a></li>
+                    </ul>
+                    
+                    <div class="tts-help-actions">
+                        <a href="<?php echo esc_url( admin_url( 'admin.php?page=tts-social-connections' ) ); ?>" class="button button-primary">
+                            <?php esc_html_e( 'Configure Social Apps', 'trello-social-auto-publisher' ); ?>
+                        </a>
+                        <a href="<?php echo esc_url( admin_url( 'admin.php?page=tts-client-wizard' ) ); ?>" class="button">
+                            <?php esc_html_e( 'Create Client', 'trello-social-auto-publisher' ); ?>
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="tts-help-content">
+                    <section id="overview">
+                        <h2><?php esc_html_e( '🚀 Getting Started', 'trello-social-auto-publisher' ); ?></h2>
+                        <p><?php esc_html_e( 'To use the Social Auto Publisher, you need to:', 'trello-social-auto-publisher' ); ?></p>
+                        <ol>
+                            <li><strong><?php esc_html_e( 'Create developer apps', 'trello-social-auto-publisher' ); ?></strong> <?php esc_html_e( 'on each social media platform', 'trello-social-auto-publisher' ); ?></li>
+                            <li><strong><?php esc_html_e( 'Configure OAuth credentials', 'trello-social-auto-publisher' ); ?></strong> <?php esc_html_e( 'in Social Connections', 'trello-social-auto-publisher' ); ?></li>
+                            <li><strong><?php esc_html_e( 'Connect your accounts', 'trello-social-auto-publisher' ); ?></strong> <?php esc_html_e( 'using the OAuth flow', 'trello-social-auto-publisher' ); ?></li>
+                            <li><strong><?php esc_html_e( 'Create clients', 'trello-social-auto-publisher' ); ?></strong> <?php esc_html_e( 'and assign social accounts', 'trello-social-auto-publisher' ); ?></li>
+                        </ol>
+                        
+                        <div class="tts-notice-warning">
+                            <p><strong><?php esc_html_e( 'Important:', 'trello-social-auto-publisher' ); ?></strong> <?php esc_html_e( 'Each social media platform requires you to create a developer application. This is a one-time setup per platform.', 'trello-social-auto-publisher' ); ?></p>
+                        </div>
+                    </section>
+
+                    <section id="facebook">
+                        <h2><?php esc_html_e( '📘 Facebook Setup', 'trello-social-auto-publisher' ); ?></h2>
+                        <h3><?php esc_html_e( 'Step 1: Create Facebook App', 'trello-social-auto-publisher' ); ?></h3>
+                        <ol>
+                            <li><?php esc_html_e( 'Visit', 'trello-social-auto-publisher' ); ?> <a href="https://developers.facebook.com/apps/" target="_blank">Facebook Developers</a></li>
+                            <li><?php esc_html_e( 'Click "Create App" → "Business" → "Consumer"', 'trello-social-auto-publisher' ); ?></li>
+                            <li><?php esc_html_e( 'Enter app name and contact email', 'trello-social-auto-publisher' ); ?></li>
+                            <li><?php esc_html_e( 'Add "Facebook Login" product', 'trello-social-auto-publisher' ); ?></li>
+                        </ol>
+                        
+                        <h3><?php esc_html_e( 'Step 2: Configure OAuth Settings', 'trello-social-auto-publisher' ); ?></h3>
+                        <ol>
+                            <li><?php esc_html_e( 'Go to Facebook Login → Settings', 'trello-social-auto-publisher' ); ?></li>
+                            <li><?php esc_html_e( 'Add redirect URI:', 'trello-social-auto-publisher' ); ?> <code><?php echo esc_url( admin_url( 'admin-post.php?action=tts_oauth_facebook' ) ); ?></code></li>
+                            <li><?php esc_html_e( 'Enable "Use Strict Mode for Redirect URIs"', 'trello-social-auto-publisher' ); ?></li>
+                        </ol>
+                        
+                        <h3><?php esc_html_e( 'Step 3: Get Credentials', 'trello-social-auto-publisher' ); ?></h3>
+                        <ol>
+                            <li><?php esc_html_e( 'Go to Settings → Basic', 'trello-social-auto-publisher' ); ?></li>
+                            <li><?php esc_html_e( 'Copy App ID and App Secret', 'trello-social-auto-publisher' ); ?></li>
+                            <li><?php esc_html_e( 'Enter these in Social Connections page', 'trello-social-auto-publisher' ); ?></li>
+                        </ol>
+                    </section>
+
+                    <section id="instagram">
+                        <h2><?php esc_html_e( '📷 Instagram Setup', 'trello-social-auto-publisher' ); ?></h2>
+                        <p><?php esc_html_e( 'Instagram uses the same Facebook app with additional configuration:', 'trello-social-auto-publisher' ); ?></p>
+                        <ol>
+                            <li><?php esc_html_e( 'In your Facebook app, add "Instagram Basic Display" product', 'trello-social-auto-publisher' ); ?></li>
+                            <li><?php esc_html_e( 'Configure redirect URI:', 'trello-social-auto-publisher' ); ?> <code><?php echo esc_url( admin_url( 'admin-post.php?action=tts_oauth_instagram' ) ); ?></code></li>
+                            <li><?php esc_html_e( 'Add your Instagram account as a test user', 'trello-social-auto-publisher' ); ?></li>
+                            <li><?php esc_html_e( 'Use the same App ID and App Secret from Facebook', 'trello-social-auto-publisher' ); ?></li>
+                        </ol>
+                    </section>
+
+                    <section id="youtube">
+                        <h2><?php esc_html_e( '🎥 YouTube Setup', 'trello-social-auto-publisher' ); ?></h2>
+                        <h3><?php esc_html_e( 'Step 1: Create Google Project', 'trello-social-auto-publisher' ); ?></h3>
+                        <ol>
+                            <li><?php esc_html_e( 'Visit', 'trello-social-auto-publisher' ); ?> <a href="https://console.developers.google.com/" target="_blank">Google Developers Console</a></li>
+                            <li><?php esc_html_e( 'Create a new project or select existing one', 'trello-social-auto-publisher' ); ?></li>
+                            <li><?php esc_html_e( 'Enable "YouTube Data API v3"', 'trello-social-auto-publisher' ); ?></li>
+                        </ol>
+                        
+                        <h3><?php esc_html_e( 'Step 2: Create OAuth Credentials', 'trello-social-auto-publisher' ); ?></h3>
+                        <ol>
+                            <li><?php esc_html_e( 'Go to Credentials → Create Credentials → OAuth 2.0 Client IDs', 'trello-social-auto-publisher' ); ?></li>
+                            <li><?php esc_html_e( 'Choose "Web application"', 'trello-social-auto-publisher' ); ?></li>
+                            <li><?php esc_html_e( 'Add redirect URI:', 'trello-social-auto-publisher' ); ?> <code><?php echo esc_url( admin_url( 'admin-post.php?action=tts_oauth_youtube' ) ); ?></code></li>
+                        </ol>
+                    </section>
+
+                    <section id="tiktok">
+                        <h2><?php esc_html_e( '🎵 TikTok Setup', 'trello-social-auto-publisher' ); ?></h2>
+                        <div class="tts-notice-warning">
+                            <p><strong><?php esc_html_e( 'Note:', 'trello-social-auto-publisher' ); ?></strong> <?php esc_html_e( 'TikTok requires developer account approval, which can take several days.', 'trello-social-auto-publisher' ); ?></p>
+                        </div>
+                        <ol>
+                            <li><?php esc_html_e( 'Visit', 'trello-social-auto-publisher' ); ?> <a href="https://developers.tiktok.com/" target="_blank">TikTok Developers</a></li>
+                            <li><?php esc_html_e( 'Apply for developer access', 'trello-social-auto-publisher' ); ?></li>
+                            <li><?php esc_html_e( 'Create a new app in the developer portal', 'trello-social-auto-publisher' ); ?></li>
+                            <li><?php esc_html_e( 'Configure redirect URI:', 'trello-social-auto-publisher' ); ?> <code><?php echo esc_url( admin_url( 'admin-post.php?action=tts_oauth_tiktok' ) ); ?></code></li>
+                        </ol>
+                    </section>
+
+                    <section id="troubleshooting">
+                        <h2><?php esc_html_e( '🛠️ Troubleshooting', 'trello-social-auto-publisher' ); ?></h2>
+                        
+                        <h3><?php esc_html_e( 'Common Issues', 'trello-social-auto-publisher' ); ?></h3>
+                        <dl>
+                            <dt><strong><?php esc_html_e( '"OAuth verification failed"', 'trello-social-auto-publisher' ); ?></strong></dt>
+                            <dd><?php esc_html_e( 'Check that redirect URIs match exactly and app credentials are correct.', 'trello-social-auto-publisher' ); ?></dd>
+                            
+                            <dt><strong><?php esc_html_e( '"Failed to obtain access token"', 'trello-social-auto-publisher' ); ?></strong></dt>
+                            <dd><?php esc_html_e( 'Verify app secret is correct and proper permissions are granted.', 'trello-social-auto-publisher' ); ?></dd>
+                            
+                            <dt><strong><?php esc_html_e( '"App credentials not configured"', 'trello-social-auto-publisher' ); ?></strong></dt>
+                            <dd><?php esc_html_e( 'Enter Client ID and Client Secret in Social Connections, then save settings.', 'trello-social-auto-publisher' ); ?></dd>
+                        </dl>
+                        
+                        <h3><?php esc_html_e( 'Getting Help', 'trello-social-auto-publisher' ); ?></h3>
+                        <p><?php esc_html_e( 'If you continue to have issues:', 'trello-social-auto-publisher' ); ?></p>
+                        <ul>
+                            <li><?php esc_html_e( 'Check the Health page for diagnostic information', 'trello-social-auto-publisher' ); ?></li>
+                            <li><?php esc_html_e( 'Review WordPress error logs', 'trello-social-auto-publisher' ); ?></li>
+                            <li><?php esc_html_e( 'Verify all redirect URIs are correctly configured', 'trello-social-auto-publisher' ); ?></li>
+                        </ul>
+                    </section>
+                </div>
+            </div>
+        </div>
+        
+        <style>
+        .tts-help-container {
+            display: flex;
+            gap: 30px;
+            margin-top: 20px;
+        }
+        .tts-help-sidebar {
+            flex: 0 0 250px;
+            background: #fff;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            height: fit-content;
+            position: sticky;
+            top: 32px;
+        }
+        .tts-help-content {
+            flex: 1;
+            background: #fff;
+            padding: 30px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .tts-help-sidebar ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .tts-help-sidebar li {
+            margin-bottom: 8px;
+        }
+        .tts-help-sidebar a {
+            text-decoration: none;
+            padding: 8px 12px;
+            display: block;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+        .tts-help-sidebar a:hover {
+            background-color: #f0f0f1;
+        }
+        .tts-help-actions {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+        .tts-help-actions .button {
+            display: block;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        .tts-help-content section {
+            margin-bottom: 40px;
+        }
+        .tts-help-content h2 {
+            border-bottom: 2px solid #0073aa;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .tts-help-content h3 {
+            color: #0073aa;
+            margin-top: 25px;
+        }
+        .tts-help-content code {
+            background: #f1f1f1;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 13px;
+            word-break: break-all;
+        }
+        .tts-notice-warning {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .tts-help-content dt {
+            margin-top: 15px;
+        }
+        .tts-help-content dd {
+            margin-left: 20px;
+            margin-bottom: 10px;
+        }
+        </style>
+        <?php
     }
 }
 
