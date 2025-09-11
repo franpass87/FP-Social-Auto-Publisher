@@ -37,11 +37,21 @@ class TTS_Scheduler {
         as_unschedule_all_actions( 'tts_publish_social_post', array( 'post_id' => $post_id ) );
 
         $publish_at = isset( $_POST['_tts_publish_at'] ) ? sanitize_text_field( $_POST['_tts_publish_at'] ) : '';
+        $channels   = isset( $_POST['_tts_social_channel'] ) && is_array( $_POST['_tts_social_channel'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['_tts_social_channel'] ) ) : get_post_meta( $post_id, '_tts_social_channel', true );
 
         if ( ! empty( $publish_at ) ) {
             $timestamp = strtotime( $publish_at );
             if ( $timestamp ) {
-                as_schedule_single_action( $timestamp, 'tts_publish_social_post', array( 'post_id' => $post_id ) );
+                if ( ! empty( $channels ) ) {
+                    $options = get_option( 'tts_settings', array() );
+                    foreach ( $channels as $channel ) {
+                        $offset = isset( $options[ $channel . '_offset' ] ) ? intval( $options[ $channel . '_offset' ] ) : 0;
+                        $when   = $timestamp + $offset * MINUTE_IN_SECONDS;
+                        as_schedule_single_action( $when, 'tts_publish_social_post', array( 'post_id' => $post_id, 'channel' => $channel ) );
+                    }
+                } else {
+                    as_schedule_single_action( $timestamp, 'tts_publish_social_post', array( 'post_id' => $post_id ) );
+                }
             }
         }
     }
@@ -52,7 +62,8 @@ class TTS_Scheduler {
      * @param array $args Action Scheduler arguments.
      */
     public function publish_social_post( $args ) {
-        $post_id = isset( $args['post_id'] ) ? intval( $args['post_id'] ) : 0;
+        $post_id       = isset( $args['post_id'] ) ? intval( $args['post_id'] ) : 0;
+        $forced_channel = isset( $args['channel'] ) ? sanitize_text_field( $args['channel'] ) : '';
         if ( ! $post_id ) {
             return;
         }
@@ -78,9 +89,9 @@ class TTS_Scheduler {
         );
 
         $options  = get_option( 'tts_settings', array() );
-        $channels = get_post_meta( $post_id, '_tts_social_channel', true );
+        $channels = $forced_channel ? array( $forced_channel ) : get_post_meta( $post_id, '_tts_social_channel', true );
 
-        if ( empty( $channels ) ) {
+        if ( empty( $channels ) && ! $forced_channel ) {
             $mapped_channel = '';
             $id_list        = get_post_meta( $post_id, '_trello_idList', true );
             if ( empty( $id_list ) ) {

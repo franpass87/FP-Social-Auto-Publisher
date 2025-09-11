@@ -46,6 +46,8 @@ class TTS_Settings {
                 'sanitize_callback' => 'tts_sanitize_settings',
             )
         );
+        
+        $channels = array( 'facebook', 'instagram', 'youtube', 'tiktok' );
 
         // Trello API credentials.
         add_settings_section(
@@ -103,6 +105,27 @@ class TTS_Settings {
             'tts_social_token'
         );
 
+        // Scheduling options.
+        add_settings_section(
+            'tts_scheduling_options',
+            __( 'Scheduling Options', 'trello-social-auto-publisher' ),
+            '__return_false',
+            'tts_settings'
+        );
+
+        foreach ( $channels as $channel ) {
+            add_settings_field(
+                $channel . '_offset',
+                sprintf( __( '%s Offset (minutes)', 'trello-social-auto-publisher' ), ucfirst( $channel ) ),
+                array( $this, 'render_offset_field' ),
+                'tts_settings',
+                'tts_scheduling_options',
+                array(
+                    'channel' => $channel,
+                )
+            );
+        }
+
         // UTM options.
         add_settings_section(
             'tts_utm_options',
@@ -110,7 +133,6 @@ class TTS_Settings {
             '__return_false',
             'tts_settings'
         );
-        $channels = array( 'facebook', 'instagram', 'youtube', 'tiktok' );
         $params   = array( 'source', 'medium', 'campaign' );
 
         foreach ( $channels as $channel ) {
@@ -273,6 +295,19 @@ class TTS_Settings {
     }
 
     /**
+     * Render scheduling offset field for a channel.
+     *
+     * @param array $args Field arguments.
+     */
+    public function render_offset_field( $args ) {
+        $options = get_option( 'tts_settings', array() );
+        $channel = isset( $args['channel'] ) ? $args['channel'] : '';
+        $key     = $channel . '_offset';
+        $value   = isset( $options[ $key ] ) ? intval( $options[ $key ] ) : 0;
+        echo '<input type="number" min="0" name="tts_settings[' . esc_attr( $key ) . ']" value="' . esc_attr( $value ) . '" class="small-text" />';
+    }
+
+    /**
      * Render a UTM field for a given channel and parameter.
      *
      * @param array $args Field arguments.
@@ -407,6 +442,13 @@ function tts_sanitize_settings( $input ) {
 
     if ( isset( $input['log_retention_days'] ) ) {
         $output['log_retention_days'] = absint( $input['log_retention_days'] );
+    }
+
+    $offset_keys = array( 'facebook_offset', 'instagram_offset', 'youtube_offset', 'tiktok_offset' );
+    foreach ( $offset_keys as $key ) {
+        if ( isset( $input[ $key ] ) ) {
+            $output[ $key ] = absint( $input[ $key ] );
+        }
     }
 
     if ( isset( $input['url_shortener'] ) && in_array( $input['url_shortener'], array( 'none', 'wp', 'bitly' ), true ) ) {

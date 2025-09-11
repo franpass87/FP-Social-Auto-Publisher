@@ -207,12 +207,16 @@ class TTS_CPT {
             'tiktok'    => 'TikTok',
         );
 
+        $options = get_option( 'tts_settings', array() );
+
         foreach ( $channels as $key => $label ) {
+            $offset  = isset( $options[ $key . '_offset' ] ) ? intval( $options[ $key . '_offset' ] ) : 0;
+            $display = sprintf( __( '%1$s (%2$d min)', 'trello-social-auto-publisher' ), $label, $offset );
             printf(
                 '<p><label><input type="checkbox" name="_tts_social_channel[]" value="%1$s" %2$s /> %3$s</label></p>',
                 esc_attr( $key ),
                 checked( in_array( $key, $value, true ), true, false ),
-                esc_html( $label )
+                esc_html( $display )
             );
         }
     }
