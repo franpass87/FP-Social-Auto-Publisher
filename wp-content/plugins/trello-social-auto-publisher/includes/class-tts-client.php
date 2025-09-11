@@ -74,7 +74,7 @@ class TTS_Client {
         $trello_key    = get_post_meta( $post->ID, '_tts_trello_key', true );
         $trello_token  = get_post_meta( $post->ID, '_tts_trello_token', true );
         $trello_secret   = get_post_meta( $post->ID, '_tts_trello_secret', true );
-        $board_id        = get_post_meta( $post->ID, '_tts_trello_board', true );
+        $board_ids       = get_post_meta( $post->ID, '_tts_trello_boards', true );
         $published_list  = get_post_meta( $post->ID, '_tts_trello_published_list', true );
         $fb_token        = get_post_meta( $post->ID, '_tts_fb_token', true );
         $ig_token        = get_post_meta( $post->ID, '_tts_ig_token', true );
@@ -84,6 +84,9 @@ class TTS_Client {
 
         if ( ! is_array( $trello_map ) ) {
             $trello_map = array();
+        }
+        if ( ! is_array( $board_ids ) ) {
+            $board_ids = array();
         }
 
         echo '<p><label for="tts_trello_key">' . esc_html__( 'Trello API Key', 'trello-social-auto-publisher' ) . '</label>';
@@ -95,8 +98,36 @@ class TTS_Client {
         echo '<p><label for="tts_trello_secret">' . esc_html__( 'Trello API Secret', 'trello-social-auto-publisher' ) . '</label>';
         echo '<input type="text" id="tts_trello_secret" name="tts_trello_secret" value="' . esc_attr( $trello_secret ) . '" class="widefat" /></p>';
 
-        echo '<p><label for="tts_trello_board">' . esc_html__( 'Trello Board/List ID', 'trello-social-auto-publisher' ) . '</label>';
-        echo '<input type="text" id="tts_trello_board" name="tts_trello_board" value="' . esc_attr( $board_id ) . '" class="widefat" /></p>';
+        ?>
+        <div id="tts_trello_boards">
+            <?php
+            $index = 0;
+            foreach ( $board_ids as $board ) :
+                ?>
+                <p class="tts-trello-board-row">
+                    <input type="text" name="tts_trello_boards[<?php echo $index; ?>]" value="<?php echo esc_attr( $board ); ?>" placeholder="<?php esc_attr_e( 'Trello Board ID', 'trello-social-auto-publisher' ); ?>" />
+                </p>
+                <?php
+                $index++;
+            endforeach;
+            ?>
+            <p class="tts-trello-board-row">
+                <input type="text" name="tts_trello_boards[<?php echo $index; ?>]" placeholder="<?php esc_attr_e( 'Trello Board ID', 'trello-social-auto-publisher' ); ?>" />
+            </p>
+        </div>
+        <p><button type="button" class="button" id="add-tts-trello-board"><?php esc_html_e( 'Add Board', 'trello-social-auto-publisher' ); ?></button></p>
+        <script type="text/javascript">
+        jQuery(document).ready(function($){
+            $('#add-tts-trello-board').on('click', function(e){
+                e.preventDefault();
+                var index = $('#tts_trello_boards .tts-trello-board-row').length;
+                var safeIndex = String(parseInt(index, 10));
+                var row = '<p class="tts-trello-board-row"><input type="text" name="tts_trello_boards[' + safeIndex + ']" placeholder="<?php echo esc_js( __( 'Trello Board ID', 'trello-social-auto-publisher' ) ); ?>" /></p>';
+                $('#tts_trello_boards').append(row);
+            });
+        });
+        </script>
+        <?php
 
         echo '<p><label for="tts_trello_published_list">' . esc_html__( 'Trello Published List ID', 'trello-social-auto-publisher' ) . '</label>';
         echo '<input type="text" id="tts_trello_published_list" name="tts_trello_published_list" value="' . esc_attr( $published_list ) . '" class="widefat" /></p>';
@@ -173,7 +204,6 @@ class TTS_Client {
             'tts_trello_key'    => '_tts_trello_key',
             'tts_trello_token'  => '_tts_trello_token',
             'tts_trello_secret' => '_tts_trello_secret',
-            'tts_trello_board'  => '_tts_trello_board',
             'tts_trello_published_list' => '_tts_trello_published_list',
             'tts_fb_token'      => '_tts_fb_token',
             'tts_ig_token'      => '_tts_ig_token',
@@ -188,6 +218,26 @@ class TTS_Client {
                 delete_post_meta( $post_id, $meta_key );
             }
         }
+
+        if ( isset( $_POST['tts_trello_boards'] ) && is_array( $_POST['tts_trello_boards'] ) ) {
+            $boards = array();
+            foreach ( wp_unslash( $_POST['tts_trello_boards'] ) as $board ) {
+                $board = sanitize_text_field( $board );
+                if ( '' !== $board ) {
+                    $boards[] = $board;
+                }
+            }
+            if ( ! empty( $boards ) ) {
+                update_post_meta( $post_id, '_tts_trello_boards', $boards );
+            } else {
+                delete_post_meta( $post_id, '_tts_trello_boards' );
+            }
+        } else {
+            delete_post_meta( $post_id, '_tts_trello_boards' );
+        }
+
+        // Cleanup old single board meta if present.
+        delete_post_meta( $post_id, '_tts_trello_board' );
 
         if ( isset( $_POST['tts_trello_map'] ) && is_array( $_POST['tts_trello_map'] ) ) {
             $map = array();
