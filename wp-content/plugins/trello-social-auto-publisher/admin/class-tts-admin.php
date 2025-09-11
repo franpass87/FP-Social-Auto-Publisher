@@ -640,10 +640,6 @@ class TTS_Admin {
      * Render social posts list page.
      */
     public function render_social_posts_page() {
-        if ( ! class_exists( 'WP_List_Table' ) ) {
-            require_once ABSPATH . 'wp-admin/includes/class-wp-list-table.php';
-        }
-
         // Handle publish now action.
         if ( isset( $_GET['action'], $_GET['post'] ) && 'publish' === $_GET['action'] ) {
             if ( ! current_user_can( 'publish_posts' ) ) {
@@ -677,6 +673,10 @@ class TTS_Admin {
         $table->display();
         echo '</div>';
     }
+}
+
+if ( ! class_exists( 'WP_List_Table' ) ) {
+    require_once ABSPATH . 'wp-admin/includes/class-wp-list-table.php';
 }
 
 /**
