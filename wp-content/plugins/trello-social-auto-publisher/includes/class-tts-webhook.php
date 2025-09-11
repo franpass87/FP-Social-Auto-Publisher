@@ -206,8 +206,30 @@ class TTS_Webhook {
             $result['client_id'] = $client_id;
 
             if ( empty( $result['attachments'] ) ) {
-                tts_log_event( $post_id, 'webhook', 'warning', __( 'No attachments provided', 'trello-social-auto-publisher' ), '' );
-                return rest_ensure_response( $result );
+                $manual_url = '';
+                $pattern    = '/https?:\\/\\/\S+\.mp4/i';
+
+                if ( ! empty( $result['desc'] ) && preg_match( $pattern, $result['desc'], $matches ) ) {
+                    $manual_url = $matches[0];
+                } elseif ( isset( $data['action']['data']['text'] ) && preg_match( $pattern, $data['action']['data']['text'], $matches ) ) {
+                    $manual_url = $matches[0];
+                }
+
+                if ( $manual_url ) {
+                    $importer  = new TTS_Media_Importer();
+                    $media_id  = $importer->import_from_url( $manual_url );
+
+                    if ( is_wp_error( $media_id ) ) {
+                        tts_log_event( $post_id, 'webhook', 'error', $media_id->get_error_message(), $manual_url );
+                        return rest_ensure_response( $result );
+                    }
+
+                    update_post_meta( $post_id, '_tts_manual_media', (int) $media_id );
+                    tts_log_event( $post_id, 'webhook', 'success', __( 'Manual media imported', 'trello-social-auto-publisher' ), $manual_url );
+                } else {
+                    tts_log_event( $post_id, 'webhook', 'warning', __( 'No attachments provided', 'trello-social-auto-publisher' ), '' );
+                    return rest_ensure_response( $result );
+                }
             }
 
             if ( ! empty( $result['due'] ) ) {
