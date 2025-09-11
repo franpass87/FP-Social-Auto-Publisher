@@ -20,45 +20,42 @@ if ( ! defined( 'TSAP_PLUGIN_DIR' ) ) {
     define( 'TSAP_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 }
 
-// Ensure Action Scheduler is available.
-if ( ! function_exists( 'as_schedule_single_action' ) ) {
-    add_action(
-        'admin_notices',
-        function() {
-            echo '<div class="error"><p>' . esc_html__( 'Action Scheduler plugin is required for Trello Social Auto Publisher.', 'trello-social-auto-publisher' ) . '</p></div>';
-        }
-    );
-    return;
-}
-
-// Load support files from the includes directory.
-foreach ( glob( TSAP_PLUGIN_DIR . 'includes/*.php' ) as $file ) {
-    if ( 'class-tts-rest.php' === basename( $file ) ) {
-        continue;
+add_action( 'plugins_loaded', function () {
+    if ( ! function_exists( 'as_schedule_single_action' ) ) {
+        add_action( 'admin_notices', function () {
+            echo '<div class="error"><p>' .
+                 esc_html__( 'Action Scheduler plugin is required for Trello Social Auto Publisher.', 'trello-social-auto-publisher' ) .
+                 '</p></div>';
+        } );
+        return;
     }
-    require_once $file;
-}
 
-// Load REST API endpoints after other includes.
-require_once TSAP_PLUGIN_DIR . 'includes/class-tts-rest.php';
-// Register activation hook.
-register_activation_hook( __FILE__, 'tts_create_logs_table' );
+    // Load support files from the includes directory.
+    foreach ( glob( TSAP_PLUGIN_DIR . 'includes/*.php' ) as $file ) {
+        if ( 'class-tts-rest.php' === basename( $file ) ) {
+            continue;
+        }
+        require_once $file;
+    }
 
-// Load admin files when in the dashboard.
-if ( is_admin() ) {
-    require_once TSAP_PLUGIN_DIR . 'admin/class-tts-admin.php';
-    require_once TSAP_PLUGIN_DIR . 'admin/class-tts-log-page.php';
-    require_once TSAP_PLUGIN_DIR . 'admin/class-tts-calendar-page.php';
-    require_once TSAP_PLUGIN_DIR . 'admin/class-tts-analytics-page.php';
-    require_once TSAP_PLUGIN_DIR . 'admin/class-tts-health-page.php';
+    // Load REST API endpoints after other includes.
+    require_once TSAP_PLUGIN_DIR . 'includes/class-tts-rest.php';
+    // Register activation hook.
+    register_activation_hook( __FILE__, 'tts_create_logs_table' );
 
-    new TTS_Admin();
-    new TTS_Calendar_Page();
-    new TTS_Health_Page();
+    // Load admin files when in the dashboard.
+    if ( is_admin() ) {
+        require_once TSAP_PLUGIN_DIR . 'admin/class-tts-admin.php';
+        require_once TSAP_PLUGIN_DIR . 'admin/class-tts-log-page.php';
+        require_once TSAP_PLUGIN_DIR . 'admin/class-tts-calendar-page.php';
+        require_once TSAP_PLUGIN_DIR . 'admin/class-tts-analytics-page.php';
+        require_once TSAP_PLUGIN_DIR . 'admin/class-tts-health-page.php';
 
-    add_action(
-        'admin_enqueue_scripts',
-        function( $hook ) {
+        new TTS_Admin();
+        new TTS_Calendar_Page();
+        new TTS_Health_Page();
+
+        add_action( 'admin_enqueue_scripts', function( $hook ) {
             if ( 'toplevel_page_tts-calendar' !== $hook ) {
                 return;
             }
@@ -70,14 +67,11 @@ if ( is_admin() ) {
                 '1.0',
                 true
             );
-        }
-    );
-}
+        } );
+    }
 
-// Add a weekly cron schedule.
-add_filter(
-    'cron_schedules',
-    function( $schedules ) {
+    // Add a weekly cron schedule.
+    add_filter( 'cron_schedules', function( $schedules ) {
         if ( ! isset( $schedules['weekly'] ) ) {
             $schedules['weekly'] = array(
                 'interval' => WEEK_IN_SECONDS,
@@ -85,49 +79,37 @@ add_filter(
             );
         }
         return $schedules;
-    }
-);
+    } );
 
-// Schedule weekly token refreshes.
-add_action(
-    'init',
-    function () {
+    // Schedule weekly token refreshes.
+    add_action( 'init', function () {
         if ( ! wp_next_scheduled( 'tts_refresh_tokens' ) ) {
             wp_schedule_event( time(), 'weekly', 'tts_refresh_tokens' );
         }
-    }
-);
+    } );
 
-// Attach the refresh action to the token refresh handler.
-add_action( 'tts_refresh_tokens', array( 'TTS_Token_Refresh', 'refresh_tokens' ) );
+    // Attach the refresh action to the token refresh handler.
+    add_action( 'tts_refresh_tokens', array( 'TTS_Token_Refresh', 'refresh_tokens' ) );
 
-// Schedule daily metrics fetching.
-add_action(
-    'init',
-    function () {
+    // Schedule daily metrics fetching.
+    add_action( 'init', function () {
         if ( ! wp_next_scheduled( 'tts_fetch_metrics' ) ) {
             wp_schedule_event( time(), 'daily', 'tts_fetch_metrics' );
         }
-    }
-);
+    } );
 
-// Hook the analytics fetcher.
-add_action( 'tts_fetch_metrics', array( 'TTS_Analytics', 'fetch_all' ) );
+    // Hook the analytics fetcher.
+    add_action( 'tts_fetch_metrics', array( 'TTS_Analytics', 'fetch_all' ) );
 
-// Schedule daily link checks.
-add_action(
-    'init',
-    function () {
+    // Schedule daily link checks.
+    add_action( 'init', function () {
         if ( ! wp_next_scheduled( 'tts_check_links' ) ) {
             wp_schedule_event( time(), 'daily', 'tts_check_links' );
         }
-    }
-);
+    } );
 
-// Hook the link checker.
-add_action(
-    'tts_check_links',
-    function () {
+    // Hook the link checker.
+    add_action( 'tts_check_links', function () {
         $posts = get_posts(
             array(
                 'post_type'      => 'tts_social_post',
@@ -142,5 +124,5 @@ add_action(
         foreach ( $posts as $post_id ) {
             TTS_Link_Checker::verify_urls( $post_id );
         }
-    }
-);
+    } );
+} );
