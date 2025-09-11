@@ -76,3 +76,12 @@ record più vecchi di un numero di giorni configurabile (30 giorni per impostazi
 Il periodo di conservazione è modificabile dalla pagina delle impostazioni del plugin tramite
 il campo **Log Retention (days)**.
 
+## Analytics
+
+Una schermata dedicata mostra le metriche raccolte dai social per i post pubblicati.
+Dal menu **Analytics** è possibile:
+
+- filtrare i dati per canale e intervallo temporale;
+- visualizzare i risultati in un grafico generato con Chart.js;
+- esportare le metriche correnti in formato CSV.
+
