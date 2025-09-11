@@ -49,10 +49,10 @@ class TTS_Analytics {
             foreach ( $channels as $ch ) {
                 $method = 'fetch_' . $ch . '_metrics';
                 if ( method_exists( __CLASS__, $method ) ) {
-                    $creds = isset( $tokens[ $ch ] ) ? $tokens[ $ch ] : '';
+                    $creds  = isset( $tokens[ $ch ] ) ? $tokens[ $ch ] : '';
                     $result = self::$method( $post_id, $creds );
                     if ( ! is_wp_error( $result ) ) {
-                        $metrics[ $ch ] = $result;
+                        $metrics[ $ch ] = self::count_interactions( (array) $result );
                     }
                 }
             }
@@ -61,6 +61,24 @@ class TTS_Analytics {
                 update_post_meta( $post_id, '_tts_metrics', $metrics );
             }
         }
+    }
+
+    /**
+     * Count total interactions from a metrics array.
+     *
+     * @param array $data Metrics data.
+     * @return int
+     */
+    private static function count_interactions( $data ) {
+        $sum = 0;
+        foreach ( $data as $value ) {
+            if ( is_array( $value ) ) {
+                $sum += self::count_interactions( $value );
+            } elseif ( is_numeric( $value ) ) {
+                $sum += (int) $value;
+            }
+        }
+        return $sum;
     }
 
     /**

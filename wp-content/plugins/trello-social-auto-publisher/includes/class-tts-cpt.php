@@ -164,7 +164,18 @@ class TTS_CPT {
         wp_nonce_field( 'tts_schedule_metabox', 'tts_schedule_nonce' );
         $value     = get_post_meta( $post->ID, '_tts_publish_at', true );
         $formatted = $value ? date( 'Y-m-d\\TH:i', strtotime( $value ) ) : '';
-        echo '<input type="datetime-local" name="_tts_publish_at" value="' . esc_attr( $formatted ) . '" class="widefat" />';
+
+        echo '<label for="_tts_publish_at">' . esc_html__( 'Data di pubblicazione', 'trello-social-auto-publisher' ) . '</label>';
+        echo '<input type="datetime-local" id="_tts_publish_at" name="_tts_publish_at" value="' . esc_attr( $formatted ) . '" class="widefat" />';
+
+        $channels = get_post_meta( $post->ID, '_tts_social_channel', true );
+        $channel  = is_array( $channels ) ? reset( $channels ) : $channels;
+        if ( $channel && class_exists( 'TTS_Timing' ) ) {
+            $suggested = TTS_Timing::suggest_time( $channel );
+            if ( $suggested ) {
+                echo '<p class="description">' . sprintf( esc_html__( 'Orario suggerito: %s', 'trello-social-auto-publisher' ), esc_html( $suggested ) ) . '</p>';
+            }
+        }
     }
 
     /**
