@@ -36,7 +36,12 @@ class TTS_Scheduler {
 
         as_unschedule_all_actions( 'tts_publish_social_post', array( 'post_id' => $post_id ) );
 
-        $publish_at = isset( $_POST['_tts_publish_at'] ) ? sanitize_text_field( $_POST['_tts_publish_at'] ) : '';
+        $approved  = isset( $_POST['_tts_approved'] ) ? (bool) $_POST['_tts_approved'] : (bool) get_post_meta( $post_id, '_tts_approved', true );
+        if ( ! $approved ) {
+            return;
+        }
+
+        $publish_at = isset( $_POST['_tts_publish_at'] ) ? sanitize_text_field( $_POST['_tts_publish_at'] ) : get_post_meta( $post_id, '_tts_publish_at', true );
         $channels   = isset( $_POST['_tts_social_channel'] ) && is_array( $_POST['_tts_social_channel'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['_tts_social_channel'] ) ) : get_post_meta( $post_id, '_tts_social_channel', true );
 
         if ( ! empty( $publish_at ) ) {

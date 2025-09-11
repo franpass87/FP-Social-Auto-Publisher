@@ -15,6 +15,27 @@ if ( ! defined( 'ABSPATH' ) ) {
 class TTS_Notifier {
 
     /**
+     * Initialize hooks.
+     */
+    public static function init() {
+        add_action( 'tts_post_approved', array( __CLASS__, 'notify_post_approved' ) );
+    }
+
+    /**
+     * Send a notification when a post is approved.
+     *
+     * @param int $post_id Post ID.
+     */
+    public static function notify_post_approved( $post_id ) {
+        $title   = get_the_title( $post_id );
+        $message = sprintf( __( 'Post "%s" approvato', 'trello-social-auto-publisher' ), $title );
+
+        $notifier = new self();
+        $notifier->notify_slack( $message );
+        $notifier->notify_email( __( 'Post approvato', 'trello-social-auto-publisher' ), $message );
+    }
+
+    /**
      * Send a message to Slack using the configured webhook.
      *
      * @param string $message Message to send.
@@ -58,3 +79,5 @@ class TTS_Notifier {
         wp_mail( $recipients, $subject, $body );
     }
 }
+
+TTS_Notifier::init();

@@ -25,10 +25,12 @@ class TTS_CPT {
         add_action( 'add_meta_boxes_tts_social_post', array( $this, 'add_channel_metabox' ) );
         add_action( 'add_meta_boxes_tts_social_post', array( $this, 'add_media_metabox' ) );
         add_action( 'add_meta_boxes_tts_social_post', array( $this, 'add_messages_metabox' ) );
+        add_action( 'add_meta_boxes_tts_social_post', array( $this, 'add_approval_metabox' ) );
         add_action( 'save_post_tts_social_post', array( $this, 'save_schedule_metabox' ), 5, 3 );
         add_action( 'save_post_tts_social_post', array( $this, 'save_channel_metabox' ), 10, 3 );
         add_action( 'save_post_tts_social_post', array( $this, 'save_media_metabox' ), 15, 3 );
         add_action( 'save_post_tts_social_post', array( $this, 'save_messages_metabox' ), 20, 3 );
+        add_action( 'save_post_tts_social_post', array( $this, 'save_approval_metabox' ), 1, 3 );
     }
 
     /**
@@ -72,6 +74,17 @@ class TTS_CPT {
                     'type' => 'string',
                 ),
                 'default'      => array(),
+            )
+        );
+
+        register_post_meta(
+            'tts_social_post',
+            '_tts_approved',
+            array(
+                'show_in_rest' => true,
+                'single'       => true,
+                'type'         => 'boolean',
+                'default'      => false,
             )
         );
 
@@ -152,6 +165,19 @@ class TTS_CPT {
             array( $this, 'render_messages_metabox' ),
             'tts_social_post',
             'normal'
+        );
+    }
+
+    /**
+     * Register the approval status meta box.
+     */
+    public function add_approval_metabox() {
+        add_meta_box(
+            'tts_approval_status',
+            __( 'Stato di approvazione', 'trello-social-auto-publisher' ),
+            array( $this, 'render_approval_metabox' ),
+            'tts_social_post',
+            'side'
         );
     }
 
@@ -381,6 +407,49 @@ class TTS_CPT {
                 } else {
                     delete_post_meta( $post_id, $field );
                 }
+            }
+        }
+    }
+
+    /**
+     * Render approval status meta box.
+     *
+     * @param WP_Post $post Current post object.
+     */
+    public function render_approval_metabox( $post ) {
+        wp_nonce_field( 'tts_approval_metabox', 'tts_approval_nonce' );
+        $approved = (bool) get_post_meta( $post->ID, '_tts_approved', true );
+        echo '<label><input type="checkbox" name="_tts_approved" value="1" ' . checked( $approved, true, false ) . ' /> ';
+        echo esc_html__( 'Approvato', 'trello-social-auto-publisher' ) . '</label>';
+    }
+
+    /**
+     * Save approval status meta box.
+     *
+     * @param int     $post_id Post ID.
+     * @param WP_Post $post    Post object.
+     * @param bool    $update  Whether this is an existing post being updated.
+     */
+    public function save_approval_metabox( $post_id, $post, $update ) {
+        if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+            return;
+        }
+
+        if ( ! current_user_can( 'edit_post', $post_id ) ) {
+            return;
+        }
+
+        if ( isset( $_POST['tts_approval_nonce'] ) && wp_verify_nonce( $_POST['tts_approval_nonce'], 'tts_approval_metabox' ) ) {
+            $old = (bool) get_post_meta( $post_id, '_tts_approved', true );
+            $new = isset( $_POST['_tts_approved'] ) ? (bool) $_POST['_tts_approved'] : false;
+
+            if ( $new ) {
+                update_post_meta( $post_id, '_tts_approved', true );
+                if ( ! $old ) {
+                    do_action( 'tts_post_approved', $post_id );
+                }
+            } else {
+                delete_post_meta( $post_id, '_tts_approved' );
             }
         }
     }
