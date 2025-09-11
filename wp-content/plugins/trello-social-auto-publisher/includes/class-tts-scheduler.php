@@ -212,6 +212,40 @@ class TTS_Scheduler {
             }
         }
 
+        $publish_story = (bool) get_post_meta( $post_id, '_tts_publish_story', true );
+        if ( $publish_story ) {
+            $story_id  = (int) get_post_meta( $post_id, '_tts_story_media', true );
+            $media_url = $story_id ? wp_get_attachment_url( $story_id ) : '';
+            if ( $media_url ) {
+                $story_channels = array( 'facebook', 'instagram' );
+                foreach ( $story_channels as $story_channel ) {
+                    $class = 'TTS_Publisher_' . ucfirst( $story_channel ) . '_Story';
+                    $file  = plugin_dir_path( __FILE__ ) . 'publishers/class-tts-publisher-' . $story_channel . '-story.php';
+                    if ( file_exists( $file ) ) {
+                        require_once $file;
+                        if ( class_exists( $class ) ) {
+                            $publisher   = new $class();
+                            $credentials = isset( $tokens[ $story_channel ] ) ? $tokens[ $story_channel ] : '';
+                            try {
+                                $key             = $story_channel . '_story';
+                                $log[ $key ]     = $publisher->publish_story( $post_id, $credentials, $media_url );
+                                if ( is_wp_error( $log[ $key ] ) ) {
+                                    $error = true;
+                                }
+                            } catch ( \Exception $e ) {
+                                $error = true;
+                                $log[ $story_channel . '_story' ] = $e->getMessage();
+                                tts_log_event( $post_id, $story_channel . '_story', 'error', $e->getMessage(), '' );
+                            }
+                        }
+                    }
+                }
+            } else {
+                tts_log_event( $post_id, 'scheduler', 'error', __( 'Missing Story media', 'trello-social-auto-publisher' ), '' );
+                $error = true;
+            }
+        }
+
         if ( $error ) {
             if ( $attempt >= $max_attempts ) {
                 tts_log_event( $post_id, 'scheduler', 'error', __( 'Maximum retry attempts reached', 'trello-social-auto-publisher' ), '' );

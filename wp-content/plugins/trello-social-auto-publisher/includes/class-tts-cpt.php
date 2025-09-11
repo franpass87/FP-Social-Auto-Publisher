@@ -90,6 +90,28 @@ class TTS_CPT {
             )
         );
 
+        register_post_meta(
+            'tts_social_post',
+            '_tts_publish_story',
+            array(
+                'show_in_rest' => true,
+                'single'       => true,
+                'type'         => 'boolean',
+                'default'      => false,
+            )
+        );
+
+        register_post_meta(
+            'tts_social_post',
+            '_tts_story_media',
+            array(
+                'show_in_rest' => true,
+                'single'       => true,
+                'type'         => 'integer',
+                'default'      => 0,
+            )
+        );
+
         $channels = array( 'facebook', 'instagram', 'youtube', 'tiktok' );
         foreach ( $channels as $ch ) {
             register_post_meta(
@@ -316,6 +338,16 @@ class TTS_CPT {
         $value = get_post_meta( $post->ID, '_tts_manual_media', true );
         echo '<input type="hidden" id="tts_manual_media" name="_tts_manual_media" value="' . esc_attr( $value ) . '" />';
         echo '<button type="button" class="button tts-select-media">' . esc_html__( 'Seleziona/Carica file', 'trello-social-auto-publisher' ) . '</button>';
+
+        $story_enabled = (bool) get_post_meta( $post->ID, '_tts_publish_story', true );
+        $story_media   = (int) get_post_meta( $post->ID, '_tts_story_media', true );
+        $story_thumb   = $story_media ? wp_get_attachment_image( $story_media, array( 80, 80 ) ) : '';
+        echo '<p><label><input type="checkbox" id="tts_publish_story" name="_tts_publish_story" value="1" ' . checked( $story_enabled, true, false ) . ' /> ' . esc_html__( 'Pubblica come Story', 'trello-social-auto-publisher' ) . '</label></p>';
+        echo '<div id="tts_story_media_wrapper"' . ( $story_enabled ? '' : ' style="display:none;"' ) . '>';
+        echo '<div id="tts_story_media_preview">' . $story_thumb . '</div>';
+        echo '<input type="hidden" id="tts_story_media" name="_tts_story_media" value="' . esc_attr( $story_media ) . '" />';
+        echo '<button type="button" class="button tts-select-story-media">' . esc_html__( 'Seleziona media Story', 'trello-social-auto-publisher' ) . '</button>';
+        echo '</div>';
     }
 
     /**
@@ -419,6 +451,17 @@ class TTS_CPT {
                 update_post_meta( $post_id, '_tts_manual_media', (int) $_POST['_tts_manual_media'] );
             } else {
                 delete_post_meta( $post_id, '_tts_manual_media' );
+            }
+
+            $is_story = isset( $_POST['_tts_publish_story'] ) && '1' === $_POST['_tts_publish_story'];
+            if ( $is_story ) {
+                update_post_meta( $post_id, '_tts_publish_story', true );
+                if ( isset( $_POST['_tts_story_media'] ) && '' !== $_POST['_tts_story_media'] ) {
+                    update_post_meta( $post_id, '_tts_story_media', (int) $_POST['_tts_story_media'] );
+                }
+            } else {
+                delete_post_meta( $post_id, '_tts_publish_story' );
+                delete_post_meta( $post_id, '_tts_story_media' );
             }
         }
     }
