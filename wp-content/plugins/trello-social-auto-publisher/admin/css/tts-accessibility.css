@@ -1,0 +1,448 @@
+/**
+ * Accessibility and Enhancement Styles for Social Auto Publisher
+ * Provides improved accessibility, contrast, and mobile responsiveness
+ */
+
+/* ==========================================================================
+   Enhanced Focus States
+   ========================================================================== */
+.tts-btn:focus,
+.tts-stat-card:focus,
+.tts-quick-action:focus,
+.tts-enhanced-table tr:focus-within,
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+select:focus,
+textarea:focus,
+.tts-bulk-select-item:focus,
+.tts-bulk-select-all:focus {
+    outline: 3px solid #005cee !important;
+    outline-offset: 2px !important;
+    box-shadow: 0 0 0 1px #fff, 0 0 0 4px #005cee !important;
+}
+
+/* Improved focus for buttons */
+.tts-btn:focus {
+    position: relative;
+    z-index: 10;
+}
+
+/* ==========================================================================
+   High Contrast Mode Support
+   ========================================================================== */
+@media (prefers-contrast: high) {
+    .tts-stat-card,
+    .tts-dashboard-section,
+    .tts-quick-action,
+    .tts-notification,
+    .tts-enhanced-table {
+        border-width: 2px !important;
+        border-color: #000 !important;
+        border-style: solid !important;
+        background-color: #fff !important;
+        color: #000 !important;
+    }
+    
+    .tts-status-badge {
+        border: 2px solid #000 !important;
+        font-weight: bold !important;
+        background-color: #fff !important;
+        color: #000 !important;
+    }
+    
+    .tts-btn {
+        border: 2px solid #000 !important;
+        background-color: #fff !important;
+        color: #000 !important;
+        font-weight: bold !important;
+    }
+    
+    .tts-btn:hover {
+        background-color: #000 !important;
+        color: #fff !important;
+    }
+    
+    /* Ensure text is always readable */
+    .tts-stat-number,
+    .tts-stat-trend,
+    .tts-loading-message {
+        color: #000 !important;
+        font-weight: bold !important;
+    }
+}
+
+/* ==========================================================================
+   Enhanced Error and Success States
+   ========================================================================== */
+.tts-field-error {
+    border-color: #d63638 !important;
+    box-shadow: 0 0 0 1px #d63638 !important;
+}
+
+.tts-field-error:focus {
+    outline-color: #d63638 !important;
+    box-shadow: 0 0 0 1px #d63638, 0 0 0 4px rgba(214, 54, 56, 0.2) !important;
+}
+
+.tts-field-success {
+    border-color: #00a32a !important;
+    box-shadow: 0 0 0 1px #00a32a !important;
+}
+
+.tts-error-message {
+    color: #d63638;
+    font-size: 14px;
+    margin-top: 4px;
+    font-weight: 500;
+}
+
+.tts-success-message {
+    color: #00a32a;
+    font-size: 14px;
+    margin-top: 4px;
+    font-weight: 500;
+}
+        border: 2px solid #000 !important;
+        font-weight: bold !important;
+    }
+    
+    .tts-stat-number {
+        color: #000 !important;
+        font-weight: bold !important;
+    }
+}
+
+/* ==========================================================================
+   Reduced Motion Support
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+    
+    .tts-notification {
+        transition: none !important;
+        transform: none !important;
+    }
+    
+    .tts-stat-card:hover {
+        transform: none !important;
+    }
+}
+
+/* ==========================================================================
+   Screen Reader and Assistive Technology Support
+   ========================================================================== */
+.sr-only {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+}
+
+.sr-only:focus {
+    position: static !important;
+    width: auto !important;
+    height: auto !important;
+    padding: inherit !important;
+    margin: inherit !important;
+    overflow: visible !important;
+    clip: auto !important;
+    white-space: normal !important;
+}
+
+/* Skip to content link */
+.tts-skip-link {
+    position: absolute !important;
+    top: -40px;
+    left: 6px;
+    background: #000;
+    color: #fff;
+    padding: 8px 12px;
+    text-decoration: none;
+    z-index: 100000;
+    border-radius: 4px;
+    transition: top 0.3s ease;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.tts-skip-link:focus {
+    top: 6px;
+    outline: 3px solid #005cee;
+    outline-offset: 2px;
+}
+
+/* ==========================================================================
+   Improved Mobile Responsiveness
+   ========================================================================== */
+@media (max-width: 782px) {
+    /* Adjust notification container for mobile */
+    .tts-notifications {
+        top: 46px !important;
+        right: 10px !important;
+        left: 10px !important;
+        max-width: none !important;
+    }
+    
+    /* Stack statistics cards vertically on mobile */
+    .tts-stats-row {
+        flex-direction: column !important;
+        gap: 15px !important;
+    }
+    
+    .tts-stat-card {
+        margin-bottom: 15px !important;
+        min-height: auto !important;
+    }
+    
+    /* Improve table responsiveness */
+    .tts-enhanced-table-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .tts-enhanced-table {
+        min-width: 600px;
+    }
+    
+    /* Adjust quick actions for mobile */
+    .tts-quick-actions {
+        flex-direction: column !important;
+        gap: 10px !important;
+    }
+    
+    .tts-quick-action {
+        width: 100% !important;
+    }
+    
+    /* Improve form layouts */
+    .tts-wizard-step input,
+    .tts-wizard-step select {
+        width: 100% !important;
+        box-sizing: border-box;
+    }
+    
+    /* Adjust bulk actions for mobile */
+    .tts-bulk-actions {
+        flex-direction: column !important;
+        align-items: stretch !important;
+    }
+    
+    .tts-bulk-action-select {
+        margin-bottom: 10px !important;
+        width: 100% !important;
+    }
+}
+
+@media (max-width: 480px) {
+    /* Extra small screens */
+    .tts-stat-number {
+        font-size: 32px !important;
+    }
+    
+    .tts-notification {
+        font-size: 14px !important;
+        padding: 12px 16px !important;
+    }
+    
+    .tts-btn {
+        padding: 10px 16px !important;
+        font-size: 14px !important;
+    }
+}
+
+/* ==========================================================================
+   Enhanced Color Accessibility
+   ========================================================================== */
+
+/* Improved status badge contrast */
+.tts-status-badge.success {
+    background-color: #00a32a;
+    color: #fff;
+    border: 1px solid #00a32a;
+}
+
+.tts-status-badge.error {
+    background-color: #d63638;
+    color: #fff;
+    border: 1px solid #d63638;
+}
+
+.tts-status-badge.warning {
+    background-color: #f56e28;
+    color: #fff;
+    border: 1px solid #f56e28;
+}
+
+.tts-status-badge.info {
+    background-color: #135e96;
+    color: #fff;
+    border: 1px solid #135e96;
+}
+
+/* Ensure sufficient contrast for text */
+.tts-stat-trend {
+    color: #646970 !important;
+    font-weight: 500;
+}
+
+.tts-dashboard-section h2 {
+    color: #1d2327 !important;
+    font-weight: 600;
+}
+
+/* ==========================================================================
+   Keyboard Navigation Enhancements
+   ========================================================================== */
+
+/* Improve table keyboard navigation */
+.tts-enhanced-table tbody tr {
+    position: relative;
+}
+
+.tts-enhanced-table tbody tr:hover,
+.tts-enhanced-table tbody tr:focus-within {
+    background-color: #f6f7f7;
+}
+
+/* Better button states */
+.tts-btn:hover {
+    background-color: #0a4b78;
+}
+
+.tts-btn:active {
+    transform: translateY(1px);
+}
+
+.tts-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* ==========================================================================
+   Loading and Error States
+   ========================================================================== */
+
+/* Loading animation that respects reduced motion */
+.tts-loading {
+    position: relative;
+    pointer-events: none;
+    opacity: 0.6;
+}
+
+.tts-loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 2px solid #ccc;
+    border-top: 2px solid #007cba;
+    border-radius: 50%;
+    animation: tts-spin 1s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .tts-loading::after {
+        animation: none;
+        border: 2px solid #007cba;
+    }
+}
+
+@keyframes tts-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Error state styling */
+.tts-error-state {
+    border: 2px solid #d63638;
+    background-color: #fcf2f2;
+    color: #d63638;
+    padding: 10px;
+    border-radius: 4px;
+}
+
+/* ==========================================================================
+   Tooltip Improvements
+   ========================================================================== */
+
+.tts-tooltip {
+    position: relative;
+}
+
+.tts-tooltiptext {
+    position: absolute;
+    bottom: 125%;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #1d2327;
+    color: #fff;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+    z-index: 1000;
+}
+
+.tts-tooltip:hover .tts-tooltiptext,
+.tts-tooltip:focus .tts-tooltiptext {
+    opacity: 1;
+}
+
+.tts-tooltiptext::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: #1d2327 transparent transparent transparent;
+}
+
+/* ==========================================================================
+   Print Styles
+   ========================================================================== */
+
+@media print {
+    .tts-notification,
+    .tts-skip-link,
+    .tts-advanced-controls,
+    .tts-btn {
+        display: none !important;
+    }
+    
+    .tts-stat-card,
+    .tts-dashboard-section {
+        border: 1px solid #000 !important;
+        break-inside: avoid;
+    }
+    
+    .tts-enhanced-table {
+        border-collapse: collapse;
+    }
+    
+    .tts-enhanced-table th,
+    .tts-enhanced-table td {
+        border: 1px solid #000 !important;
+        padding: 5px !important;
+    }
+}

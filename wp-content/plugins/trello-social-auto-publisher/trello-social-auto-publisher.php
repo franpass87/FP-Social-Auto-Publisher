@@ -30,12 +30,51 @@ add_action( 'plugins_loaded', function () {
         return;
     }
 
-    // Load support files from the includes directory.
-    foreach ( glob( TSAP_PLUGIN_DIR . 'includes/*.php' ) as $file ) {
-        if ( 'class-tts-rest.php' === basename( $file ) ) {
-            continue;
+    // Load support files from the includes directory using whitelist for security.
+    $tsap_includes = array(
+        'class-tts-advanced-utils.php',
+        'class-tts-analytics.php',
+        'class-tts-backup.php',
+        'class-tts-cache-manager.php',
+        'class-tts-client.php',
+        'class-tts-cpt.php',
+        'class-tts-error-recovery.php',
+        'class-tts-image-processor.php',
+        'class-tts-link-checker.php',
+        'class-tts-media-importer.php',
+        'class-tts-monitoring.php',
+        'class-tts-notifier.php',
+        'class-tts-performance.php',
+        'class-tts-rate-limiter.php',
+        'class-tts-scheduler.php',
+        'class-tts-security-audit.php',
+        'class-tts-settings.php',
+        'class-tts-shortener.php',
+        'class-tts-timing.php',
+        'class-tts-token-refresh.php',
+        'class-tts-validation.php',
+        'class-tts-webhook.php',
+        'class-tts-ai-content.php',
+        'class-tts-competitor-analysis.php',
+        'class-tts-workflow-system.php',
+        'class-tts-advanced-media.php',
+        'class-tts-integration-hub.php',
+        'tts-logger.php',
+        'tts-notify.php',
+        'tts-template.php',
+        'publishers/class-tts-publisher-facebook-story.php',
+        'publishers/class-tts-publisher-facebook.php',
+        'publishers/class-tts-publisher-instagram-story.php',
+        'publishers/class-tts-publisher-instagram.php',
+        'publishers/class-tts-publisher-tiktok.php',
+        'publishers/class-tts-publisher-youtube.php',
+    );
+    
+    foreach ( $tsap_includes as $include_file ) {
+        $file = TSAP_PLUGIN_DIR . 'includes/' . $include_file;
+        if ( file_exists( $file ) ) {
+            require_once $file;
         }
-        require_once $file;
     }
 
     // Load REST API endpoints after other includes.
@@ -54,11 +93,21 @@ add_action( 'plugins_loaded', function () {
         new TTS_Admin();
         new TTS_Calendar_Page();
         new TTS_Health_Page();
+        
+        // Load AI Features page
+        require_once TSAP_PLUGIN_DIR . 'admin/class-tts-ai-features-page.php';
 
         add_action( 'admin_enqueue_scripts', function( $hook ) {
-            if ( 'toplevel_page_tts-calendar' !== $hook ) {
+            if ( 'social-auto-publisher_page_tts-calendar' !== $hook ) {
                 return;
             }
+
+            wp_enqueue_style(
+                'tts-calendar',
+                plugin_dir_url( __FILE__ ) . 'admin/css/tts-calendar.css',
+                array(),
+                '1.0'
+            );
 
             wp_enqueue_script(
                 'tts-calendar',

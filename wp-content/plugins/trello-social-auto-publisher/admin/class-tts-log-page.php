@@ -29,13 +29,13 @@ class TTS_Log_Page {
      * Register the menu page.
      */
     public function register_menu() {
-        add_menu_page(
+        add_submenu_page(
+            'tts-main',
             __( 'Log', 'trello-social-auto-publisher' ),
             __( 'Log', 'trello-social-auto-publisher' ),
             'manage_options',
             'tts-log',
-            array( $this, 'render_page' ),
-            'dashicons-list-view'
+            array( $this, 'render_page' )
         );
     }
 
@@ -206,7 +206,7 @@ class TTS_Log_Table extends WP_List_Table {
         }
         echo '</select>';
 
-        submit_button( __( 'Filter' ), '', 'filter_action', false );
+        submit_button( __( 'Filter', 'trello-social-auto-publisher' ), '', 'filter_action', false );
         echo '</div>';
     }
 

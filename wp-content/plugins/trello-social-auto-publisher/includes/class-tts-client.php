@@ -299,12 +299,19 @@ class TTS_Client {
 
         $state   = isset( $_GET['state'] ) ? sanitize_text_field( wp_unslash( $_GET['state'] ) ) : '';
         $expect  = isset( $_SESSION['tts_oauth_state'] ) ? $_SESSION['tts_oauth_state'] : '';
-        $token   = isset( $_GET['token'] ) ? sanitize_text_field( wp_unslash( $_GET['token'] ) ) : '';
+        $code    = isset( $_GET['code'] ) ? sanitize_text_field( wp_unslash( $_GET['code'] ) ) : '';
         $step    = isset( $_GET['step'] ) ? absint( $_GET['step'] ) : 2;
         $client  = isset( $_GET['client_id'] ) ? absint( $_GET['client_id'] ) : 0;
 
-        if ( empty( $token ) || $state !== $expect ) {
+        if ( empty( $code ) || $state !== $expect ) {
             wp_die( esc_html__( 'OAuth verification failed.', 'trello-social-auto-publisher' ) );
+        }
+
+        // Exchange code for token
+        $token = $this->exchange_code_for_token( $channel, $code );
+        
+        if ( ! $token ) {
+            wp_die( esc_html__( 'Failed to obtain access token.', 'trello-social-auto-publisher' ) );
         }
 
         if ( $client ) {
@@ -332,6 +339,110 @@ class TTS_Client {
 
         wp_safe_redirect( add_query_arg( array( 'page' => 'tts-client-wizard', 'step' => $step ), admin_url( 'admin.php' ) ) );
         exit;
+    }
+
+    /**
+     * Exchange authorization code for access token.
+     *
+     * @param string $channel Social platform.
+     * @param string $code Authorization code.
+     * @return string|false Access token or false on failure.
+     */
+    private function exchange_code_for_token( $channel, $code ) {
+        $settings = get_option( 'tts_social_apps', array() );
+        $platform_settings = isset( $settings[$channel] ) ? $settings[$channel] : array();
+        $redirect_uri = admin_url( 'admin-post.php?action=tts_oauth_' . $channel );
+
+        switch ( $channel ) {
+            case 'facebook':
+                if ( empty( $platform_settings['app_id'] ) || empty( $platform_settings['app_secret'] ) ) {
+                    return false;
+                }
+                
+                $response = wp_remote_post( 'https://graph.facebook.com/v18.0/oauth/access_token', array(
+                    'body' => array(
+                        'client_id' => $platform_settings['app_id'],
+                        'client_secret' => $platform_settings['app_secret'],
+                        'redirect_uri' => $redirect_uri,
+                        'code' => $code
+                    )
+                ) );
+                
+                if ( is_wp_error( $response ) ) {
+                    return false;
+                }
+                
+                $body = json_decode( wp_remote_retrieve_body( $response ), true );
+                return isset( $body['access_token'] ) ? $body['access_token'] : false;
+
+            case 'instagram':
+                if ( empty( $platform_settings['app_id'] ) || empty( $platform_settings['app_secret'] ) ) {
+                    return false;
+                }
+                
+                $response = wp_remote_post( 'https://api.instagram.com/oauth/access_token', array(
+                    'body' => array(
+                        'client_id' => $platform_settings['app_id'],
+                        'client_secret' => $platform_settings['app_secret'],
+                        'redirect_uri' => $redirect_uri,
+                        'code' => $code,
+                        'grant_type' => 'authorization_code'
+                    )
+                ) );
+                
+                if ( is_wp_error( $response ) ) {
+                    return false;
+                }
+                
+                $body = json_decode( wp_remote_retrieve_body( $response ), true );
+                return isset( $body['access_token'] ) ? $body['access_token'] : false;
+
+            case 'youtube':
+                if ( empty( $platform_settings['client_id'] ) || empty( $platform_settings['client_secret'] ) ) {
+                    return false;
+                }
+                
+                $response = wp_remote_post( 'https://oauth2.googleapis.com/token', array(
+                    'body' => array(
+                        'client_id' => $platform_settings['client_id'],
+                        'client_secret' => $platform_settings['client_secret'],
+                        'redirect_uri' => $redirect_uri,
+                        'code' => $code,
+                        'grant_type' => 'authorization_code'
+                    )
+                ) );
+                
+                if ( is_wp_error( $response ) ) {
+                    return false;
+                }
+                
+                $body = json_decode( wp_remote_retrieve_body( $response ), true );
+                return isset( $body['access_token'] ) ? $body['access_token'] : false;
+
+            case 'tiktok':
+                if ( empty( $platform_settings['client_key'] ) || empty( $platform_settings['client_secret'] ) ) {
+                    return false;
+                }
+                
+                $response = wp_remote_post( 'https://open-api.tiktok.com/oauth/access_token/', array(
+                    'body' => array(
+                        'client_key' => $platform_settings['client_key'],
+                        'client_secret' => $platform_settings['client_secret'],
+                        'redirect_uri' => $redirect_uri,
+                        'code' => $code,
+                        'grant_type' => 'authorization_code'
+                    )
+                ) );
+                
+                if ( is_wp_error( $response ) ) {
+                    return false;
+                }
+                
+                $body = json_decode( wp_remote_retrieve_body( $response ), true );
+                return isset( $body['data']['access_token'] ) ? $body['data']['access_token'] : false;
+        }
+
+        return false;
     }
 
     /**

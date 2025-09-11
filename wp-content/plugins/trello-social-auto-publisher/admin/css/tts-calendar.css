@@ -1,0 +1,179 @@
+/* Calendar Styles */
+
+.tts-calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 20px 0;
+    padding: 15px;
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-radius: 4px;
+}
+
+.tts-calendar-nav {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.tts-current-month {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1d2327;
+}
+
+.tts-calendar-summary {
+    color: #50575e;
+    font-size: 14px;
+}
+
+.tts-posts-count {
+    background: #135e96;
+    color: #fff;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.tts-calendar {
+    margin-top: 20px;
+    border-collapse: collapse;
+    width: 100%;
+}
+
+.tts-calendar th {
+    background: #f6f7f7;
+    padding: 12px 8px;
+    text-align: center;
+    font-weight: 600;
+    border: 1px solid #c3c4c7;
+}
+
+.tts-calendar td {
+    border: 1px solid #c3c4c7;
+    padding: 0;
+    vertical-align: top;
+    width: 14.28%;
+    height: 120px;
+    position: relative;
+}
+
+.tts-calendar td.empty {
+    background: #f9f9f9;
+}
+
+.tts-day {
+    height: 100%;
+    position: relative;
+}
+
+.day-number {
+    position: absolute;
+    top: 5px;
+    left: 8px;
+    font-weight: 600;
+    color: #1d2327;
+    font-size: 14px;
+}
+
+.tts-day-posts {
+    margin-top: 25px;
+    padding: 5px;
+    max-height: 90px;
+    overflow-y: auto;
+}
+
+.tts-calendar-entry {
+    background: #f0f6fc;
+    border: 1px solid #0073aa;
+    border-radius: 3px;
+    padding: 4px 6px;
+    margin-bottom: 4px;
+    font-size: 11px;
+    line-height: 1.2;
+}
+
+.entry-title {
+    font-weight: 600;
+    color: #135e96;
+    margin-bottom: 2px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.entry-details {
+    margin-bottom: 3px;
+    color: #50575e;
+}
+
+.entry-channels {
+    font-style: italic;
+}
+
+.entry-time {
+    color: #135e96;
+    font-weight: 500;
+}
+
+.entry-actions {
+    text-align: right;
+}
+
+.button-small {
+    font-size: 10px;
+    padding: 2px 6px;
+    line-height: 1.2;
+    height: auto;
+    text-decoration: none;
+    background: #135e96;
+    color: #fff;
+    border: none;
+    border-radius: 2px;
+}
+
+.button-small:hover {
+    background: #0a4b78;
+    color: #fff;
+    text-decoration: none;
+}
+
+/* Today highlighting */
+.tts-day[data-today="true"] {
+    background: #fff3cd;
+}
+
+.tts-day[data-today="true"] .day-number {
+    background: #135e96;
+    color: #fff;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    text-align: center;
+    line-height: 20px;
+    font-size: 12px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .tts-calendar-header {
+        flex-direction: column;
+        gap: 10px;
+        text-align: center;
+    }
+    
+    .tts-calendar td {
+        height: 80px;
+    }
+    
+    .tts-day-posts {
+        max-height: 50px;
+    }
+    
+    .tts-calendar-entry {
+        font-size: 10px;
+        padding: 2px 4px;
+    }
+}

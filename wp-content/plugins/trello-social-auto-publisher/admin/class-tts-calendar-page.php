@@ -25,13 +25,13 @@ class TTS_Calendar_Page {
      * Register the calendar menu page.
      */
     public function register_menu() {
-        add_menu_page(
+        add_submenu_page(
+            'tts-main',
             __( 'Calendario', 'trello-social-auto-publisher' ),
             __( 'Calendario', 'trello-social-auto-publisher' ),
             'manage_options',
             'tts-calendar',
-            array( $this, 'render_page' ),
-            'dashicons-calendar'
+            array( $this, 'render_page' )
         );
     }
 
@@ -97,10 +97,18 @@ class TTS_Calendar_Page {
 
         echo '<div class="wrap">';
         echo '<h1>' . esc_html__( 'Calendario', 'trello-social-auto-publisher' ) . '</h1>';
+        
+        // Add navigation and summary info
+        echo '<div class="tts-calendar-header">';
         echo '<div class="tts-calendar-nav">';
-        echo '<a href="#" data-month="' . esc_attr( $prev_month ) . '">&laquo;</a> ';
-        echo esc_html( date_i18n( 'F Y', $timestamp ) ) . ' ';
-        echo '<a href="#" data-month="' . esc_attr( $next_month ) . '">&raquo;</a>';
+        echo '<a href="#" data-month="' . esc_attr( $prev_month ) . '" class="button">&laquo; ' . esc_html__('Previous', 'trello-social-auto-publisher') . '</a> ';
+        echo '<span class="tts-current-month">' . esc_html( date_i18n( 'F Y', $timestamp ) ) . '</span> ';
+        echo '<a href="#" data-month="' . esc_attr( $next_month ) . '" class="button">' . esc_html__('Next', 'trello-social-auto-publisher') . ' &raquo;</a>';
+        echo '</div>';
+        
+        echo '<div class="tts-calendar-summary">';
+        echo '<span class="tts-posts-count">' . sprintf(esc_html__('%d posts scheduled this month', 'trello-social-auto-publisher'), count($posts)) . '</span>';
+        echo '</div>';
         echo '</div>';
 
         $weekdays = array(
@@ -131,15 +139,25 @@ class TTS_Calendar_Page {
             echo '<td class="tts-day">';
             echo '<div class="day-number">' . esc_html( $day ) . '</div>';
             if ( isset( $posts_by_day[ $date_key ] ) ) {
+                echo '<div class="tts-day-posts">';
                 foreach ( $posts_by_day[ $date_key ] as $post ) {
                     $channels  = get_post_meta( $post->ID, '_tts_social_channel', true );
                     $edit_link = get_edit_post_link( $post->ID );
+                    $publish_time = get_post_meta( $post->ID, '_tts_publish_at', true );
+                    $time_display = $publish_time ? date('H:i', strtotime($publish_time)) : '';
+                    
                     echo '<div class="tts-calendar-entry">';
-                    echo '<strong>' . esc_html( $post->post_title ) . '</strong><br />';
-                    echo esc_html( is_array( $channels ) ? implode( ', ', $channels ) : $channels );
-                    echo ' - <a href="' . esc_url( $edit_link ) . '">' . esc_html__( 'Modifica', 'trello-social-auto-publisher' ) . '</a>';
+                    echo '<div class="entry-title"><strong>' . esc_html( $post->post_title ) . '</strong></div>';
+                    echo '<div class="entry-details">';
+                    echo '<span class="entry-channels">' . esc_html( is_array( $channels ) ? implode( ', ', $channels ) : $channels ) . '</span>';
+                    if ($time_display) {
+                        echo ' <span class="entry-time">(' . esc_html($time_display) . ')</span>';
+                    }
+                    echo '</div>';
+                    echo '<div class="entry-actions"><a href="' . esc_url( $edit_link ) . '" class="button-small">' . esc_html__( 'Modifica', 'trello-social-auto-publisher' ) . '</a></div>';
                     echo '</div>';
                 }
+                echo '</div>';
             }
             echo '</td>';
 

@@ -34,9 +34,22 @@ class TTS_Scheduler {
             return;
         }
 
+        // Security check: only process if this is a legitimate post save with proper nonce
+        if ( isset( $_POST['_tts_approved'] ) ) {
+            // Verify nonce if processing form data
+            if ( ! isset( $_POST['_wpnonce'] ) || ! wp_verify_nonce( $_POST['_wpnonce'], 'update-post_' . $post_id ) ) {
+                return;
+            }
+            
+            // Check user capabilities for this specific post
+            if ( ! current_user_can( 'edit_post', $post_id ) ) {
+                return;
+            }
+        }
+
         as_unschedule_all_actions( 'tts_publish_social_post', array( 'post_id' => $post_id ) );
 
-        $approved  = isset( $_POST['_tts_approved'] ) ? (bool) $_POST['_tts_approved'] : (bool) get_post_meta( $post_id, '_tts_approved', true );
+        $approved  = isset( $_POST['_tts_approved'] ) ? (bool) sanitize_text_field( $_POST['_tts_approved'] ) : (bool) get_post_meta( $post_id, '_tts_approved', true );
         if ( ! $approved ) {
             return;
         }
