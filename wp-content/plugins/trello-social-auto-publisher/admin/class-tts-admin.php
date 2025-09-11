@@ -29,6 +29,9 @@ class TTS_Admin {
         add_action( 'wp_dashboard_setup', array( $this, 'register_scheduled_posts_widget' ) );
         add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_widget_assets' ) );
         add_action( 'wp_ajax_tts_get_lists', array( $this, 'ajax_get_lists' ) );
+        add_action( 'wp_ajax_tts_refresh_posts', array( $this, 'ajax_refresh_posts' ) );
+        add_action( 'wp_ajax_tts_delete_post', array( $this, 'ajax_delete_post' ) );
+        add_action( 'wp_ajax_tts_bulk_action', array( $this, 'ajax_bulk_action' ) );
         add_filter( 'manage_tts_social_post_posts_columns', array( $this, 'add_approved_column' ) );
         add_action( 'manage_tts_social_post_posts_custom_column', array( $this, 'render_approved_column' ), 10, 2 );
         add_filter( 'bulk_actions-edit-tts_social_post', array( $this, 'register_bulk_actions' ) );
@@ -101,19 +104,56 @@ class TTS_Admin {
             return;
         }
 
+        // Enqueue enhanced notification system
+        wp_enqueue_script(
+            'tts-notifications',
+            plugin_dir_url( __FILE__ ) . 'js/tts-notifications.js',
+            array(),
+            '1.1',
+            true
+        );
+
+        // Enqueue admin utilities
+        wp_enqueue_script(
+            'tts-admin-utils',
+            plugin_dir_url( __FILE__ ) . 'js/tts-admin-utils.js',
+            array( 'tts-notifications' ),
+            '1.1',
+            true
+        );
+
         wp_enqueue_style(
             'tts-dashboard',
             plugin_dir_url( __FILE__ ) . 'css/tts-dashboard.css',
             array(),
-            '1.0'
+            '1.1'
         );
 
         wp_enqueue_script(
             'tts-dashboard',
             plugin_dir_url( __FILE__ ) . 'js/tts-dashboard.js',
-            array( 'wp-element', 'wp-components', 'wp-api-fetch' ),
-            '1.0',
+            array( 'wp-element', 'wp-components', 'wp-api-fetch', 'tts-notifications', 'tts-admin-utils' ),
+            '1.1',
             true
+        );
+
+        // Localize script with enhanced data
+        wp_localize_script(
+            'tts-dashboard',
+            'ttsDashboard',
+            array(
+                'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+                'nonce' => wp_create_nonce( 'tts_dashboard' ),
+                'restUrl' => rest_url( 'wp/v2/' ),
+                'restNonce' => wp_create_nonce( 'wp_rest' ),
+                'strings' => array(
+                    'confirmDelete' => __( 'Are you sure you want to delete this item?', 'trello-social-auto-publisher' ),
+                    'bulkDelete' => __( 'Are you sure you want to delete the selected items?', 'trello-social-auto-publisher' ),
+                    'loading' => __( 'Loading...', 'trello-social-auto-publisher' ),
+                    'error' => __( 'An error occurred', 'trello-social-auto-publisher' ),
+                    'success' => __( 'Operation completed successfully', 'trello-social-auto-publisher' ),
+                )
+            )
         );
     }
 
@@ -273,16 +313,174 @@ class TTS_Admin {
     }
 
     /**
+     * AJAX callback: refresh posts data for dashboard.
+     */
+    public function ajax_refresh_posts() {
+        check_ajax_referer( 'tts_dashboard', 'nonce' );
+
+        $posts = get_posts(array(
+            'post_type' => 'tts_social_post',
+            'posts_per_page' => 10,
+            'post_status' => 'any',
+            'orderby' => 'date',
+            'order' => 'DESC'
+        ));
+
+        $formatted_posts = array();
+        foreach ($posts as $post) {
+            $channel = get_post_meta($post->ID, '_tts_social_channel', true);
+            $status = get_post_meta($post->ID, '_published_status', true);
+            $publish_at = get_post_meta($post->ID, '_tts_publish_at', true);
+            
+            $formatted_posts[] = array(
+                'ID' => $post->ID,
+                'title' => $post->post_title,
+                'channel' => is_array($channel) ? $channel : array($channel),
+                'status' => $status ?: 'scheduled',
+                'publish_at' => $publish_at ?: $post->post_date,
+                'edit_link' => get_edit_post_link($post->ID)
+            );
+        }
+
+        wp_send_json_success(array(
+            'posts' => $formatted_posts,
+            'message' => __('Posts refreshed successfully', 'trello-social-auto-publisher'),
+            'timestamp' => current_time('timestamp')
+        ));
+    }
+
+    /**
+     * AJAX callback: delete a social post.
+     */
+    public function ajax_delete_post() {
+        check_ajax_referer( 'tts_dashboard', 'nonce' );
+
+        if (!current_user_can('delete_posts')) {
+            wp_send_json_error(__('You do not have permission to delete posts.', 'trello-social-auto-publisher'));
+        }
+
+        $post_id = isset($_POST['postId']) ? intval($_POST['postId']) : 0;
+        
+        if (!$post_id) {
+            wp_send_json_error(__('Invalid post ID.', 'trello-social-auto-publisher'));
+        }
+
+        $post = get_post($post_id);
+        if (!$post || $post->post_type !== 'tts_social_post') {
+            wp_send_json_error(__('Post not found.', 'trello-social-auto-publisher'));
+        }
+
+        $result = wp_delete_post($post_id, true);
+        
+        if ($result) {
+            wp_send_json_success(array(
+                'message' => __('Post deleted successfully.', 'trello-social-auto-publisher'),
+                'refresh' => true
+            ));
+        } else {
+            wp_send_json_error(__('Failed to delete post.', 'trello-social-auto-publisher'));
+        }
+    }
+
+    /**
+     * AJAX callback: handle bulk actions on social posts.
+     */
+    public function ajax_bulk_action() {
+        check_ajax_referer( 'tts_dashboard', 'nonce' );
+
+        if (!current_user_can('edit_posts')) {
+            wp_send_json_error(__('You do not have permission to perform this action.', 'trello-social-auto-publisher'));
+        }
+
+        $action = isset($_POST['bulkAction']) ? sanitize_text_field($_POST['bulkAction']) : '';
+        $post_ids = isset($_POST['postIds']) ? array_map('intval', $_POST['postIds']) : array();
+
+        if (!$action || empty($post_ids)) {
+            wp_send_json_error(__('Invalid action or no posts selected.', 'trello-social-auto-publisher'));
+        }
+
+        $processed = 0;
+        $errors = array();
+
+        foreach ($post_ids as $post_id) {
+            $post = get_post($post_id);
+            if (!$post || $post->post_type !== 'tts_social_post') {
+                $errors[] = sprintf(__('Post ID %d not found.', 'trello-social-auto-publisher'), $post_id);
+                continue;
+            }
+
+            switch ($action) {
+                case 'delete':
+                    if (current_user_can('delete_posts')) {
+                        if (wp_delete_post($post_id, true)) {
+                            $processed++;
+                        } else {
+                            $errors[] = sprintf(__('Failed to delete post ID %d.', 'trello-social-auto-publisher'), $post_id);
+                        }
+                    } else {
+                        $errors[] = __('You do not have permission to delete posts.', 'trello-social-auto-publisher');
+                    }
+                    break;
+
+                case 'approve':
+                    update_post_meta($post_id, '_tts_approved', true);
+                    do_action('save_post_tts_social_post', $post_id, $post, true);
+                    do_action('tts_post_approved', $post_id);
+                    $processed++;
+                    break;
+
+                case 'revoke':
+                    delete_post_meta($post_id, '_tts_approved');
+                    do_action('save_post_tts_social_post', $post_id, $post, true);
+                    $processed++;
+                    break;
+
+                default:
+                    $errors[] = sprintf(__('Unknown action: %s', 'trello-social-auto-publisher'), $action);
+                    break;
+            }
+        }
+
+        if ($processed > 0) {
+            $message = sprintf(
+                _n(
+                    '%d post processed successfully.',
+                    '%d posts processed successfully.',
+                    $processed,
+                    'trello-social-auto-publisher'
+                ),
+                $processed
+            );
+
+            if (!empty($errors)) {
+                $message .= ' ' . sprintf(__('However, %d errors occurred.', 'trello-social-auto-publisher'), count($errors));
+            }
+
+            wp_send_json_success(array(
+                'message' => $message,
+                'processed' => $processed,
+                'errors' => $errors,
+                'refresh' => true
+            ));
+        } else {
+            wp_send_json_error(__('No posts were processed.', 'trello-social-auto-publisher') . ' ' . implode(' ', $errors));
+        }
+    }
+
+    /**
      * Render the dashboard page.
      */
     public function render_dashboard_page() {
         echo '<div class="wrap">';
         echo '<h1>' . esc_html__( 'Social Auto Publisher Dashboard', 'trello-social-auto-publisher' ) . '</h1>';
         
+        // Add notification area
+        echo '<div id="tts-notification-area" style="margin: 15px 0;"></div>';
+        
         // Quick stats cards
         $this->render_dashboard_stats();
         
-        // Recent activity
+        // Recent activity and actions
         echo '<div class="tts-dashboard-sections">';
         echo '<div class="tts-dashboard-left">';
         $this->render_recent_posts_section();
@@ -290,6 +488,7 @@ class TTS_Admin {
         
         echo '<div class="tts-dashboard-right">';
         $this->render_quick_actions_section();
+        $this->render_system_status_widget();
         echo '</div>';
         echo '</div>';
         
@@ -328,26 +527,152 @@ class TTS_Admin {
             'fields' => 'ids'
         ));
 
+        // Get yesterday's published posts for trend analysis
+        $published_yesterday = get_posts(array(
+            'post_type' => 'tts_social_post',
+            'post_status' => 'any',
+            'date_query' => array(
+                array(
+                    'after' => '1 day ago',
+                    'before' => 'today',
+                )
+            ),
+            'meta_key' => '_published_status',
+            'meta_value' => 'published',
+            'fields' => 'ids'
+        ));
+
+        // Get failed posts today
+        $failed_today = get_posts(array(
+            'post_type' => 'tts_social_post',
+            'post_status' => 'any',
+            'date_query' => array(
+                array(
+                    'after' => 'today',
+                    'before' => 'tomorrow',
+                )
+            ),
+            'meta_key' => '_published_status',
+            'meta_value' => 'failed',
+            'fields' => 'ids'
+        ));
+
         echo '<div class="tts-stats-row">';
-        echo '<div class="tts-stat-card">';
+        
+        // Total Posts Card
+        echo '<div class="tts-stat-card tts-tooltip">';
         echo '<h3>' . esc_html__('Total Posts', 'trello-social-auto-publisher') . '</h3>';
         echo '<span class="tts-stat-number">' . intval($total_posts->publish + $total_posts->draft + $total_posts->private) . '</span>';
+        echo '<div class="tts-stat-trend">All time posts created</div>';
+        echo '<span class="tts-tooltiptext">Total number of social media posts created in the system</span>';
         echo '</div>';
         
-        echo '<div class="tts-stat-card">';
+        // Active Clients Card
+        echo '<div class="tts-stat-card tts-tooltip">';
         echo '<h3>' . esc_html__('Active Clients', 'trello-social-auto-publisher') . '</h3>';
         echo '<span class="tts-stat-number">' . intval($total_clients->publish) . '</span>';
+        echo '<div class="tts-stat-trend">Currently configured</div>';
+        echo '<span class="tts-tooltiptext">Number of clients with active social media configurations</span>';
         echo '</div>';
         
-        echo '<div class="tts-stat-card">';
+        // Scheduled Posts Card
+        echo '<div class="tts-stat-card tts-tooltip">';
         echo '<h3>' . esc_html__('Scheduled Posts', 'trello-social-auto-publisher') . '</h3>';
         echo '<span class="tts-stat-number">' . count($scheduled_posts) . '</span>';
+        echo '<div class="tts-stat-trend">Awaiting publication</div>';
+        echo '<span class="tts-tooltiptext">Posts scheduled for future publication</span>';
         echo '</div>';
         
-        echo '<div class="tts-stat-card">';
+        // Published Today Card with Trend
+        $today_count = count($published_today);
+        $yesterday_count = count($published_yesterday);
+        $trend_percentage = $yesterday_count > 0 ? round((($today_count - $yesterday_count) / $yesterday_count) * 100) : 0;
+        $trend_class = $trend_percentage > 0 ? 'positive' : ($trend_percentage < 0 ? 'negative' : '');
+        $trend_icon = $trend_percentage > 0 ? '↗' : ($trend_percentage < 0 ? '↘' : '→');
+        
+        echo '<div class="tts-stat-card tts-tooltip">';
         echo '<h3>' . esc_html__('Published Today', 'trello-social-auto-publisher') . '</h3>';
-        echo '<span class="tts-stat-number">' . count($published_today) . '</span>';
+        echo '<span class="tts-stat-number">' . $today_count . '</span>';
+        if ($yesterday_count > 0) {
+            echo '<div class="tts-stat-trend ' . $trend_class . '">';
+            echo $trend_icon . ' ' . abs($trend_percentage) . '% vs yesterday';
+            echo '</div>';
+        } else {
+            echo '<div class="tts-stat-trend">Published today</div>';
+        }
+        echo '<span class="tts-tooltiptext">Posts successfully published today with trend comparison</span>';
         echo '</div>';
+
+        echo '</div>';
+
+        // Additional stats row for more detailed metrics
+        echo '<div class="tts-stats-row">';
+        
+        // Failed Posts Today
+        echo '<div class="tts-stat-card tts-tooltip">';
+        echo '<h3>' . esc_html__('Failed Today', 'trello-social-auto-publisher') . '</h3>';
+        echo '<span class="tts-stat-number" style="color: #d63638;">' . count($failed_today) . '</span>';
+        echo '<div class="tts-stat-trend">Requires attention</div>';
+        echo '<span class="tts-tooltiptext">Posts that failed to publish today and need attention</span>';
+        echo '</div>';
+
+        // Success Rate
+        $total_today = $today_count + count($failed_today);
+        $success_rate = $total_today > 0 ? round(($today_count / $total_today) * 100) : 100;
+        echo '<div class="tts-stat-card tts-tooltip">';
+        echo '<h3>' . esc_html__('Success Rate', 'trello-social-auto-publisher') . '</h3>';
+        echo '<span class="tts-stat-number" style="color: ' . ($success_rate >= 95 ? '#00a32a' : ($success_rate >= 80 ? '#f56e28' : '#d63638')) . ';">' . $success_rate . '%</span>';
+        echo '<div class="tts-stat-trend">Today\'s performance</div>';
+        echo '<span class="tts-tooltiptext">Percentage of successful publications today</span>';
+        echo '</div>';
+
+        // Next Scheduled
+        $next_scheduled = get_posts(array(
+            'post_type' => 'tts_social_post',
+            'posts_per_page' => 1,
+            'post_status' => 'any',
+            'meta_key' => '_tts_publish_at',
+            'meta_value' => current_time('mysql'),
+            'meta_compare' => '>=',
+            'orderby' => 'meta_value',
+            'order' => 'ASC'
+        ));
+
+        echo '<div class="tts-stat-card tts-tooltip">';
+        echo '<h3>' . esc_html__('Next Post', 'trello-social-auto-publisher') . '</h3>';
+        if (!empty($next_scheduled)) {
+            $next_time = get_post_meta($next_scheduled[0]->ID, '_tts_publish_at', true);
+            $time_diff = human_time_diff(current_time('timestamp'), strtotime($next_time));
+            echo '<span class="tts-stat-number" style="font-size: 20px;">in ' . $time_diff . '</span>';
+            echo '<div class="tts-stat-trend">' . esc_html($next_scheduled[0]->post_title) . '</div>';
+        } else {
+            echo '<span class="tts-stat-number" style="font-size: 20px;">None</span>';
+            echo '<div class="tts-stat-trend">No posts scheduled</div>';
+        }
+        echo '<span class="tts-tooltiptext">Time until the next scheduled post publication</span>';
+        echo '</div>';
+
+        // Weekly Average
+        $week_posts = get_posts(array(
+            'post_type' => 'tts_social_post',
+            'date_query' => array(
+                array(
+                    'after' => '1 week ago'
+                )
+            ),
+            'meta_key' => '_published_status',
+            'meta_value' => 'published',
+            'fields' => 'ids'
+        ));
+        $weekly_average = round(count($week_posts) / 7, 1);
+
+        echo '<div class="tts-stat-card tts-tooltip">';
+        echo '<h3>' . esc_html__('Daily Average', 'trello-social-auto-publisher') . '</h3>';
+        echo '<span class="tts-stat-number">' . $weekly_average . '</span>';
+        echo '<div class="tts-stat-trend">Posts per day (7-day avg)</div>';
+        echo '<span class="tts-tooltiptext">Average number of posts published per day over the last week</span>';
+        echo '</div>';
+
         echo '</div>';
     }
 
@@ -356,23 +681,33 @@ class TTS_Admin {
      */
     private function render_recent_posts_section() {
         echo '<div class="tts-dashboard-section">';
-        echo '<h2>' . esc_html__('Recent Social Posts', 'trello-social-auto-publisher') . '</h2>';
+        echo '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">';
+        echo '<h2 style="margin: 0;">' . esc_html__('Recent Social Posts', 'trello-social-auto-publisher') . '</h2>';
+        echo '<div>';
+        echo '<button class="tts-btn small" data-ajax-action="tts_refresh_posts" data-loading-text="' . esc_attr__('Refreshing...', 'trello-social-auto-publisher') . '">';
+        echo esc_html__('Refresh', 'trello-social-auto-publisher');
+        echo '</button>';
+        echo '</div>';
+        echo '</div>';
         
         $recent_posts = get_posts(array(
             'post_type' => 'tts_social_post',
-            'posts_per_page' => 5,
+            'posts_per_page' => 10,
             'post_status' => 'any',
             'orderby' => 'date',
             'order' => 'DESC'
         ));
         
         if (!empty($recent_posts)) {
-            echo '<table class="widefat">';
+            echo '<div class="tts-enhanced-table-container">';
+            echo '<table class="widefat tts-enhanced-table">';
             echo '<thead><tr>';
+            echo '<th style="width: 20px;"><input type="checkbox" class="tts-bulk-select-all"></th>';
             echo '<th>' . esc_html__('Title', 'trello-social-auto-publisher') . '</th>';
             echo '<th>' . esc_html__('Channel', 'trello-social-auto-publisher') . '</th>';
             echo '<th>' . esc_html__('Status', 'trello-social-auto-publisher') . '</th>';
             echo '<th>' . esc_html__('Date', 'trello-social-auto-publisher') . '</th>';
+            echo '<th>' . esc_html__('Actions', 'trello-social-auto-publisher') . '</th>';
             echo '</tr></thead><tbody>';
             
             foreach ($recent_posts as $post) {
@@ -380,16 +715,74 @@ class TTS_Admin {
                 $status = get_post_meta($post->ID, '_published_status', true);
                 $publish_at = get_post_meta($post->ID, '_tts_publish_at', true);
                 
-                echo '<tr>';
-                echo '<td><a href="' . esc_url(get_edit_post_link($post->ID)) . '">' . esc_html($post->post_title) . '</a></td>';
-                echo '<td>' . esc_html(is_array($channel) ? implode(', ', $channel) : $channel) . '</td>';
-                echo '<td>' . esc_html($status ?: __('Scheduled', 'trello-social-auto-publisher')) . '</td>';
-                echo '<td>' . esc_html($publish_at ? date_i18n('Y-m-d H:i', strtotime($publish_at)) : get_the_date('Y-m-d H:i', $post)) . '</td>';
+                // Determine status class and text
+                $status_class = $status === 'published' ? 'success' : ($status === 'failed' ? 'error' : 'warning');
+                $status_text = $status ?: __('Scheduled', 'trello-social-auto-publisher');
+                
+                echo '<tr class="tts-list-item">';
+                echo '<td><input type="checkbox" class="tts-bulk-select-item" value="' . esc_attr($post->ID) . '"></td>';
+                echo '<td>';
+                echo '<a href="' . esc_url(get_edit_post_link($post->ID)) . '" class="tts-tooltip">';
+                echo '<strong>' . esc_html($post->post_title) . '</strong>';
+                echo '<span class="tts-tooltiptext">' . esc_html__('Click to edit this post', 'trello-social-auto-publisher') . '</span>';
+                echo '</a>';
+                echo '<div class="row-actions">';
+                echo '<span class="edit"><a href="' . esc_url(get_edit_post_link($post->ID)) . '">' . esc_html__('Edit', 'trello-social-auto-publisher') . '</a> | </span>';
+                echo '<span class="delete"><a href="#" data-confirm="' . esc_attr__('Are you sure you want to delete this post?', 'trello-social-auto-publisher') . '" data-dangerous data-ajax-action="tts_delete_post" data-post-id="' . esc_attr($post->ID) . '">' . esc_html__('Delete', 'trello-social-auto-publisher') . '</a></span>';
+                echo '</div>';
+                echo '</td>';
+                echo '<td>';
+                if (is_array($channel)) {
+                    foreach ($channel as $ch) {
+                        echo '<span class="tts-status-badge info" style="margin-right: 5px;">' . esc_html($ch) . '</span>';
+                    }
+                } else {
+                    echo '<span class="tts-status-badge info">' . esc_html($channel ?: __('No channel', 'trello-social-auto-publisher')) . '</span>';
+                }
+                echo '</td>';
+                echo '<td><span class="tts-status-badge ' . $status_class . '">' . esc_html($status_text) . '</span></td>';
+                echo '<td>';
+                $date_text = $publish_at ? date_i18n('Y-m-d H:i', strtotime($publish_at)) : get_the_date('Y-m-d H:i', $post);
+                echo '<span class="tts-tooltip">';
+                echo esc_html($date_text);
+                echo '<span class="tts-tooltiptext">' . esc_html(human_time_diff(strtotime($date_text), current_time('timestamp'))) . ' ago</span>';
+                echo '</span>';
+                echo '</td>';
+                echo '<td>';
+                echo '<a href="' . esc_url(admin_url('admin.php?page=tts-social-posts&action=log&post=' . $post->ID)) . '" class="tts-btn small secondary">';
+                echo esc_html__('View Log', 'trello-social-auto-publisher');
+                echo '</a>';
+                echo '</td>';
                 echo '</tr>';
             }
             echo '</tbody></table>';
+            echo '</div>';
+            
+            // Bulk actions
+            echo '<div class="tts-bulk-actions">';
+            echo '<h4>' . esc_html__('Bulk Actions', 'trello-social-auto-publisher') . '</h4>';
+            echo '<div style="display: flex; gap: 10px; align-items: center;">';
+            echo '<select class="tts-bulk-action-select">';
+            echo '<option value="">' . esc_html__('Choose an action...', 'trello-social-auto-publisher') . '</option>';
+            echo '<option value="delete">' . esc_html__('Delete', 'trello-social-auto-publisher') . '</option>';
+            echo '<option value="approve">' . esc_html__('Approve', 'trello-social-auto-publisher') . '</option>';
+            echo '<option value="revoke">' . esc_html__('Revoke', 'trello-social-auto-publisher') . '</option>';
+            echo '</select>';
+            echo '<button class="tts-btn" data-ajax-action="tts_bulk_action" data-confirm="' . esc_attr__('Are you sure you want to perform this action on the selected posts?', 'trello-social-auto-publisher') . '">';
+            echo esc_html__('Apply', 'trello-social-auto-publisher');
+            echo '</button>';
+            echo '</div>';
+            echo '</div>';
+            
         } else {
-            echo '<p>' . esc_html__('No social posts found.', 'trello-social-auto-publisher') . '</p>';
+            echo '<div style="text-align: center; padding: 40px; color: #666;">';
+            echo '<span style="font-size: 48px; margin-bottom: 10px; display: block;">📝</span>';
+            echo '<p style="margin: 0; font-size: 16px;">' . esc_html__('No social posts found.', 'trello-social-auto-publisher') . '</p>';
+            echo '<p style="margin: 5px 0 0 0; font-size: 14px;">' . esc_html__('Create your first social media post to get started!', 'trello-social-auto-publisher') . '</p>';
+            echo '<a href="' . esc_url(admin_url('admin.php?page=tts-client-wizard')) . '" class="tts-btn" style="margin-top: 15px;">';
+            echo esc_html__('Add New Client', 'trello-social-auto-publisher');
+            echo '</a>';
+            echo '</div>';
         }
         echo '</div>';
     }
@@ -405,39 +798,143 @@ class TTS_Admin {
         $actions = array(
             array(
                 'title' => __('Add New Client', 'trello-social-auto-publisher'),
+                'description' => __('Set up a new social media client', 'trello-social-auto-publisher'),
                 'url' => admin_url('admin.php?page=tts-client-wizard'),
-                'icon' => 'dashicons-plus'
+                'icon' => 'dashicons-plus',
+                'color' => '#135e96'
             ),
             array(
                 'title' => __('View Calendar', 'trello-social-auto-publisher'),
+                'description' => __('See scheduled posts in calendar view', 'trello-social-auto-publisher'),
                 'url' => admin_url('admin.php?page=tts-calendar'),
-                'icon' => 'dashicons-calendar'
+                'icon' => 'dashicons-calendar',
+                'color' => '#f56e28'
             ),
             array(
-                'title' => __('Check Status', 'trello-social-auto-publisher'),
+                'title' => __('Check Health Status', 'trello-social-auto-publisher'),
+                'description' => __('Monitor system health and tokens', 'trello-social-auto-publisher'),
                 'url' => admin_url('admin.php?page=tts-health'),
-                'icon' => 'dashicons-heart'
+                'icon' => 'dashicons-heart',
+                'color' => '#00a32a'
             ),
             array(
                 'title' => __('View Analytics', 'trello-social-auto-publisher'),
+                'description' => __('Analyze performance and engagement', 'trello-social-auto-publisher'),
                 'url' => admin_url('admin.php?page=tts-analytics'),
-                'icon' => 'dashicons-chart-area'
+                'icon' => 'dashicons-chart-area',
+                'color' => '#7c3aed'
+            ),
+            array(
+                'title' => __('Manage Posts', 'trello-social-auto-publisher'),
+                'description' => __('View and manage all social posts', 'trello-social-auto-publisher'),
+                'url' => admin_url('admin.php?page=tts-social-posts'),
+                'icon' => 'dashicons-admin-post',
+                'color' => '#2563eb'
             ),
             array(
                 'title' => __('View Logs', 'trello-social-auto-publisher'),
+                'description' => __('Check system logs and debugging info', 'trello-social-auto-publisher'),
                 'url' => admin_url('admin.php?page=tts-log'),
-                'icon' => 'dashicons-list-view'
+                'icon' => 'dashicons-list-view',
+                'color' => '#64748b'
             )
         );
         
         foreach ($actions as $action) {
-            echo '<a href="' . esc_url($action['url']) . '" class="tts-quick-action">';
-            echo '<span class="dashicons ' . esc_attr($action['icon']) . '"></span>';
-            echo esc_html($action['title']);
+            echo '<a href="' . esc_url($action['url']) . '" class="tts-quick-action tts-tooltip" style="border-left: 4px solid ' . $action['color'] . ';">';
+            echo '<div style="display: flex; align-items: center;">';
+            echo '<span class="dashicons ' . esc_attr($action['icon']) . '" style="color: ' . $action['color'] . '; margin-right: 12px; font-size: 20px;"></span>';
+            echo '<div>';
+            echo '<div style="font-weight: 600; margin-bottom: 2px;">' . esc_html($action['title']) . '</div>';
+            echo '<div style="font-size: 12px; color: #666;">' . esc_html($action['description']) . '</div>';
+            echo '</div>';
+            echo '</div>';
+            echo '<span class="tts-tooltiptext">' . esc_html($action['description']) . '</span>';
             echo '</a>';
         }
         
         echo '</div>';
+        echo '</div>';
+    }
+
+    /**
+     * Render system status widget for dashboard.
+     */
+    private function render_system_status_widget() {
+        echo '<div class="tts-dashboard-section">';
+        echo '<h2>' . esc_html__('System Status', 'trello-social-auto-publisher') . '</h2>';
+        
+        // Check various system components
+        $status_checks = array();
+        
+        // Check WordPress requirements
+        $wp_version = get_bloginfo('version');
+        $status_checks['wordpress'] = array(
+            'name' => 'WordPress Version',
+            'status' => version_compare($wp_version, '5.0', '>=') ? 'success' : 'error',
+            'message' => 'WordPress ' . $wp_version
+        );
+        
+        // Check if Action Scheduler is available
+        $status_checks['scheduler'] = array(
+            'name' => 'Action Scheduler',
+            'status' => class_exists('ActionScheduler') ? 'success' : 'warning',
+            'message' => class_exists('ActionScheduler') ? 'Available' : 'Not available'
+        );
+        
+        // Check recent error logs
+        $recent_errors = get_posts(array(
+            'post_type' => 'tts_log',
+            'posts_per_page' => 1,
+            'meta_query' => array(
+                array(
+                    'key' => '_log_level',
+                    'value' => 'error',
+                    'compare' => '='
+                )
+            ),
+            'date_query' => array(
+                array(
+                    'after' => '24 hours ago'
+                )
+            )
+        ));
+        
+        $status_checks['errors'] = array(
+            'name' => 'Recent Errors',
+            'status' => empty($recent_errors) ? 'success' : 'warning',
+            'message' => empty($recent_errors) ? 'No errors in 24h' : count($recent_errors) . ' error(s) in 24h'
+        );
+        
+        // Overall health calculation
+        $success_count = 0;
+        foreach ($status_checks as $check) {
+            if ($check['status'] === 'success') $success_count++;
+        }
+        $health_percentage = round(($success_count / count($status_checks)) * 100);
+        
+        // Health indicator
+        echo '<div style="text-align: center; margin-bottom: 15px;">';
+        $health_color = $health_percentage >= 80 ? '#00a32a' : ($health_percentage >= 60 ? '#f56e28' : '#d63638');
+        echo '<div style="font-size: 24px; color: ' . $health_color . '; font-weight: bold;">';
+        echo $health_percentage . '% ' . esc_html__('Healthy', 'trello-social-auto-publisher');
+        echo '</div>';
+        echo '</div>';
+        
+        // Status items
+        foreach ($status_checks as $key => $check) {
+            $icon_color = $check['status'] === 'success' ? '#00a32a' : ($check['status'] === 'warning' ? '#f56e28' : '#d63638');
+            echo '<div style="display: flex; align-items: center; margin-bottom: 8px;">';
+            echo '<span class="tts-status-indicator ' . $check['status'] . '" style="background: ' . $icon_color . ';"></span>';
+            echo '<span style="flex: 1;">' . esc_html($check['name']) . '</span>';
+            echo '<span style="color: #666; font-size: 12px;">' . esc_html($check['message']) . '</span>';
+            echo '</div>';
+        }
+        
+        echo '<div style="margin-top: 15px;">';
+        echo '<a href="' . admin_url('admin.php?page=tts-health') . '" class="tts-btn small">View Detailed Status</a>';
+        echo '</div>';
+        
         echo '</div>';
     }
 
