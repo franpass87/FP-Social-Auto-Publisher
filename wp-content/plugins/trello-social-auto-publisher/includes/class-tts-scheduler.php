@@ -140,9 +140,30 @@ class TTS_Scheduler {
         $channels = is_array( $channels ) ? $channels : array( $channels );
         $log      = array();
 
+        $attachment_ids = get_post_meta( $post_id, '_tts_attachment_ids', true );
+        $attachment_ids = is_array( $attachment_ids ) ? array_map( 'intval', $attachment_ids ) : array();
+        $manual_id      = (int) get_post_meta( $post_id, '_tts_manual_media', true );
+        if ( $manual_id ) {
+            $attachment_ids[] = $manual_id;
+        }
+
+        $processor = new TTS_Image_Processor();
+
         $error = false;
 
         foreach ( $channels as $ch ) {
+            if ( $attachment_ids ) {
+                $resized = array();
+                foreach ( $attachment_ids as $att_id ) {
+                    $url = $processor->resize_for_channel( $att_id, $ch );
+                    if ( $url ) {
+                        $resized[ $att_id ] = $url;
+                    }
+                }
+                if ( $resized ) {
+                    update_post_meta( $post_id, '_tts_resized_' . $ch, $resized );
+                }
+            }
             $class = 'TTS_Publisher_' . ucfirst( $ch );
             $file  = plugin_dir_path( __FILE__ ) . 'publishers/class-tts-publisher-' . $ch . '.php';
 

@@ -56,12 +56,14 @@ class TTS_Publisher_Facebook {
 
         $attachment_ids = get_post_meta( $post_id, '_tts_attachment_ids', true );
         $attachment_ids = is_array( $attachment_ids ) ? array_map( 'intval', $attachment_ids ) : array();
+        $resized_urls   = get_post_meta( $post_id, '_tts_resized_facebook', true );
+        $resized_urls   = is_array( $resized_urls ) ? $resized_urls : array();
         $images         = array();
         $videos         = array();
         foreach ( $attachment_ids as $att_id ) {
             $mime = get_post_mime_type( $att_id );
             if ( $mime && 0 === strpos( $mime, 'image/' ) ) {
-                $images[] = $att_id;
+                $images[ $att_id ] = isset( $resized_urls[ $att_id ] ) ? $resized_urls[ $att_id ] : wp_get_attachment_url( $att_id );
             } elseif ( $mime && 0 === strpos( $mime, 'video/' ) ) {
                 $videos[] = $att_id;
             }
@@ -72,7 +74,7 @@ class TTS_Publisher_Facebook {
             if ( $manual_id ) {
                 $mime = get_post_mime_type( $manual_id );
                 if ( $mime && 0 === strpos( $mime, 'image/' ) ) {
-                    $images[] = $manual_id;
+                    $images[ $manual_id ] = isset( $resized_urls[ $manual_id ] ) ? $resized_urls[ $manual_id ] : wp_get_attachment_url( $manual_id );
                 } elseif ( $mime && 0 === strpos( $mime, 'video/' ) ) {
                     $videos[] = $manual_id;
                 }
@@ -160,14 +162,13 @@ class TTS_Publisher_Facebook {
             }
         }
 
-        foreach ( $images as $index => $image_id ) {
+        foreach ( $images as $image_id => $image_url ) {
             $endpoint  = sprintf( 'https://graph.facebook.com/%s/photos', $page_id );
-            $image_url = wp_get_attachment_url( $image_id );
             $img_body  = array(
                 'access_token' => $token,
                 'source'       => $image_url,
             );
-            if ( 0 === $index && empty( $videos ) ) {
+            if ( empty( $videos ) && $image_id === array_key_first( $images ) ) {
                 $img_body['message'] = $message;
             }
             if ( $lat && $lng ) {

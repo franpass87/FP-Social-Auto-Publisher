@@ -47,13 +47,15 @@ class TTS_Publisher_Instagram {
 
         $attachment_ids = get_post_meta( $post_id, '_tts_attachment_ids', true );
         $attachment_ids = is_array( $attachment_ids ) ? array_map( 'intval', $attachment_ids ) : array();
+        $resized_urls   = get_post_meta( $post_id, '_tts_resized_instagram', true );
+        $resized_urls   = is_array( $resized_urls ) ? $resized_urls : array();
         $media_items    = array();
         foreach ( $attachment_ids as $att_id ) {
             $mime = get_post_mime_type( $att_id );
             if ( $mime && 0 === strpos( $mime, 'image/' ) ) {
                 $media_items[] = array(
                     'type' => 'IMAGE',
-                    'url'  => wp_get_attachment_url( $att_id ),
+                    'url'  => isset( $resized_urls[ $att_id ] ) ? $resized_urls[ $att_id ] : wp_get_attachment_url( $att_id ),
                 );
             } elseif ( $mime && 0 === strpos( $mime, 'video/' ) ) {
                 $media_items[] = array(
@@ -67,9 +69,10 @@ class TTS_Publisher_Instagram {
             if ( $manual_id ) {
                 $mime = get_post_mime_type( $manual_id );
                 if ( $mime && 0 === strpos( $mime, 'image/' ) ) {
+                    $url = isset( $resized_urls[ $manual_id ] ) ? $resized_urls[ $manual_id ] : wp_get_attachment_url( $manual_id );
                     $media_items[] = array(
                         'type' => 'IMAGE',
-                        'url'  => wp_make_link_relative( wp_get_attachment_url( $manual_id ) ),
+                        'url'  => wp_make_link_relative( $url ),
                     );
                 } elseif ( $mime && 0 === strpos( $mime, 'video/' ) ) {
                     $media_items[] = array(
