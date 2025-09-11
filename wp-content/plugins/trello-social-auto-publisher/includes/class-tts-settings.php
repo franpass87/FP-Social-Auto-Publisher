@@ -223,6 +223,30 @@ class TTS_Settings {
             'tts_url_shortener'
         );
 
+        // Notification options.
+        add_settings_section(
+            'tts_notification_options',
+            __( 'Notification Options', 'trello-social-auto-publisher' ),
+            '__return_false',
+            'tts_settings'
+        );
+
+        add_settings_field(
+            'slack_webhook',
+            __( 'Slack Webhook', 'trello-social-auto-publisher' ),
+            array( $this, 'render_slack_webhook_field' ),
+            'tts_settings',
+            'tts_notification_options'
+        );
+
+        add_settings_field(
+            'notification_emails',
+            __( 'Notification Emails', 'trello-social-auto-publisher' ),
+            array( $this, 'render_notification_emails_field' ),
+            'tts_settings',
+            'tts_notification_options'
+        );
+
         // Logging options.
         add_settings_section(
             'tts_logging_options',
@@ -401,6 +425,25 @@ class TTS_Settings {
     }
 
     /**
+     * Render field for Slack webhook.
+     */
+    public function render_slack_webhook_field() {
+        $options = get_option( 'tts_settings', array() );
+        $value   = isset( $options['slack_webhook'] ) ? esc_url( $options['slack_webhook'] ) : '';
+        echo '<input type="url" name="tts_settings[slack_webhook]" value="' . $value . '" class="regular-text" />';
+    }
+
+    /**
+     * Render field for notification emails.
+     */
+    public function render_notification_emails_field() {
+        $options = get_option( 'tts_settings', array() );
+        $value   = isset( $options['notification_emails'] ) ? esc_attr( $options['notification_emails'] ) : '';
+        echo '<input type="text" name="tts_settings[notification_emails]" value="' . $value . '" class="regular-text" />';
+        echo '<p class="description">' . esc_html__( 'Comma-separated list of email addresses.', 'trello-social-auto-publisher' ) . '</p>';
+    }
+
+    /**
      * Render field for log retention period.
      */
     public function render_log_retention_days_field() {
@@ -467,6 +510,16 @@ function tts_sanitize_settings( $input ) {
         } elseif ( substr( $key, -4 ) === '_url' ) {
             $output[ $key ] = esc_url_raw( $value );
         }
+    }
+
+    if ( isset( $input['slack_webhook'] ) ) {
+        $output['slack_webhook'] = esc_url_raw( $input['slack_webhook'] );
+    }
+
+    if ( isset( $input['notification_emails'] ) ) {
+        $emails = array_map( 'sanitize_email', array_map( 'trim', explode( ',', $input['notification_emails'] ) ) );
+        $emails = array_filter( $emails );
+        $output['notification_emails'] = implode( ',', $emails );
     }
 
     return $output;
