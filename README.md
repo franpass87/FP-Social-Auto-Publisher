@@ -67,6 +67,11 @@ Ogni elemento dell'array associa una lista Trello al canale social su cui pubbli
 
 Canali supportati: `facebook`, `instagram`, `youtube`, `tiktok`.
 
+## Hashtag di default
+
+Nel metabox *Client Credentials* del post type `tts_client` è possibile definire hashtag di default per Facebook, Instagram, YouTube e TikTok.
+Gli hashtag indicati vengono automaticamente concatenati ai messaggi generati per il relativo canale.
+
 ## Pulizia dei log
 
 Il plugin registra gli eventi nella tabella personalizzata `tts_logs`.
