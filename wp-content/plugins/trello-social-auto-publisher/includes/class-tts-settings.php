@@ -150,6 +150,27 @@ class TTS_Settings {
             'tts_location_options'
         );
 
+        // Image size options.
+        add_settings_section(
+            'tts_image_sizes',
+            __( 'Image Sizes', 'trello-social-auto-publisher' ),
+            '__return_false',
+            'tts_settings'
+        );
+
+        foreach ( $channels as $channel ) {
+            add_settings_field(
+                $channel . '_size',
+                sprintf( __( '%s Size (WxH)', 'trello-social-auto-publisher' ), ucfirst( $channel ) ),
+                array( $this, 'render_image_size_field' ),
+                'tts_settings',
+                'tts_image_sizes',
+                array(
+                    'channel' => $channel,
+                )
+            );
+        }
+
         // UTM options.
         add_settings_section(
             'tts_utm_options',
@@ -374,6 +395,25 @@ class TTS_Settings {
     }
 
     /**
+     * Render image size field for a channel.
+     *
+     * @param array $args Field arguments.
+     */
+    public function render_image_size_field( $args ) {
+        $options  = get_option( 'tts_settings', array() );
+        $channel  = isset( $args['channel'] ) ? $args['channel'] : '';
+        $key      = $channel . '_size';
+        $defaults = array(
+            'facebook'  => '1080x1350',
+            'instagram' => '1080x1350',
+            'youtube'   => '1080x1920',
+            'tiktok'    => '1080x1920',
+        );
+        $value = isset( $options[ $key ] ) ? esc_attr( $options[ $key ] ) : ( isset( $defaults[ $channel ] ) ? $defaults[ $channel ] : '' );
+        echo '<input type="text" name="tts_settings[' . esc_attr( $key ) . ']" value="' . $value . '" class="regular-text" placeholder="' . esc_attr( $defaults[ $channel ] ) . '" />';
+    }
+
+    /**
      * Render a UTM field for a given channel and parameter.
      *
      * @param array $args Field arguments.
@@ -533,6 +573,16 @@ function tts_sanitize_settings( $input ) {
     foreach ( $offset_keys as $key ) {
         if ( isset( $input[ $key ] ) ) {
             $output[ $key ] = absint( $input[ $key ] );
+        }
+    }
+
+    $size_keys = array( 'facebook_size', 'instagram_size', 'youtube_size', 'tiktok_size' );
+    foreach ( $size_keys as $key ) {
+        if ( isset( $input[ $key ] ) ) {
+            $value = strtolower( sanitize_text_field( $input[ $key ] ) );
+            if ( preg_match( '/^\d+x\d+$/', $value ) ) {
+                $output[ $key ] = $value;
+            }
         }
     }
 
