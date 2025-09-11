@@ -73,13 +73,14 @@ class TTS_Client {
 
         $trello_key    = get_post_meta( $post->ID, '_tts_trello_key', true );
         $trello_token  = get_post_meta( $post->ID, '_tts_trello_token', true );
-        $trello_secret = get_post_meta( $post->ID, '_tts_trello_secret', true );
-        $board_id      = get_post_meta( $post->ID, '_tts_trello_board', true );
-        $fb_token     = get_post_meta( $post->ID, '_tts_fb_token', true );
-        $ig_token     = get_post_meta( $post->ID, '_tts_ig_token', true );
-        $yt_token     = get_post_meta( $post->ID, '_tts_yt_token', true );
-        $tt_token     = get_post_meta( $post->ID, '_tts_tt_token', true );
-        $trello_map   = get_post_meta( $post->ID, '_tts_trello_map', true );
+        $trello_secret   = get_post_meta( $post->ID, '_tts_trello_secret', true );
+        $board_id        = get_post_meta( $post->ID, '_tts_trello_board', true );
+        $published_list  = get_post_meta( $post->ID, '_tts_trello_published_list', true );
+        $fb_token        = get_post_meta( $post->ID, '_tts_fb_token', true );
+        $ig_token        = get_post_meta( $post->ID, '_tts_ig_token', true );
+        $yt_token        = get_post_meta( $post->ID, '_tts_yt_token', true );
+        $tt_token        = get_post_meta( $post->ID, '_tts_tt_token', true );
+        $trello_map      = get_post_meta( $post->ID, '_tts_trello_map', true );
 
         if ( ! is_array( $trello_map ) ) {
             $trello_map = array();
@@ -96,6 +97,9 @@ class TTS_Client {
 
         echo '<p><label for="tts_trello_board">' . esc_html__( 'Trello Board/List ID', 'trello-social-auto-publisher' ) . '</label>';
         echo '<input type="text" id="tts_trello_board" name="tts_trello_board" value="' . esc_attr( $board_id ) . '" class="widefat" /></p>';
+
+        echo '<p><label for="tts_trello_published_list">' . esc_html__( 'Trello Published List ID', 'trello-social-auto-publisher' ) . '</label>';
+        echo '<input type="text" id="tts_trello_published_list" name="tts_trello_published_list" value="' . esc_attr( $published_list ) . '" class="widefat" /></p>';
 
         echo '<p><label for="tts_fb_token">' . esc_html__( 'Facebook Access Token', 'trello-social-auto-publisher' ) . '</label>';
         echo '<input type="text" id="tts_fb_token" name="tts_fb_token" value="' . esc_attr( $fb_token ) . '" class="widefat" /></p>';
@@ -170,6 +174,7 @@ class TTS_Client {
             'tts_trello_token'  => '_tts_trello_token',
             'tts_trello_secret' => '_tts_trello_secret',
             'tts_trello_board'  => '_tts_trello_board',
+            'tts_trello_published_list' => '_tts_trello_published_list',
             'tts_fb_token'      => '_tts_fb_token',
             'tts_ig_token'      => '_tts_ig_token',
             'tts_yt_token'      => '_tts_yt_token',
