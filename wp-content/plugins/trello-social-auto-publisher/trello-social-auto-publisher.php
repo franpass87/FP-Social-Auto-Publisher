@@ -54,6 +54,11 @@ add_action( 'plugins_loaded', function () {
         'class-tts-token-refresh.php',
         'class-tts-validation.php',
         'class-tts-webhook.php',
+        'class-tts-ai-content.php',
+        'class-tts-competitor-analysis.php',
+        'class-tts-workflow-system.php',
+        'class-tts-advanced-media.php',
+        'class-tts-integration-hub.php',
         'tts-logger.php',
         'tts-notify.php',
         'tts-template.php',
@@ -88,6 +93,9 @@ add_action( 'plugins_loaded', function () {
         new TTS_Admin();
         new TTS_Calendar_Page();
         new TTS_Health_Page();
+        
+        // Load AI Features page
+        require_once TSAP_PLUGIN_DIR . 'admin/class-tts-ai-features-page.php';
 
         add_action( 'admin_enqueue_scripts', function( $hook ) {
             if ( 'social-auto-publisher_page_tts-calendar' !== $hook ) {
