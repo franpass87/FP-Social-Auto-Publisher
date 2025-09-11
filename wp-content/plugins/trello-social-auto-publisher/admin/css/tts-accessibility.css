@@ -40,14 +40,69 @@ textarea:focus,
         border-width: 2px !important;
         border-color: #000 !important;
         border-style: solid !important;
+        background-color: #fff !important;
+        color: #000 !important;
     }
     
     .tts-status-badge {
         border: 2px solid #000 !important;
         font-weight: bold !important;
+        background-color: #fff !important;
+        color: #000 !important;
     }
     
     .tts-btn {
+        border: 2px solid #000 !important;
+        background-color: #fff !important;
+        color: #000 !important;
+        font-weight: bold !important;
+    }
+    
+    .tts-btn:hover {
+        background-color: #000 !important;
+        color: #fff !important;
+    }
+    
+    /* Ensure text is always readable */
+    .tts-stat-number,
+    .tts-stat-trend,
+    .tts-loading-message {
+        color: #000 !important;
+        font-weight: bold !important;
+    }
+}
+
+/* ==========================================================================
+   Enhanced Error and Success States
+   ========================================================================== */
+.tts-field-error {
+    border-color: #d63638 !important;
+    box-shadow: 0 0 0 1px #d63638 !important;
+}
+
+.tts-field-error:focus {
+    outline-color: #d63638 !important;
+    box-shadow: 0 0 0 1px #d63638, 0 0 0 4px rgba(214, 54, 56, 0.2) !important;
+}
+
+.tts-field-success {
+    border-color: #00a32a !important;
+    box-shadow: 0 0 0 1px #00a32a !important;
+}
+
+.tts-error-message {
+    color: #d63638;
+    font-size: 14px;
+    margin-top: 4px;
+    font-weight: 500;
+}
+
+.tts-success-message {
+    color: #00a32a;
+    font-size: 14px;
+    margin-top: 4px;
+    font-weight: 500;
+}
         border: 2px solid #000 !important;
         font-weight: bold !important;
     }

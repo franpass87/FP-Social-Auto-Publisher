@@ -323,23 +323,65 @@ class TTS_Admin {
     public function ajax_get_lists() {
         check_ajax_referer( 'tts_wizard', 'nonce' );
 
+        // Check user capabilities
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( __( 'You do not have permission to perform this action.', 'trello-social-auto-publisher' ) );
+        }
+
         $board = isset( $_POST['board'] ) ? sanitize_text_field( $_POST['board'] ) : '';
         $key   = isset( $_POST['key'] ) ? sanitize_text_field( $_POST['key'] ) : '';
         $token = isset( $_POST['token'] ) ? sanitize_text_field( $_POST['token'] ) : '';
 
-        if ( empty( $board ) || empty( $key ) || empty( $token ) ) {
-            wp_send_json_error();
+        // Enhanced validation with specific error messages
+        if ( empty( $board ) ) {
+            wp_send_json_error( __( 'Board ID is required.', 'trello-social-auto-publisher' ) );
+        }
+        if ( empty( $key ) ) {
+            wp_send_json_error( __( 'Trello API key is required.', 'trello-social-auto-publisher' ) );
+        }
+        if ( empty( $token ) ) {
+            wp_send_json_error( __( 'Trello token is required.', 'trello-social-auto-publisher' ) );
+        }
+
+        // Validate board ID format (should be 24 character hex string)
+        if ( ! preg_match( '/^[a-f0-9]{24}$/i', $board ) ) {
+            wp_send_json_error( __( 'Invalid board ID format.', 'trello-social-auto-publisher' ) );
         }
 
         $response = wp_remote_get(
             'https://api.trello.com/1/boards/' . rawurlencode( $board ) . '/lists?key=' . rawurlencode( $key ) . '&token=' . rawurlencode( $token ),
             array( 'timeout' => 20 )
         );
+        
         if ( is_wp_error( $response ) ) {
-            wp_send_json_error();
+            error_log( 'TTS AJAX Error: ' . $response->get_error_message() );
+            wp_send_json_error( 
+                sprintf( 
+                    __( 'Failed to connect to Trello API: %s', 'trello-social-auto-publisher' ), 
+                    $response->get_error_message() 
+                ) 
+            );
         }
 
-        $data = json_decode( wp_remote_retrieve_body( $response ), true );
+        $http_code = wp_remote_retrieve_response_code( $response );
+        if ( $http_code !== 200 ) {
+            error_log( "TTS AJAX Error: HTTP $http_code from Trello API" );
+            wp_send_json_error( 
+                sprintf( 
+                    __( 'Trello API returned error code %d. Please check your credentials.', 'trello-social-auto-publisher' ), 
+                    $http_code 
+                ) 
+            );
+        }
+
+        $body = wp_remote_retrieve_body( $response );
+        $data = json_decode( $body, true );
+        
+        if ( json_last_error() !== JSON_ERROR_NONE ) {
+            error_log( 'TTS AJAX Error: Invalid JSON response from Trello API' );
+            wp_send_json_error( __( 'Invalid response from Trello API.', 'trello-social-auto-publisher' ) );
+        }
+
         wp_send_json_success( $data );
     }
 
@@ -349,35 +391,73 @@ class TTS_Admin {
     public function ajax_refresh_posts() {
         check_ajax_referer( 'tts_dashboard', 'nonce' );
 
-        $posts = get_posts(array(
-            'post_type' => 'tts_social_post',
-            'posts_per_page' => 10,
-            'post_status' => 'any',
-            'orderby' => 'date',
-            'order' => 'DESC'
-        ));
-
-        $formatted_posts = array();
-        foreach ($posts as $post) {
-            $channel = get_post_meta($post->ID, '_tts_social_channel', true);
-            $status = get_post_meta($post->ID, '_published_status', true);
-            $publish_at = get_post_meta($post->ID, '_tts_publish_at', true);
-            
-            $formatted_posts[] = array(
-                'ID' => $post->ID,
-                'title' => $post->post_title,
-                'channel' => is_array($channel) ? $channel : array($channel),
-                'status' => $status ?: 'scheduled',
-                'publish_at' => $publish_at ?: $post->post_date,
-                'edit_link' => get_edit_post_link($post->ID)
-            );
+        // Check user capabilities
+        if ( ! current_user_can( 'edit_posts' ) ) {
+            wp_send_json_error( __( 'You do not have permission to view posts.', 'trello-social-auto-publisher' ) );
         }
 
-        wp_send_json_success(array(
-            'posts' => $formatted_posts,
-            'message' => __('Posts refreshed successfully', 'trello-social-auto-publisher'),
-            'timestamp' => current_time('timestamp')
-        ));
+        try {
+            $posts = get_posts(array(
+                'post_type' => 'tts_social_post',
+                'posts_per_page' => 10,
+                'post_status' => 'any',
+                'orderby' => 'date',
+                'order' => 'DESC',
+                'meta_query' => array(
+                    'relation' => 'OR',
+                    array(
+                        'key' => '_tts_publish_at',
+                        'compare' => 'EXISTS'
+                    ),
+                    array(
+                        'key' => '_tts_publish_at',
+                        'compare' => 'NOT EXISTS'
+                    )
+                )
+            ));
+
+            if ( empty( $posts ) ) {
+                wp_send_json_success( array(
+                    'posts' => array(),
+                    'message' => __( 'No posts found.', 'trello-social-auto-publisher' ),
+                    'timestamp' => current_time( 'timestamp' )
+                ) );
+            }
+
+            $formatted_posts = array();
+            foreach ( $posts as $post ) {
+                $channel = get_post_meta( $post->ID, '_tts_social_channel', true );
+                $status = get_post_meta( $post->ID, '_published_status', true );
+                $publish_at = get_post_meta( $post->ID, '_tts_publish_at', true );
+                
+                $formatted_posts[] = array(
+                    'ID' => intval( $post->ID ),
+                    'title' => wp_trim_words( $post->post_title, 10 ),
+                    'channel' => is_array( $channel ) ? $channel : array( $channel ),
+                    'status' => $status ?: 'scheduled',
+                    'publish_at' => $publish_at ?: $post->post_date,
+                    'edit_link' => current_user_can( 'edit_post', $post->ID ) ? get_edit_post_link( $post->ID ) : ''
+                );
+            }
+
+            wp_send_json_success( array(
+                'posts' => $formatted_posts,
+                'message' => sprintf( 
+                    _n( 
+                        '%d post refreshed successfully', 
+                        '%d posts refreshed successfully', 
+                        count( $formatted_posts ), 
+                        'trello-social-auto-publisher' 
+                    ), 
+                    count( $formatted_posts ) 
+                ),
+                'timestamp' => current_time( 'timestamp' )
+            ) );
+
+        } catch ( Exception $e ) {
+            error_log( 'TTS Refresh Posts Error: ' . $e->getMessage() );
+            wp_send_json_error( __( 'An error occurred while refreshing posts. Please try again.', 'trello-social-auto-publisher' ) );
+        }
     }
 
     /**
@@ -578,7 +658,17 @@ class TTS_Admin {
             set_transient($cache_key, $stats, 5 * MINUTE_IN_SECONDS);
         }
         
-        extract($stats); // Extract variables for use below
+        // Access variables directly from the stats array for security
+        $total_posts = $stats['total_posts'];
+        $total_clients = $stats['total_clients'];
+        $scheduled_posts = $stats['scheduled_posts'];
+        $published_today = $stats['published_today'];
+        $published_yesterday = $stats['published_yesterday'];
+        $failed_today = $stats['failed_today'];
+        $success_rate = $stats['success_rate'];
+        $trend_percentage = $stats['trend_percentage'];
+        $next_scheduled = $stats['next_scheduled'];
+        $weekly_average = $stats['weekly_average'];
 
         echo '<div class="tts-stats-row">';
         
@@ -601,13 +691,13 @@ class TTS_Admin {
         // Scheduled Posts Card
         echo '<div class="tts-stat-card tts-tooltip">';
         echo '<h3>' . esc_html__('Scheduled Posts', 'trello-social-auto-publisher') . '</h3>';
-        echo '<span class="tts-stat-number">' . $scheduled_posts . '</span>';
+        echo '<span class="tts-stat-number">' . intval($scheduled_posts) . '</span>';
         echo '<div class="tts-stat-trend">Awaiting publication</div>';
         echo '<span class="tts-tooltiptext">Posts scheduled for future publication</span>';
         echo '</div>';
         
         // Published Today Card with Trend
-        $today_count = $published_today;
+        $today_count = intval($published_today);
         $trend_class = $trend_percentage > 0 ? 'positive' : ($trend_percentage < 0 ? 'negative' : '');
         $trend_icon = $trend_percentage > 0 ? '↗' : ($trend_percentage < 0 ? '↘' : '→');
         
@@ -615,8 +705,8 @@ class TTS_Admin {
         echo '<h3>' . esc_html__('Published Today', 'trello-social-auto-publisher') . '</h3>';
         echo '<span class="tts-stat-number">' . $today_count . '</span>';
         if ($published_yesterday > 0) {
-            echo '<div class="tts-stat-trend ' . $trend_class . '">';
-            echo $trend_icon . ' ' . abs($trend_percentage) . '% vs yesterday';
+            echo '<div class="tts-stat-trend ' . esc_attr($trend_class) . '">';
+            echo esc_html($trend_icon . ' ' . abs($trend_percentage) . '% vs yesterday');
             echo '</div>';
         } else {
             echo '<div class="tts-stat-trend">Published today</div>';

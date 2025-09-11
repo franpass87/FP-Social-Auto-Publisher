@@ -26,7 +26,11 @@ function tts_create_logs_table() {
         message text NOT NULL,
         response longtext NULL,
         created_at datetime NOT NULL,
-        PRIMARY KEY  (id)
+        PRIMARY KEY  (id),
+        KEY post_id (post_id),
+        KEY channel_status (channel, status),
+        KEY created_at (created_at),
+        KEY status_created (status, created_at)
     ) {$charset_collate};";
 
     require_once ABSPATH . 'wp-admin/includes/upgrade.php';

@@ -206,7 +206,7 @@ class TTS_Log_Table extends WP_List_Table {
         }
         echo '</select>';
 
-        submit_button( __( 'Filter' ), '', 'filter_action', false );
+        submit_button( __( 'Filter', 'trello-social-auto-publisher' ), '', 'filter_action', false );
         echo '</div>';
     }
 

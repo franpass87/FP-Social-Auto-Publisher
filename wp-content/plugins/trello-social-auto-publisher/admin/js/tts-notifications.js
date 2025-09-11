@@ -10,10 +10,13 @@ class TTSNotificationSystem {
     }
 
     init() {
-        // Create notification container
+        // Create notification container with proper ARIA attributes
         this.container = document.createElement('div');
         this.container.id = 'tts-notification-container';
         this.container.className = 'tts-notifications';
+        this.container.setAttribute('aria-live', 'polite');
+        this.container.setAttribute('aria-atomic', 'false');
+        this.container.setAttribute('role', 'status');
         document.body.appendChild(this.container);
 
         // Add global styles if not already present
@@ -26,6 +29,9 @@ class TTSNotificationSystem {
 
         // Listen for WordPress admin notices to enhance them
         this.enhanceWordPressNotices();
+        
+        // Add keyboard navigation support
+        this.setupKeyboardNavigation();
     }
 
     getNotificationStyles() {
@@ -393,6 +399,24 @@ class TTSNotificationSystem {
                 announcement.parentNode.removeChild(announcement);
             }
         }, 1000);
+    }
+
+    setupKeyboardNavigation() {
+        // Allow dismissing notifications with Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                const notifications = this.container.querySelectorAll('.tts-notification');
+                if (notifications.length > 0) {
+                    // Dismiss the most recent notification
+                    const lastNotification = notifications[notifications.length - 1];
+                    const dismissBtn = lastNotification.querySelector('.tts-notification-dismiss');
+                    if (dismissBtn) {
+                        dismissBtn.click();
+                        e.preventDefault();
+                    }
+                }
+            }
+        });
     }
 
     // Convenience methods

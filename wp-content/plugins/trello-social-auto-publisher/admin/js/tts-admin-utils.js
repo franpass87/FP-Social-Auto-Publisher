@@ -675,6 +675,134 @@ class TTSAdminUtils {
             }
         };
     }
+
+    // Form Validation Utilities
+    validateForm(form) {
+        const fields = form.querySelectorAll('input[required], select[required], textarea[required]');
+        let isValid = true;
+        let firstInvalidField = null;
+
+        fields.forEach(field => {
+            const isFieldValid = this.validateField(field);
+            if (!isFieldValid && isValid) {
+                isValid = false;
+                firstInvalidField = field;
+            }
+        });
+
+        // Focus first invalid field for accessibility
+        if (firstInvalidField) {
+            firstInvalidField.focus();
+            this.announceError('Please check the form for errors and try again.');
+        }
+
+        return isValid;
+    }
+
+    validateField(field) {
+        const value = field.value.trim();
+        const type = field.type;
+        const required = field.hasAttribute('required');
+        let isValid = true;
+        let errorMessage = '';
+
+        // Remove existing error states
+        this.clearFieldError(field);
+
+        // Required field validation
+        if (required && !value) {
+            isValid = false;
+            errorMessage = 'This field is required.';
+        }
+
+        // Email validation
+        if (type === 'email' && value && !this.isValidEmail(value)) {
+            isValid = false;
+            errorMessage = 'Please enter a valid email address.';
+        }
+
+        // URL validation for URL fields
+        if (type === 'url' && value && !this.isValidUrl(value)) {
+            isValid = false;
+            errorMessage = 'Please enter a valid URL.';
+        }
+
+        // Custom validation patterns
+        const pattern = field.getAttribute('pattern');
+        if (pattern && value && !new RegExp(pattern).test(value)) {
+            isValid = false;
+            errorMessage = field.getAttribute('data-pattern-error') || 'Invalid format.';
+        }
+
+        // Show error state if invalid
+        if (!isValid) {
+            this.showFieldError(field, errorMessage);
+        } else {
+            this.showFieldSuccess(field);
+        }
+
+        return isValid;
+    }
+
+    showFieldError(field, message) {
+        field.classList.add('tts-field-error');
+        field.setAttribute('aria-invalid', 'true');
+        
+        // Add error message
+        let errorElement = field.nextElementSibling;
+        if (!errorElement || !errorElement.classList.contains('tts-error-message')) {
+            errorElement = document.createElement('div');
+            errorElement.className = 'tts-error-message';
+            errorElement.setAttribute('role', 'alert');
+            field.parentNode.insertBefore(errorElement, field.nextSibling);
+        }
+        errorElement.textContent = message;
+    }
+
+    showFieldSuccess(field) {
+        field.classList.add('tts-field-success');
+        field.setAttribute('aria-invalid', 'false');
+    }
+
+    clearFieldError(field) {
+        field.classList.remove('tts-field-error', 'tts-field-success');
+        field.removeAttribute('aria-invalid');
+        
+        const errorElement = field.nextElementSibling;
+        if (errorElement && errorElement.classList.contains('tts-error-message')) {
+            errorElement.remove();
+        }
+    }
+
+    isValidEmail(email) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
+    }
+
+    isValidUrl(url) {
+        try {
+            new URL(url);
+            return true;
+        } catch {
+            return false;
+        }
+    }
+
+    // Screen reader announcements
+    announceError(message) {
+        const announcement = document.createElement('div');
+        announcement.setAttribute('aria-live', 'assertive');
+        announcement.setAttribute('aria-atomic', 'true');
+        announcement.style.position = 'absolute';
+        announcement.style.left = '-10000px';
+        announcement.style.width = '1px';
+        announcement.style.height = '1px';
+        announcement.style.overflow = 'hidden';
+        announcement.textContent = message;
+        
+        document.body.appendChild(announcement);
+        setTimeout(() => document.body.removeChild(announcement), 1000);
+    }
 }
 
 // Initialize admin utils
