@@ -80,6 +80,10 @@ class TTS_Client {
         $ig_token        = get_post_meta( $post->ID, '_tts_ig_token', true );
         $yt_token        = get_post_meta( $post->ID, '_tts_yt_token', true );
         $tt_token        = get_post_meta( $post->ID, '_tts_tt_token', true );
+        $fb_hashtags     = get_post_meta( $post->ID, '_tts_default_hashtags_facebook', true );
+        $ig_hashtags     = get_post_meta( $post->ID, '_tts_default_hashtags_instagram', true );
+        $yt_hashtags     = get_post_meta( $post->ID, '_tts_default_hashtags_youtube', true );
+        $tt_hashtags     = get_post_meta( $post->ID, '_tts_default_hashtags_tiktok', true );
         $trello_map      = get_post_meta( $post->ID, '_tts_trello_map', true );
 
         if ( ! is_array( $trello_map ) ) {
@@ -134,15 +138,23 @@ class TTS_Client {
 
         echo '<p><label for="tts_fb_token">' . esc_html__( 'Facebook Access Token', 'trello-social-auto-publisher' ) . '</label>';
         echo '<input type="text" id="tts_fb_token" name="tts_fb_token" value="' . esc_attr( $fb_token ) . '" class="widefat" /></p>';
+        echo '<p><label for="tts_default_hashtags_facebook">' . esc_html__( 'Facebook Default Hashtags', 'trello-social-auto-publisher' ) . '</label>';
+        echo '<textarea id="tts_default_hashtags_facebook" name="tts_default_hashtags_facebook" class="widefat" rows="3">' . esc_textarea( $fb_hashtags ) . '</textarea></p>';
 
         echo '<p><label for="tts_ig_token">' . esc_html__( 'Instagram Access Token', 'trello-social-auto-publisher' ) . '</label>';
         echo '<input type="text" id="tts_ig_token" name="tts_ig_token" value="' . esc_attr( $ig_token ) . '" class="widefat" /></p>';
+        echo '<p><label for="tts_default_hashtags_instagram">' . esc_html__( 'Instagram Default Hashtags', 'trello-social-auto-publisher' ) . '</label>';
+        echo '<textarea id="tts_default_hashtags_instagram" name="tts_default_hashtags_instagram" class="widefat" rows="3">' . esc_textarea( $ig_hashtags ) . '</textarea></p>';
 
         echo '<p><label for="tts_yt_token">' . esc_html__( 'YouTube Access Token', 'trello-social-auto-publisher' ) . '</label>';
         echo '<input type="text" id="tts_yt_token" name="tts_yt_token" value="' . esc_attr( $yt_token ) . '" class="widefat" /></p>';
+        echo '<p><label for="tts_default_hashtags_youtube">' . esc_html__( 'YouTube Default Hashtags', 'trello-social-auto-publisher' ) . '</label>';
+        echo '<textarea id="tts_default_hashtags_youtube" name="tts_default_hashtags_youtube" class="widefat" rows="3">' . esc_textarea( $yt_hashtags ) . '</textarea></p>';
 
         echo '<p><label for="tts_tt_token">' . esc_html__( 'TikTok Access Token', 'trello-social-auto-publisher' ) . '</label>';
         echo '<input type="text" id="tts_tt_token" name="tts_tt_token" value="' . esc_attr( $tt_token ) . '" class="widefat" /></p>';
+        echo '<p><label for="tts_default_hashtags_tiktok">' . esc_html__( 'TikTok Default Hashtags', 'trello-social-auto-publisher' ) . '</label>';
+        echo '<textarea id="tts_default_hashtags_tiktok" name="tts_default_hashtags_tiktok" class="widefat" rows="3">' . esc_textarea( $tt_hashtags ) . '</textarea></p>';
 
         ?>
         <div id="tts_trello_map">
@@ -214,6 +226,21 @@ class TTS_Client {
         foreach ( $fields as $field => $meta_key ) {
             if ( isset( $_POST[ $field ] ) && '' !== $_POST[ $field ] ) {
                 update_post_meta( $post_id, $meta_key, sanitize_text_field( wp_unslash( $_POST[ $field ] ) ) );
+            } else {
+                delete_post_meta( $post_id, $meta_key );
+            }
+        }
+
+        $hashtag_fields = array(
+            'tts_default_hashtags_facebook'  => '_tts_default_hashtags_facebook',
+            'tts_default_hashtags_instagram' => '_tts_default_hashtags_instagram',
+            'tts_default_hashtags_youtube'   => '_tts_default_hashtags_youtube',
+            'tts_default_hashtags_tiktok'    => '_tts_default_hashtags_tiktok',
+        );
+
+        foreach ( $hashtag_fields as $field => $meta_key ) {
+            if ( isset( $_POST[ $field ] ) && '' !== $_POST[ $field ] ) {
+                update_post_meta( $post_id, $meta_key, sanitize_textarea_field( wp_unslash( $_POST[ $field ] ) ) );
             } else {
                 delete_post_meta( $post_id, $meta_key );
             }

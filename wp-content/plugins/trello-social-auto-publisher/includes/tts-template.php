@@ -96,5 +96,12 @@ function tts_apply_template( $template, $post_id, $channel ) {
         }
     }
 
+    if ( $client_id ) {
+        $default_hashtags = get_post_meta( $client_id, '_tts_default_hashtags_' . $channel, true );
+        if ( ! empty( $default_hashtags ) ) {
+            $message = trim( $message ) . ' ' . trim( $default_hashtags );
+        }
+    }
+
     return $message;
 }
