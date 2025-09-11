@@ -20,13 +20,19 @@ class TTS_Admin {
     public function __construct() {
         add_action( 'admin_menu', array( $this, 'register_menu' ) );
         add_action( 'restrict_manage_posts', array( $this, 'add_client_filter' ) );
+        add_action( 'restrict_manage_posts', array( $this, 'add_approved_filter' ) );
         add_action( 'pre_get_posts', array( $this, 'filter_posts_by_client' ) );
+        add_action( 'pre_get_posts', array( $this, 'filter_posts_by_approved' ) );
         add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_dashboard_assets' ) );
         add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_wizard_assets' ) );
         add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_media_assets' ) );
         add_action( 'wp_dashboard_setup', array( $this, 'register_scheduled_posts_widget' ) );
         add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_widget_assets' ) );
         add_action( 'wp_ajax_tts_get_lists', array( $this, 'ajax_get_lists' ) );
+        add_filter( 'manage_tts_social_post_posts_columns', array( $this, 'add_approved_column' ) );
+        add_action( 'manage_tts_social_post_posts_custom_column', array( $this, 'render_approved_column' ), 10, 2 );
+        add_filter( 'bulk_actions-edit-tts_social_post', array( $this, 'register_bulk_actions' ) );
+        add_filter( 'handle_bulk_actions-edit-tts_social_post', array( $this, 'handle_bulk_actions' ), 10, 3 );
     }
 
     /**
@@ -522,6 +528,112 @@ class TTS_Admin {
                 )
             );
         }
+    }
+
+    /**
+     * Add approval status filter on social posts list table.
+     *
+     * @param string $post_type Current post type.
+     */
+    public function add_approved_filter( $post_type ) {
+        if ( 'tts_social_post' !== $post_type ) {
+            return;
+        }
+
+        $selected = isset( $_GET['tts_approved'] ) ? sanitize_text_field( $_GET['tts_approved'] ) : '';
+        echo '<select name="tts_approved">';
+        echo '<option value="">' . esc_html__( 'Stato approvazione', 'trello-social-auto-publisher' ) . '</option>';
+        echo '<option value="1" ' . selected( $selected, '1', false ) . '>' . esc_html__( 'Approvato', 'trello-social-auto-publisher' ) . '</option>';
+        echo '<option value="0" ' . selected( $selected, '0', false ) . '>' . esc_html__( 'Non approvato', 'trello-social-auto-publisher' ) . '</option>';
+        echo '</select>';
+    }
+
+    /**
+     * Filter social posts list by approval status.
+     *
+     * @param WP_Query $query Current query instance.
+     */
+    public function filter_posts_by_approved( $query ) {
+        if ( ! is_admin() || ! $query->is_main_query() ) {
+            return;
+        }
+
+        if ( 'tts_social_post' !== $query->get( 'post_type' ) ) {
+            return;
+        }
+
+        if ( isset( $_GET['tts_approved'] ) && '' !== $_GET['tts_approved'] ) {
+            $meta_query   = (array) $query->get( 'meta_query', array() );
+            $meta_query[] = array(
+                'key'   => '_tts_approved',
+                'value' => '1' === $_GET['tts_approved'] ? '1' : '0',
+            );
+            $query->set( 'meta_query', $meta_query );
+        }
+    }
+
+    /**
+     * Add approved column to social posts list.
+     *
+     * @param array $columns Existing columns.
+     *
+     * @return array
+     */
+    public function add_approved_column( $columns ) {
+        $columns['tts_approved'] = __( 'Approvato', 'trello-social-auto-publisher' );
+        return $columns;
+    }
+
+    /**
+     * Render approved column content.
+     *
+     * @param string $column  Column name.
+     * @param int    $post_id Post ID.
+     */
+    public function render_approved_column( $column, $post_id ) {
+        if ( 'tts_approved' === $column ) {
+            $approved = (bool) get_post_meta( $post_id, '_tts_approved', true );
+            echo $approved ? esc_html__( 'Si', 'trello-social-auto-publisher' ) : esc_html__( 'No', 'trello-social-auto-publisher' );
+        }
+    }
+
+    /**
+     * Register bulk actions for approving/revoking posts.
+     *
+     * @param array $actions Existing actions.
+     *
+     * @return array
+     */
+    public function register_bulk_actions( $actions ) {
+        $actions['tts_approve'] = __( 'Approva', 'trello-social-auto-publisher' );
+        $actions['tts_revoke']  = __( 'Revoca', 'trello-social-auto-publisher' );
+        return $actions;
+    }
+
+    /**
+     * Handle bulk actions for approval status.
+     *
+     * @param string $redirect_to Redirect URL.
+     * @param string $doaction    Action name.
+     * @param array  $post_ids    Selected post IDs.
+     *
+     * @return string
+     */
+    public function handle_bulk_actions( $redirect_to, $doaction, $post_ids ) {
+        if ( 'tts_approve' === $doaction ) {
+            foreach ( $post_ids as $post_id ) {
+                update_post_meta( $post_id, '_tts_approved', true );
+                do_action( 'save_post_tts_social_post', $post_id, get_post( $post_id ), true );
+                do_action( 'tts_post_approved', $post_id );
+            }
+        } elseif ( 'tts_revoke' === $doaction ) {
+            foreach ( $post_ids as $post_id ) {
+                delete_post_meta( $post_id, '_tts_approved' );
+                do_action( 'save_post_tts_social_post', $post_id, get_post( $post_id ), true );
+            }
+        }
+
+        return $redirect_to;
     }
 
     /**
