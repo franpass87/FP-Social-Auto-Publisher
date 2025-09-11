@@ -10,31 +10,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Build a URL with UTM parameters for a specific channel.
- *
- * @param string $url     Base URL.
- * @param string $channel Channel name.
- * @return string URL with UTM parameters.
- */
-function tts_build_utm_url( $url, $channel ) {
-    $options = get_option( 'tts_settings', array() );
-    $params  = array();
-
-    foreach ( array( 'source', 'medium', 'campaign' ) as $param ) {
-        $key = $channel . '_utm_' . $param;
-        if ( ! empty( $options[ $key ] ) ) {
-            $params[ 'utm_' . $param ] = $options[ $key ];
-        }
-    }
-
-    if ( empty( $params ) ) {
-        return $url;
-    }
-
-    return add_query_arg( $params, $url );
-}
-
-/**
  * Apply placeholders in template.
  *
  * @param string $template Template string.
@@ -52,7 +27,20 @@ function tts_apply_template( $template, $post_id, $channel ) {
     $labels_as_hashtags = ! empty( $options['labels_as_hashtags'] );
 
     $url = get_permalink( $post_id );
-    $url = tts_build_utm_url( $url, $channel );
+
+    if ( false !== strpos( $template, '{url}' ) ) {
+        $utm_params = array();
+        if ( ! empty( $options['utm'][ $channel ] ) && is_array( $options['utm'][ $channel ] ) ) {
+            foreach ( array( 'utm_source', 'utm_medium', 'utm_campaign' ) as $utm_key ) {
+                if ( ! empty( $options['utm'][ $channel ][ $utm_key ] ) ) {
+                    $utm_params[ $utm_key ] = $options['utm'][ $channel ][ $utm_key ];
+                }
+            }
+        }
+        if ( ! empty( $utm_params ) ) {
+            $url = add_query_arg( $utm_params, $url );
+        }
+    }
 
     if ( ! empty( $options['url_shortener'] ) && 'none' !== $options['url_shortener'] ) {
         if ( 'wp' === $options['url_shortener'] ) {

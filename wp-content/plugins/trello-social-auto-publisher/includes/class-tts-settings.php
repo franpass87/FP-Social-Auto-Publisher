@@ -178,13 +178,13 @@ class TTS_Settings {
             '__return_false',
             'tts_settings'
         );
-        $params   = array( 'source', 'medium', 'campaign' );
+        $params = array( 'utm_source', 'utm_medium', 'utm_campaign' );
 
         foreach ( $channels as $channel ) {
             foreach ( $params as $param ) {
                 add_settings_field(
-                    $channel . '_utm_' . $param,
-                    sprintf( __( '%s UTM %s', 'trello-social-auto-publisher' ), ucfirst( $channel ), ucfirst( $param ) ),
+                    $channel . '_' . $param,
+                    sprintf( __( '%s UTM %s', 'trello-social-auto-publisher' ), ucfirst( $channel ), ucfirst( str_replace( 'utm_', '', $param ) ) ),
                     array( $this, 'render_utm_field' ),
                     'tts_settings',
                     'tts_utm_options',
@@ -422,9 +422,8 @@ class TTS_Settings {
         $options = get_option( 'tts_settings', array() );
         $channel = isset( $args['channel'] ) ? $args['channel'] : '';
         $param   = isset( $args['param'] ) ? $args['param'] : '';
-        $key     = $channel . '_utm_' . $param;
-        $value   = isset( $options[ $key ] ) ? esc_attr( $options[ $key ] ) : '';
-        echo '<input type="text" name="tts_settings[' . esc_attr( $key ) . ']" value="' . $value . '" class="regular-text" />';
+        $value   = isset( $options['utm'][ $channel ][ $param ] ) ? esc_attr( $options['utm'][ $channel ][ $param ] ) : '';
+        echo '<input type="text" name="tts_settings[utm][' . esc_attr( $channel ) . '][' . esc_attr( $param ) . ']" value="' . $value . '" class="regular-text" />';
     }
 
     /**
@@ -602,9 +601,20 @@ function tts_sanitize_settings( $input ) {
 
     $output['labels_as_hashtags'] = ! empty( $input['labels_as_hashtags'] ) ? 1 : 0;
 
+    if ( isset( $input['utm'] ) && is_array( $input['utm'] ) ) {
+        foreach ( $input['utm'] as $channel => $params ) {
+            if ( ! is_array( $params ) ) {
+                continue;
+            }
+            foreach ( $params as $param_key => $param_value ) {
+                $output['utm'][ $channel ][ $param_key ] = sanitize_text_field( $param_value );
+            }
+        }
+    }
+
     foreach ( $input as $key => $value ) {
-        if ( preg_match( '/_utm_/', $key ) ) {
-            $output[ $key ] = sanitize_text_field( $value );
+        if ( 'utm' === $key ) {
+            continue;
         } elseif ( substr( $key, -9 ) === '_template' ) {
             $output[ $key ] = sanitize_text_field( $value );
         } elseif ( substr( $key, -4 ) === '_url' ) {
