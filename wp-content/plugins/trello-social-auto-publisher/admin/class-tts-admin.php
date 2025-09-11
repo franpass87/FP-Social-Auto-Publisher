@@ -34,6 +34,11 @@ class TTS_Admin {
         add_action( 'wp_ajax_tts_bulk_action', array( $this, 'ajax_bulk_action' ) );
         add_action( 'wp_ajax_tts_test_connection', array( $this, 'ajax_test_connection' ) );
         add_action( 'wp_ajax_tts_check_rate_limits', array( $this, 'ajax_check_rate_limits' ) );
+        add_action( 'wp_ajax_tts_export_data', array( $this, 'ajax_export_data' ) );
+        add_action( 'wp_ajax_tts_import_data', array( $this, 'ajax_import_data' ) );
+        add_action( 'wp_ajax_tts_system_maintenance', array( $this, 'ajax_system_maintenance' ) );
+        add_action( 'wp_ajax_tts_generate_report', array( $this, 'ajax_generate_report' ) );
+        add_action( 'wp_ajax_tts_quick_connection_check', array( $this, 'ajax_quick_connection_check' ) );
         add_filter( 'manage_tts_social_post_posts_columns', array( $this, 'add_approved_column' ) );
         add_action( 'manage_tts_social_post_posts_custom_column', array( $this, 'render_approved_column' ), 10, 2 );
         add_filter( 'bulk_actions-edit-tts_social_post', array( $this, 'register_bulk_actions' ) );
@@ -137,67 +142,121 @@ class TTS_Admin {
             return;
         }
 
-        // Enqueue accessibility styles (global for all TTS pages)
+        // Core assets - loaded on all TTS pages
+        $this->enqueue_core_assets();
+
+        // Page-specific assets
+        switch ( $hook ) {
+            case 'toplevel_page_tts-main':
+                $this->enqueue_dashboard_specific_assets();
+                break;
+            case 'social-auto-publisher_page_tts-social-connections':
+                $this->enqueue_social_connections_assets();
+                break;
+            case 'social-auto-publisher_page_tts-client-wizard':
+                $this->enqueue_wizard_assets();
+                break;
+            case 'social-auto-publisher_page_tts-analytics':
+                $this->enqueue_analytics_assets();
+                break;
+        }
+    }
+
+    /**
+     * Enqueue core assets needed on all TTS pages.
+     */
+    private function enqueue_core_assets() {
+        // Essential styles
         wp_enqueue_style(
-            'tts-accessibility',
-            plugin_dir_url( __FILE__ ) . 'css/tts-accessibility.css',
+            'tts-core',
+            plugin_dir_url( __FILE__ ) . 'css/tts-core.css',
             array(),
+            '1.3'
+        );
+
+        // Essential JavaScript
+        wp_enqueue_script(
+            'tts-core',
+            plugin_dir_url( __FILE__ ) . 'js/tts-core.js',
+            array( 'jquery' ),
+            '1.3',
+            true
+        );
+
+        // Localize core script
+        wp_localize_script( 'tts-core', 'tts_ajax', array(
+            'ajax_url' => admin_url( 'admin-ajax.php' ),
+            'nonce' => wp_create_nonce( 'tts_ajax_nonce' ),
+        ));
+    }
+
+    /**
+     * Enqueue dashboard-specific assets.
+     */
+    private function enqueue_dashboard_specific_assets() {
+        wp_enqueue_style(
+            'tts-dashboard',
+            plugin_dir_url( __FILE__ ) . 'css/tts-dashboard.css',
+            array( 'tts-core' ),
             '1.2'
         );
 
-        // Enqueue enhanced notification system (global for all TTS pages)
         wp_enqueue_script(
-            'tts-notifications',
-            plugin_dir_url( __FILE__ ) . 'js/tts-notifications.js',
+            'tts-dashboard',
+            plugin_dir_url( __FILE__ ) . 'js/tts-dashboard.js',
+            array( 'tts-core', 'wp-element', 'wp-components', 'wp-api-fetch' ),
+            '1.2',
+            true
+        );
+    }
+
+    /**
+     * Enqueue social connections specific assets.
+     */
+    private function enqueue_social_connections_assets() {
+        wp_enqueue_style(
+            'tts-social-connections',
+            plugin_dir_url( __FILE__ ) . 'css/tts-social-connections.css',
+            array( 'tts-core' ),
+            '1.0'
+        );
+
+        wp_enqueue_script(
+            'tts-social-connections',
+            plugin_dir_url( __FILE__ ) . 'js/tts-social-connections.js',
+            array( 'tts-core' ),
+            '1.0',
+            true
+        );
+    }
+
+    /**
+     * Enqueue analytics specific assets.
+     */
+    private function enqueue_analytics_assets() {
+        wp_enqueue_style(
+            'tts-analytics',
+            plugin_dir_url( __FILE__ ) . 'css/tts-analytics.css',
+            array( 'tts-core' ),
+            '1.0'
+        );
+
+        wp_enqueue_script(
+            'tts-analytics',
+            plugin_dir_url( __FILE__ ) . 'js/tts-analytics.js',
+            array( 'tts-core', 'chart-js' ),
+            '1.0',
+            true
+        );
+
+        // Enqueue Chart.js for analytics
+        wp_enqueue_script(
+            'chart-js',
+            'https://cdn.jsdelivr.net/npm/chart.js',
             array(),
-            '1.2',
+            '3.9.1',
             true
         );
-
-        // Enqueue admin utilities (global for all TTS pages)
-        wp_enqueue_script(
-            'tts-admin-utils',
-            plugin_dir_url( __FILE__ ) . 'js/tts-admin-utils.js',
-            array( 'tts-notifications' ),
-            '1.2',
-            true
-        );
-
-        // Enqueue advanced features (global for all TTS pages)
-        wp_enqueue_script(
-            'tts-advanced-features',
-            plugin_dir_url( __FILE__ ) . 'js/tts-advanced-features.js',
-            array( 'tts-notifications', 'tts-admin-utils' ),
-            '1.2',
-            true
-        );
-
-        // Enqueue help system (global for all TTS pages)
-        wp_enqueue_script(
-            'tts-help-system',
-            plugin_dir_url( __FILE__ ) . 'js/tts-help-system.js',
-            array( 'tts-notifications', 'tts-admin-utils' ),
-            '1.2',
-            true
-        );
-
-        // Dashboard-specific assets
-        if ( 'toplevel_page_tts-main' === $hook ) {
-            wp_enqueue_style(
-                'tts-dashboard',
-                plugin_dir_url( __FILE__ ) . 'css/tts-dashboard.css',
-                array(),
-                '1.1'
-            );
-
-            wp_enqueue_script(
-                'tts-dashboard',
-                plugin_dir_url( __FILE__ ) . 'js/tts-dashboard.js',
-                array( 'wp-element', 'wp-components', 'wp-api-fetch', 'tts-notifications', 'tts-admin-utils', 'tts-advanced-features', 'tts-help-system' ),
-                '1.1',
-                true
-            );
-        }
 
         // Localize script with enhanced data (global for all TTS pages)
         wp_localize_script(
@@ -221,7 +280,7 @@ class TTS_Admin {
     }
 
     /**
-     * Enqueue assets for the client wizard.
+     * Enqueue optimized wizard assets.
      *
      * @param string $hook Current admin page hook.
      */
@@ -233,8 +292,8 @@ class TTS_Admin {
         wp_enqueue_script(
             'tts-wizard',
             plugin_dir_url( __FILE__ ) . 'js/tts-wizard.js',
-            array( 'jquery' ),
-            '1.0',
+            array( 'tts-core' ),
+            '1.1',
             true
         );
 
@@ -244,12 +303,18 @@ class TTS_Admin {
             array(
                 'ajaxUrl' => admin_url( 'admin-ajax.php' ),
                 'nonce'   => wp_create_nonce( 'tts_wizard' ),
+                'strings' => array(
+                    'validating' => __( 'Validating...', 'trello-social-auto-publisher' ),
+                    'connecting' => __( 'Connecting...', 'trello-social-auto-publisher' ),
+                    'success' => __( 'Success!', 'trello-social-auto-publisher' ),
+                    'error' => __( 'Error occurred', 'trello-social-auto-publisher' ),
+                )
             )
         );
     }
 
     /**
-     * Enqueue assets for the manual media metabox.
+     * Enqueue optimized media assets.
      *
      * @param string $hook Current admin page hook.
      */
@@ -266,8 +331,8 @@ class TTS_Admin {
         wp_enqueue_script(
             'tts-media',
             plugin_dir_url( __FILE__ ) . 'js/tts-media.js',
-            array( 'jquery', 'media-editor', 'jquery-ui-sortable' ),
-            '1.0',
+            array( 'tts-core', 'media-editor', 'jquery-ui-sortable' ),
+            '1.1',
             true
         );
     }
@@ -2578,6 +2643,188 @@ class TTS_Social_Posts_Table extends WP_List_Table {
         );
         
         return isset( $limits[$platform] ) ? $limits[$platform] : array( 'used' => 0, 'limit' => 100, 'remaining' => 100, 'reset_time' => 'Unknown' );
+    }
+    
+    /**
+     * AJAX handler for data export.
+     */
+    public function ajax_export_data() {
+        if ( ! wp_verify_nonce( $_POST['nonce'], 'tts_ajax_nonce' ) ) {
+            wp_die( 'Security check failed' );
+        }
+        
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( array( 'message' => __( 'Insufficient permissions', 'trello-social-auto-publisher' ) ) );
+        }
+        
+        $export_options = array(
+            'settings' => isset( $_POST['export_settings'] ) && $_POST['export_settings'] === 'true',
+            'social_apps' => isset( $_POST['export_social_apps'] ) && $_POST['export_social_apps'] === 'true',
+            'clients' => isset( $_POST['export_clients'] ) && $_POST['export_clients'] === 'true',
+            'posts' => isset( $_POST['export_posts'] ) && $_POST['export_posts'] === 'true',
+            'logs' => isset( $_POST['export_logs'] ) && $_POST['export_logs'] === 'true',
+            'analytics' => isset( $_POST['export_analytics'] ) && $_POST['export_analytics'] === 'true'
+        );
+        
+        $result = TTS_Advanced_Utils::export_data( $export_options );
+        
+        if ( $result['success'] ) {
+            // Create download file
+            $filename = 'tts-export-' . date( 'Y-m-d-H-i-s' ) . '.json';
+            $upload_dir = wp_upload_dir();
+            $file_path = $upload_dir['path'] . '/' . $filename;
+            
+            file_put_contents( $file_path, json_encode( $result['data'], JSON_PRETTY_PRINT ) );
+            
+            wp_send_json_success( array( 
+                'message' => __( 'Export completed successfully', 'trello-social-auto-publisher' ),
+                'download_url' => $upload_dir['url'] . '/' . $filename,
+                'file_size' => $result['file_size']
+            ) );
+        } else {
+            wp_send_json_error( array( 'message' => $result['error'] ) );
+        }
+    }
+    
+    /**
+     * AJAX handler for data import.
+     */
+    public function ajax_import_data() {
+        if ( ! wp_verify_nonce( $_POST['nonce'], 'tts_ajax_nonce' ) ) {
+            wp_die( 'Security check failed' );
+        }
+        
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( array( 'message' => __( 'Insufficient permissions', 'trello-social-auto-publisher' ) ) );
+        }
+        
+        if ( ! isset( $_FILES['import_file'] ) ) {
+            wp_send_json_error( array( 'message' => __( 'No file provided', 'trello-social-auto-publisher' ) ) );
+        }
+        
+        $file = $_FILES['import_file'];
+        $import_data = json_decode( file_get_contents( $file['tmp_name'] ), true );
+        
+        if ( json_last_error() !== JSON_ERROR_NONE ) {
+            wp_send_json_error( array( 'message' => __( 'Invalid JSON file', 'trello-social-auto-publisher' ) ) );
+        }
+        
+        $import_options = array(
+            'overwrite_settings' => isset( $_POST['overwrite_settings'] ) && $_POST['overwrite_settings'] === 'true',
+            'overwrite_social_apps' => isset( $_POST['overwrite_social_apps'] ) && $_POST['overwrite_social_apps'] === 'true',
+            'import_clients' => isset( $_POST['import_clients'] ) && $_POST['import_clients'] === 'true',
+            'import_posts' => isset( $_POST['import_posts'] ) && $_POST['import_posts'] === 'true'
+        );
+        
+        $result = TTS_Advanced_Utils::import_data( $import_data, $import_options );
+        
+        if ( $result['success'] ) {
+            wp_send_json_success( array( 
+                'message' => __( 'Import completed successfully', 'trello-social-auto-publisher' ),
+                'log' => $result['log']
+            ) );
+        } else {
+            wp_send_json_error( array( 'message' => $result['error'] ) );
+        }
+    }
+    
+    /**
+     * AJAX handler for system maintenance.
+     */
+    public function ajax_system_maintenance() {
+        if ( ! wp_verify_nonce( $_POST['nonce'], 'tts_ajax_nonce' ) ) {
+            wp_die( 'Security check failed' );
+        }
+        
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( array( 'message' => __( 'Insufficient permissions', 'trello-social-auto-publisher' ) ) );
+        }
+        
+        $tasks = array(
+            'optimize_database' => isset( $_POST['optimize_database'] ) && $_POST['optimize_database'] === 'true',
+            'clear_cache' => isset( $_POST['clear_cache'] ) && $_POST['clear_cache'] === 'true',
+            'cleanup_logs' => isset( $_POST['cleanup_logs'] ) && $_POST['cleanup_logs'] === 'true',
+            'update_statistics' => isset( $_POST['update_statistics'] ) && $_POST['update_statistics'] === 'true',
+            'check_health' => isset( $_POST['check_health'] ) && $_POST['check_health'] === 'true'
+        );
+        
+        $result = TTS_Advanced_Utils::system_maintenance( $tasks );
+        
+        if ( $result['success'] ) {
+            wp_send_json_success( array( 
+                'message' => __( 'System maintenance completed', 'trello-social-auto-publisher' ),
+                'log' => $result['log']
+            ) );
+        } else {
+            wp_send_json_error( array( 'message' => __( 'Maintenance failed', 'trello-social-auto-publisher' ) ) );
+        }
+    }
+    
+    /**
+     * AJAX handler for system report generation.
+     */
+    public function ajax_generate_report() {
+        if ( ! wp_verify_nonce( $_POST['nonce'], 'tts_ajax_nonce' ) ) {
+            wp_die( 'Security check failed' );
+        }
+        
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( array( 'message' => __( 'Insufficient permissions', 'trello-social-auto-publisher' ) ) );
+        }
+        
+        $report = TTS_Advanced_Utils::generate_system_report();
+        
+        wp_send_json_success( array( 
+            'message' => __( 'System report generated', 'trello-social-auto-publisher' ),
+            'report' => $report
+        ) );
+    }
+    
+    /**
+     * AJAX handler for quick connection check.
+     */
+    public function ajax_quick_connection_check() {
+        if ( ! wp_verify_nonce( $_POST['nonce'], 'tts_ajax_nonce' ) ) {
+            wp_die( 'Security check failed' );
+        }
+        
+        $platform = sanitize_text_field( $_POST['platform'] );
+        $social_apps = get_option( 'tts_social_apps', array() );
+        
+        if ( ! isset( $social_apps[$platform] ) ) {
+            wp_send_json_success( array( 'status' => 'not_configured' ) );
+            return;
+        }
+        
+        $settings = $social_apps[$platform];
+        $required_fields = $this->get_required_platform_fields( $platform );
+        
+        foreach ( $required_fields as $field ) {
+            if ( empty( $settings[$field] ) ) {
+                wp_send_json_success( array( 'status' => 'not_configured' ) );
+                return;
+            }
+        }
+        
+        // Quick validation - just check if credentials are present
+        wp_send_json_success( array( 'status' => 'configured' ) );
+    }
+    
+    /**
+     * Get required fields for platform.
+     *
+     * @param string $platform Platform name.
+     * @return array Required fields.
+     */
+    private function get_required_platform_fields( $platform ) {
+        $fields = array(
+            'facebook' => array( 'app_id', 'app_secret' ),
+            'instagram' => array( 'app_id', 'app_secret' ),
+            'youtube' => array( 'client_id', 'client_secret' ),
+            'tiktok' => array( 'client_key', 'client_secret' )
+        );
+        
+        return isset( $fields[$platform] ) ? $fields[$platform] : array();
     }
 }
 
