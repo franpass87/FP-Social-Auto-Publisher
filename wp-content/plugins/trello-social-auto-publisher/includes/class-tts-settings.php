@@ -404,9 +404,9 @@ class TTS_Settings {
         $channel  = isset( $args['channel'] ) ? $args['channel'] : '';
         $key      = $channel . '_size';
         $defaults = array(
-            'facebook'  => '1200x630',
-            'instagram' => '1080x1080',
-            'youtube'   => '1280x720',
+            'facebook'  => '1080x1350',
+            'instagram' => '1080x1350',
+            'youtube'   => '1080x1920',
             'tiktok'    => '1080x1920',
         );
         $value = isset( $options[ $key ] ) ? esc_attr( $options[ $key ] ) : ( isset( $defaults[ $channel ] ) ? $defaults[ $channel ] : '' );

@@ -28,9 +28,9 @@ class TTS_Image_Processor {
 
         $options = get_option( 'tts_settings', array() );
         $defaults = array(
-            'facebook'  => '1200x630',
-            'instagram' => '1080x1080',
-            'youtube'   => '1280x720',
+            'facebook'  => '1080x1350',
+            'instagram' => '1080x1350',
+            'youtube'   => '1080x1920',
             'tiktok'    => '1080x1920',
         );
         $size = isset( $options[ $channel . '_size' ] ) ? strtolower( $options[ $channel . '_size' ] ) : ( isset( $defaults[ $channel ] ) ? $defaults[ $channel ] : '' );
