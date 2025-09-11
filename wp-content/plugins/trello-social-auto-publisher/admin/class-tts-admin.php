@@ -100,11 +100,12 @@ class TTS_Admin {
      * @param string $hook Current admin page hook.
      */
     public function enqueue_dashboard_assets( $hook ) {
-        if ( 'toplevel_page_tts-main' !== $hook ) {
+        // Check if we're on any TTS admin page
+        if ( strpos( $hook, 'tts-' ) === false && $hook !== 'toplevel_page_tts-main' ) {
             return;
         }
 
-        // Enqueue enhanced notification system
+        // Enqueue enhanced notification system (global for all TTS pages)
         wp_enqueue_script(
             'tts-notifications',
             plugin_dir_url( __FILE__ ) . 'js/tts-notifications.js',
@@ -113,7 +114,7 @@ class TTS_Admin {
             true
         );
 
-        // Enqueue admin utilities
+        // Enqueue admin utilities (global for all TTS pages)
         wp_enqueue_script(
             'tts-admin-utils',
             plugin_dir_url( __FILE__ ) . 'js/tts-admin-utils.js',
@@ -122,30 +123,52 @@ class TTS_Admin {
             true
         );
 
-        wp_enqueue_style(
-            'tts-dashboard',
-            plugin_dir_url( __FILE__ ) . 'css/tts-dashboard.css',
-            array(),
-            '1.1'
-        );
-
+        // Enqueue advanced features (global for all TTS pages)
         wp_enqueue_script(
-            'tts-dashboard',
-            plugin_dir_url( __FILE__ ) . 'js/tts-dashboard.js',
-            array( 'wp-element', 'wp-components', 'wp-api-fetch', 'tts-notifications', 'tts-admin-utils' ),
+            'tts-advanced-features',
+            plugin_dir_url( __FILE__ ) . 'js/tts-advanced-features.js',
+            array( 'tts-notifications', 'tts-admin-utils' ),
             '1.1',
             true
         );
 
-        // Localize script with enhanced data
+        // Enqueue help system (global for all TTS pages)
+        wp_enqueue_script(
+            'tts-help-system',
+            plugin_dir_url( __FILE__ ) . 'js/tts-help-system.js',
+            array( 'tts-notifications', 'tts-admin-utils' ),
+            '1.1',
+            true
+        );
+
+        // Dashboard-specific assets
+        if ( 'toplevel_page_tts-main' === $hook ) {
+            wp_enqueue_style(
+                'tts-dashboard',
+                plugin_dir_url( __FILE__ ) . 'css/tts-dashboard.css',
+                array(),
+                '1.1'
+            );
+
+            wp_enqueue_script(
+                'tts-dashboard',
+                plugin_dir_url( __FILE__ ) . 'js/tts-dashboard.js',
+                array( 'wp-element', 'wp-components', 'wp-api-fetch', 'tts-notifications', 'tts-admin-utils', 'tts-advanced-features', 'tts-help-system' ),
+                '1.1',
+                true
+            );
+        }
+
+        // Localize script with enhanced data (global for all TTS pages)
         wp_localize_script(
-            'tts-dashboard',
+            'tts-admin-utils',
             'ttsDashboard',
             array(
                 'ajaxUrl' => admin_url( 'admin-ajax.php' ),
                 'nonce' => wp_create_nonce( 'tts_dashboard' ),
                 'restUrl' => rest_url( 'wp/v2/' ),
                 'restNonce' => wp_create_nonce( 'wp_rest' ),
+                'currentPage' => isset( $_GET['page'] ) ? sanitize_text_field( $_GET['page'] ) : '',
                 'strings' => array(
                     'confirmDelete' => __( 'Are you sure you want to delete this item?', 'trello-social-auto-publisher' ),
                     'bulkDelete' => __( 'Are you sure you want to delete the selected items?', 'trello-social-auto-publisher' ),
