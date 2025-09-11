@@ -34,6 +34,19 @@ class TTS_Webhook {
                 'permission_callback' => '__return_true',
             )
         );
+
+        register_rest_route(
+            'tts/v1',
+            '/client/(?P<id>\d+)/register-webhooks',
+            array(
+                'methods'             => 'POST',
+                'callback'            => array( $this, 'register_client_webhooks' ),
+                'permission_callback' => function( $request ) {
+                    $id = isset( $request['id'] ) ? (int) $request['id'] : 0;
+                    return current_user_can( 'edit_post', $id );
+                },
+            )
+        );
     }
 
     /**
@@ -74,8 +87,9 @@ class TTS_Webhook {
                     'post_status' => 'any',
                     'meta_query'  => array(
                         array(
-                            'key'   => '_tts_trello_board',
-                            'value' => $board_id,
+                            'key'     => '_tts_trello_boards',
+                            'value'   => $board_id,
+                            'compare' => 'LIKE',
                         ),
                     ),
                     'fields'      => 'ids',
@@ -201,6 +215,7 @@ class TTS_Webhook {
             update_post_meta( $post_id, '_trello_labels', $result['labels'] );
             update_post_meta( $post_id, '_trello_attachments', $result['attachments'] );
             update_post_meta( $post_id, '_trello_due', $result['due'] );
+            update_post_meta( $post_id, '_trello_board_id', $result['idBoard'] );
 
             $result['post_id']   = $post_id;
             $result['client_id'] = $client_id;
@@ -314,6 +329,50 @@ class TTS_Webhook {
         }
 
         return rest_ensure_response( $result );
+    }
+
+    /**
+     * Register Trello webhooks for all boards of a client.
+     *
+     * @param WP_REST_Request $request Request instance.
+     *
+     * @return WP_REST_Response|WP_Error
+     */
+    public function register_client_webhooks( WP_REST_Request $request ) {
+        $client_id = (int) $request['id'];
+
+        $key    = get_post_meta( $client_id, '_tts_trello_key', true );
+        $token  = get_post_meta( $client_id, '_tts_trello_token', true );
+        $boards = get_post_meta( $client_id, '_tts_trello_boards', true );
+
+        if ( empty( $key ) || empty( $token ) || empty( $boards ) || ! is_array( $boards ) ) {
+            return new WP_Error( 'missing_data', __( 'Missing Trello credentials or boards.', 'trello-social-auto-publisher' ), array( 'status' => 400 ) );
+        }
+
+        $callback = rest_url( 'tts/v1/trello-webhook' );
+        $results  = array();
+
+        foreach ( $boards as $board_id ) {
+            $response = wp_remote_post(
+                sprintf( 'https://api.trello.com/1/webhooks/?key=%s&token=%s', rawurlencode( $key ), rawurlencode( $token ) ),
+                array(
+                    'body' => array(
+                        'idModel'     => $board_id,
+                        'callbackURL' => $callback,
+                        'description' => get_bloginfo( 'name' ) . ' TTS',
+                    ),
+                    'timeout' => 20,
+                )
+            );
+
+            if ( is_wp_error( $response ) ) {
+                $results[ $board_id ] = $response->get_error_message();
+            } else {
+                $results[ $board_id ] = wp_remote_retrieve_response_code( $response );
+            }
+        }
+
+        return rest_ensure_response( $results );
     }
 }
 
