@@ -26,11 +26,13 @@ class TTS_CPT {
         add_action( 'add_meta_boxes_tts_social_post', array( $this, 'add_media_metabox' ) );
         add_action( 'add_meta_boxes_tts_social_post', array( $this, 'add_messages_metabox' ) );
         add_action( 'add_meta_boxes_tts_social_post', array( $this, 'add_approval_metabox' ) );
+        add_action( 'add_meta_boxes_tts_social_post', array( $this, 'add_location_metabox' ) );
         add_action( 'save_post_tts_social_post', array( $this, 'save_schedule_metabox' ), 5, 3 );
         add_action( 'save_post_tts_social_post', array( $this, 'save_channel_metabox' ), 10, 3 );
         add_action( 'save_post_tts_social_post', array( $this, 'save_media_metabox' ), 15, 3 );
         add_action( 'save_post_tts_social_post', array( $this, 'save_messages_metabox' ), 20, 3 );
         add_action( 'save_post_tts_social_post', array( $this, 'save_approval_metabox' ), 1, 3 );
+        add_action( 'save_post_tts_social_post', array( $this, 'save_location_metabox' ), 25, 3 );
     }
 
     /**
@@ -101,6 +103,28 @@ class TTS_CPT {
                 )
             );
         }
+
+        register_post_meta(
+            'tts_social_post',
+            '_tts_lat',
+            array(
+                'show_in_rest' => true,
+                'single'       => true,
+                'type'         => 'string',
+                'default'      => '',
+            )
+        );
+
+        register_post_meta(
+            'tts_social_post',
+            '_tts_lng',
+            array(
+                'show_in_rest' => true,
+                'single'       => true,
+                'type'         => 'string',
+                'default'      => '',
+            )
+        );
     }
 
     /**
@@ -165,6 +189,19 @@ class TTS_CPT {
             array( $this, 'render_messages_metabox' ),
             'tts_social_post',
             'normal'
+        );
+    }
+
+    /**
+     * Register the location meta box.
+     */
+    public function add_location_metabox() {
+        add_meta_box(
+            'tts_location',
+            __( 'Localizzazione', 'trello-social-auto-publisher' ),
+            array( $this, 'render_location_metabox' ),
+            'tts_social_post',
+            'side'
         );
     }
 
@@ -303,6 +340,30 @@ class TTS_CPT {
     }
 
     /**
+     * Render location meta box.
+     *
+     * @param WP_Post $post Current post object.
+     */
+    public function render_location_metabox( $post ) {
+        wp_nonce_field( 'tts_location_metabox', 'tts_location_nonce' );
+        $lat     = get_post_meta( $post->ID, '_tts_lat', true );
+        $lng     = get_post_meta( $post->ID, '_tts_lng', true );
+        $options = get_option( 'tts_settings', array() );
+
+        if ( '' === $lat && isset( $options['default_lat'] ) ) {
+            $lat = $options['default_lat'];
+        }
+        if ( '' === $lng && isset( $options['default_lng'] ) ) {
+            $lng = $options['default_lng'];
+        }
+
+        echo '<p><label for="_tts_lat">' . esc_html__( 'Latitude', 'trello-social-auto-publisher' ) . '</label>';
+        echo '<input type="text" id="_tts_lat" name="_tts_lat" value="' . esc_attr( $lat ) . '" class="widefat" /></p>';
+        echo '<p><label for="_tts_lng">' . esc_html__( 'Longitude', 'trello-social-auto-publisher' ) . '</label>';
+        echo '<input type="text" id="_tts_lng" name="_tts_lng" value="' . esc_attr( $lng ) . '" class="widefat" /></p>';
+    }
+
+    /**
      * Save scheduling meta box data.
      *
      * @param int     $post_id Post ID.
@@ -407,6 +468,36 @@ class TTS_CPT {
                 } else {
                     delete_post_meta( $post_id, $field );
                 }
+            }
+        }
+    }
+
+    /**
+     * Save location meta box data.
+     *
+     * @param int     $post_id Post ID.
+     * @param WP_Post $post    Post object.
+     * @param bool    $update  Whether this is an existing post being updated.
+     */
+    public function save_location_metabox( $post_id, $post, $update ) {
+        if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+            return;
+        }
+
+        if ( ! current_user_can( 'edit_post', $post_id ) ) {
+            return;
+        }
+
+        if ( isset( $_POST['tts_location_nonce'] ) && wp_verify_nonce( $_POST['tts_location_nonce'], 'tts_location_metabox' ) ) {
+            if ( isset( $_POST['_tts_lat'] ) && '' !== $_POST['_tts_lat'] ) {
+                update_post_meta( $post_id, '_tts_lat', sanitize_text_field( wp_unslash( $_POST['_tts_lat'] ) ) );
+            } else {
+                delete_post_meta( $post_id, '_tts_lat' );
+            }
+            if ( isset( $_POST['_tts_lng'] ) && '' !== $_POST['_tts_lng'] ) {
+                update_post_meta( $post_id, '_tts_lng', sanitize_text_field( wp_unslash( $_POST['_tts_lng'] ) ) );
+            } else {
+                delete_post_meta( $post_id, '_tts_lng' );
             }
         }
     }

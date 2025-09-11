@@ -51,6 +51,9 @@ class TTS_Publisher_Facebook {
             return new \WP_Error( 'facebook_bad_credentials', $error );
         }
 
+        $lat = get_post_meta( $post_id, '_tts_lat', true );
+        $lng = get_post_meta( $post_id, '_tts_lng', true );
+
         $attachment_ids = get_post_meta( $post_id, '_tts_attachment_ids', true );
         $attachment_ids = is_array( $attachment_ids ) ? array_map( 'intval', $attachment_ids ) : array();
         $images         = array();
@@ -85,6 +88,12 @@ class TTS_Publisher_Facebook {
             );
             if ( $link ) {
                 $body['link'] = $link;
+            }
+            if ( $lat && $lng ) {
+                $body['location'] = array(
+                    'latitude'  => $lat,
+                    'longitude' => $lng,
+                );
             }
             $result = wp_remote_post(
                 $endpoint,
@@ -122,6 +131,12 @@ class TTS_Publisher_Facebook {
             if ( 0 === $index ) {
                 $video_body['description'] = $message;
             }
+            if ( $lat && $lng ) {
+                $video_body['location'] = array(
+                    'latitude'  => $lat,
+                    'longitude' => $lng,
+                );
+            }
             $result = wp_remote_post(
                 $endpoint,
                 array(
@@ -154,6 +169,12 @@ class TTS_Publisher_Facebook {
             );
             if ( 0 === $index && empty( $videos ) ) {
                 $img_body['message'] = $message;
+            }
+            if ( $lat && $lng ) {
+                $img_body['location'] = array(
+                    'latitude'  => $lat,
+                    'longitude' => $lng,
+                );
             }
             $result = wp_remote_post(
                 $endpoint,

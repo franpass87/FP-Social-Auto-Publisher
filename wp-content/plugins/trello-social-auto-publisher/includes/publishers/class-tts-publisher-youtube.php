@@ -75,6 +75,9 @@ class TTS_Publisher_YouTube {
             return new \WP_Error( 'youtube_no_access_token', $error );
         }
 
+        $lat = get_post_meta( $post_id, '_tts_lat', true );
+        $lng = get_post_meta( $post_id, '_tts_lng', true );
+
         $attachment_ids = get_post_meta( $post_id, '_tts_attachment_ids', true );
         $attachment_ids = is_array( $attachment_ids ) ? array_map( 'intval', $attachment_ids ) : array();
         $videos         = array();
@@ -118,7 +121,19 @@ class TTS_Publisher_YouTube {
                 'snippet' => $snippet,
                 'status'  => $status,
             );
-            $endpoint = 'https://www.googleapis.com/upload/youtube/v3/videos?part=snippet,status&uploadType=resumable';
+            if ( $lat && $lng ) {
+                $metadata['recordingDetails'] = array(
+                    'location' => array(
+                        'latitude'  => (float) $lat,
+                        'longitude' => (float) $lng,
+                    ),
+                );
+            }
+            $endpoint = 'https://www.googleapis.com/upload/youtube/v3/videos?part=snippet,status';
+            if ( $lat && $lng ) {
+                $endpoint .= ',recordingDetails';
+            }
+            $endpoint .= '&uploadType=resumable';
             $init     = wp_remote_request(
                 $endpoint,
                 array(
