@@ -336,6 +336,12 @@ class TTS_CPT {
             $value = get_post_meta( $post->ID, '_tts_message_' . $key, true );
             echo '<p><label for="tts_message_' . esc_attr( $key ) . '"><strong>' . esc_html( $label ) . '</strong></label>';
             echo '<textarea id="tts_message_' . esc_attr( $key ) . '" name="_tts_message_' . esc_attr( $key ) . '" rows="3" class="widefat">' . esc_textarea( $value ) . '</textarea></p>';
+
+            if ( 'instagram' === $key ) {
+                $comment = get_post_meta( $post->ID, '_tts_instagram_first_comment', true );
+                echo '<p><label for="tts_instagram_first_comment">' . esc_html__( 'Commento iniziale Instagram', 'trello-social-auto-publisher' ) . '</label>';
+                echo '<textarea id="tts_instagram_first_comment" name="_tts_instagram_first_comment" rows="3" class="widefat">' . esc_textarea( $comment ) . '</textarea></p>';
+            }
         }
     }
 
@@ -468,6 +474,13 @@ class TTS_CPT {
                 } else {
                     delete_post_meta( $post_id, $field );
                 }
+            }
+
+            $comment_field = '_tts_instagram_first_comment';
+            if ( isset( $_POST[ $comment_field ] ) && '' !== $_POST[ $comment_field ] ) {
+                update_post_meta( $post_id, $comment_field, sanitize_textarea_field( wp_unslash( $_POST[ $comment_field ] ) ) );
+            } else {
+                delete_post_meta( $post_id, $comment_field );
             }
         }
     }

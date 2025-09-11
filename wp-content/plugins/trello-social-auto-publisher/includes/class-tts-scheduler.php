@@ -184,6 +184,17 @@ class TTS_Scheduler {
                         $log[ $ch ] = $publisher->publish( $post_id, $credentials, $message );
                         if ( is_wp_error( $log[ $ch ] ) ) {
                             $error = true;
+                        } elseif ( 'instagram' === $ch ) {
+                            $first_comment = get_post_meta( $post_id, '_tts_instagram_first_comment', true );
+                            if ( $first_comment && is_array( $log[ $ch ] ) && isset( $log[ $ch ]['id'] ) ) {
+                                $comment_res = $publisher->post_comment( $log[ $ch ]['id'], $first_comment );
+                                if ( is_wp_error( $comment_res ) ) {
+                                    $error = true;
+                                    $log['instagram_comment'] = $comment_res;
+                                } else {
+                                    $log['instagram_comment'] = $comment_res;
+                                }
+                            }
                         }
                     } catch ( \Exception $e ) {
                         $error       = true;
