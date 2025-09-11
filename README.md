@@ -2,6 +2,17 @@
 
 Questo progetto pubblica automaticamente contenuti sui social a partire da Trello.
 
+## ✨ Aggiornamenti Recenti
+
+### Menu WordPress Riorganizzato
+Il plugin ora utilizza una struttura di menu consolidata per migliorare la navigazione:
+- **Menu principale**: "Social Auto Publisher" con tutte le funzioni organizzate come sottomenu
+- **Dashboard migliorata**: Statistiche, post recenti, e azioni rapide
+- **Design responsivo**: Interfaccia moderna e mobile-friendly
+- **Pagine migliorate**: Calendar, Analytics, Health Status con styling avanzato
+
+Vedi [MENU_STRUCTURE.md](MENU_STRUCTURE.md) per la documentazione completa della nuova struttura.
+
 ## API richieste
 
 - **Trello**: API Key e Token.
