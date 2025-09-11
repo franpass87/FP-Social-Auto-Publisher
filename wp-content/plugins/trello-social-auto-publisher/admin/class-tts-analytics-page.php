@@ -26,13 +26,13 @@ class TTS_Analytics_Page {
      * Register the analytics menu.
      */
     public function register_menu() {
-        add_menu_page(
+        add_submenu_page(
+            'tts-main',
             __( 'Analytics', 'trello-social-auto-publisher' ),
             __( 'Analytics', 'trello-social-auto-publisher' ),
             'manage_options',
             'tts-analytics',
-            array( $this, 'render_page' ),
-            'dashicons-chart-area'
+            array( $this, 'render_page' )
         );
     }
 
@@ -42,7 +42,7 @@ class TTS_Analytics_Page {
      * @param string $hook Current admin page hook.
      */
     public function enqueue_assets( $hook ) {
-        if ( 'toplevel_page_tts-analytics' !== $hook ) {
+        if ( 'social-auto-publisher_page_tts-analytics' !== $hook ) {
             return;
         }
 

@@ -39,17 +39,40 @@ class TTS_Admin {
      * Register plugin menu pages.
      */
     public function register_menu() {
+        // Main menu page
         add_menu_page(
+            __( 'Social Auto Publisher', 'trello-social-auto-publisher' ),
+            __( 'Social Auto Publisher', 'trello-social-auto-publisher' ),
+            'manage_options',
+            'tts-main',
+            array( $this, 'render_dashboard_page' ),
+            'dashicons-share-alt',
+            25
+        );
+
+        // Dashboard as first submenu (same as main page)
+        add_submenu_page(
+            'tts-main',
+            __( 'Dashboard', 'trello-social-auto-publisher' ),
+            __( 'Dashboard', 'trello-social-auto-publisher' ),
+            'manage_options',
+            'tts-main',
+            array( $this, 'render_dashboard_page' )
+        );
+
+        // Clients submenu
+        add_submenu_page(
+            'tts-main',
             __( 'Clienti', 'trello-social-auto-publisher' ),
             __( 'Clienti', 'trello-social-auto-publisher' ),
             'manage_options',
             'tts-clienti',
-            array( $this, 'render_clients_page' ),
-            'dashicons-groups'
+            array( $this, 'render_clients_page' )
         );
 
+        // Client Wizard submenu
         add_submenu_page(
-            'tts-clienti',
+            'tts-main',
             __( 'Client Wizard', 'trello-social-auto-publisher' ),
             __( 'Client Wizard', 'trello-social-auto-publisher' ),
             'manage_options',
@@ -57,22 +80,14 @@ class TTS_Admin {
             array( $this, 'tts_render_client_wizard' )
         );
 
-        add_menu_page(
+        // Social Posts submenu
+        add_submenu_page(
+            'tts-main',
             __( 'Social Post', 'trello-social-auto-publisher' ),
             __( 'Social Post', 'trello-social-auto-publisher' ),
             'manage_options',
             'tts-social-posts',
-            array( $this, 'render_social_posts_page' ),
-            'dashicons-share'
-        );
-
-        add_menu_page(
-            __( 'Social Dashboard', 'trello-social-auto-publisher' ),
-            __( 'Social Dashboard', 'trello-social-auto-publisher' ),
-            'manage_options',
-            'tts-dashboard',
-            array( $this, 'render_dashboard_page' ),
-            'dashicons-chart-bar'
+            array( $this, 'render_social_posts_page' )
         );
     }
 
@@ -82,9 +97,16 @@ class TTS_Admin {
      * @param string $hook Current admin page hook.
      */
     public function enqueue_dashboard_assets( $hook ) {
-        if ( 'toplevel_page_tts-dashboard' !== $hook ) {
+        if ( 'toplevel_page_tts-main' !== $hook ) {
             return;
         }
+
+        wp_enqueue_style(
+            'tts-dashboard',
+            plugin_dir_url( __FILE__ ) . 'css/tts-dashboard.css',
+            array(),
+            '1.0'
+        );
 
         wp_enqueue_script(
             'tts-dashboard',
@@ -101,7 +123,7 @@ class TTS_Admin {
      * @param string $hook Current admin page hook.
      */
     public function enqueue_wizard_assets( $hook ) {
-        if ( 'tts-clienti_page_tts-client-wizard' !== $hook ) {
+        if ( 'social-auto-publisher_page_tts-client-wizard' !== $hook ) {
             return;
         }
 
@@ -255,8 +277,167 @@ class TTS_Admin {
      */
     public function render_dashboard_page() {
         echo '<div class="wrap">';
-        echo '<h1>' . esc_html__( 'Social Dashboard', 'trello-social-auto-publisher' ) . '</h1>';
+        echo '<h1>' . esc_html__( 'Social Auto Publisher Dashboard', 'trello-social-auto-publisher' ) . '</h1>';
+        
+        // Quick stats cards
+        $this->render_dashboard_stats();
+        
+        // Recent activity
+        echo '<div class="tts-dashboard-sections">';
+        echo '<div class="tts-dashboard-left">';
+        $this->render_recent_posts_section();
+        echo '</div>';
+        
+        echo '<div class="tts-dashboard-right">';
+        $this->render_quick_actions_section();
+        echo '</div>';
+        echo '</div>';
+        
+        // React component container for advanced features
         echo '<div id="tts-dashboard-root"></div>';
+        echo '</div>';
+    }
+
+    /**
+     * Render dashboard statistics cards.
+     */
+    private function render_dashboard_stats() {
+        $total_posts = wp_count_posts('tts_social_post');
+        $total_clients = wp_count_posts('tts_client');
+        
+        $scheduled_posts = get_posts(array(
+            'post_type' => 'tts_social_post',
+            'post_status' => 'any',
+            'meta_key' => '_tts_publish_at',
+            'meta_value' => current_time('mysql'),
+            'meta_compare' => '>=',
+            'fields' => 'ids'
+        ));
+        
+        $published_today = get_posts(array(
+            'post_type' => 'tts_social_post',
+            'post_status' => 'any',
+            'date_query' => array(
+                array(
+                    'after' => 'today',
+                    'before' => 'tomorrow',
+                )
+            ),
+            'meta_key' => '_published_status',
+            'meta_value' => 'published',
+            'fields' => 'ids'
+        ));
+
+        echo '<div class="tts-stats-row">';
+        echo '<div class="tts-stat-card">';
+        echo '<h3>' . esc_html__('Total Posts', 'trello-social-auto-publisher') . '</h3>';
+        echo '<span class="tts-stat-number">' . intval($total_posts->publish + $total_posts->draft + $total_posts->private) . '</span>';
+        echo '</div>';
+        
+        echo '<div class="tts-stat-card">';
+        echo '<h3>' . esc_html__('Active Clients', 'trello-social-auto-publisher') . '</h3>';
+        echo '<span class="tts-stat-number">' . intval($total_clients->publish) . '</span>';
+        echo '</div>';
+        
+        echo '<div class="tts-stat-card">';
+        echo '<h3>' . esc_html__('Scheduled Posts', 'trello-social-auto-publisher') . '</h3>';
+        echo '<span class="tts-stat-number">' . count($scheduled_posts) . '</span>';
+        echo '</div>';
+        
+        echo '<div class="tts-stat-card">';
+        echo '<h3>' . esc_html__('Published Today', 'trello-social-auto-publisher') . '</h3>';
+        echo '<span class="tts-stat-number">' . count($published_today) . '</span>';
+        echo '</div>';
+        echo '</div>';
+    }
+
+    /**
+     * Render recent posts section.
+     */
+    private function render_recent_posts_section() {
+        echo '<div class="tts-dashboard-section">';
+        echo '<h2>' . esc_html__('Recent Social Posts', 'trello-social-auto-publisher') . '</h2>';
+        
+        $recent_posts = get_posts(array(
+            'post_type' => 'tts_social_post',
+            'posts_per_page' => 5,
+            'post_status' => 'any',
+            'orderby' => 'date',
+            'order' => 'DESC'
+        ));
+        
+        if (!empty($recent_posts)) {
+            echo '<table class="widefat">';
+            echo '<thead><tr>';
+            echo '<th>' . esc_html__('Title', 'trello-social-auto-publisher') . '</th>';
+            echo '<th>' . esc_html__('Channel', 'trello-social-auto-publisher') . '</th>';
+            echo '<th>' . esc_html__('Status', 'trello-social-auto-publisher') . '</th>';
+            echo '<th>' . esc_html__('Date', 'trello-social-auto-publisher') . '</th>';
+            echo '</tr></thead><tbody>';
+            
+            foreach ($recent_posts as $post) {
+                $channel = get_post_meta($post->ID, '_tts_social_channel', true);
+                $status = get_post_meta($post->ID, '_published_status', true);
+                $publish_at = get_post_meta($post->ID, '_tts_publish_at', true);
+                
+                echo '<tr>';
+                echo '<td><a href="' . esc_url(get_edit_post_link($post->ID)) . '">' . esc_html($post->post_title) . '</a></td>';
+                echo '<td>' . esc_html(is_array($channel) ? implode(', ', $channel) : $channel) . '</td>';
+                echo '<td>' . esc_html($status ?: __('Scheduled', 'trello-social-auto-publisher')) . '</td>';
+                echo '<td>' . esc_html($publish_at ? date_i18n('Y-m-d H:i', strtotime($publish_at)) : get_the_date('Y-m-d H:i', $post)) . '</td>';
+                echo '</tr>';
+            }
+            echo '</tbody></table>';
+        } else {
+            echo '<p>' . esc_html__('No social posts found.', 'trello-social-auto-publisher') . '</p>';
+        }
+        echo '</div>';
+    }
+
+    /**
+     * Render quick actions section.
+     */
+    private function render_quick_actions_section() {
+        echo '<div class="tts-dashboard-section">';
+        echo '<h2>' . esc_html__('Quick Actions', 'trello-social-auto-publisher') . '</h2>';
+        echo '<div class="tts-quick-actions">';
+        
+        $actions = array(
+            array(
+                'title' => __('Add New Client', 'trello-social-auto-publisher'),
+                'url' => admin_url('admin.php?page=tts-client-wizard'),
+                'icon' => 'dashicons-plus'
+            ),
+            array(
+                'title' => __('View Calendar', 'trello-social-auto-publisher'),
+                'url' => admin_url('admin.php?page=tts-calendar'),
+                'icon' => 'dashicons-calendar'
+            ),
+            array(
+                'title' => __('Check Status', 'trello-social-auto-publisher'),
+                'url' => admin_url('admin.php?page=tts-health'),
+                'icon' => 'dashicons-heart'
+            ),
+            array(
+                'title' => __('View Analytics', 'trello-social-auto-publisher'),
+                'url' => admin_url('admin.php?page=tts-analytics'),
+                'icon' => 'dashicons-chart-area'
+            ),
+            array(
+                'title' => __('View Logs', 'trello-social-auto-publisher'),
+                'url' => admin_url('admin.php?page=tts-log'),
+                'icon' => 'dashicons-list-view'
+            )
+        );
+        
+        foreach ($actions as $action) {
+            echo '<a href="' . esc_url($action['url']) . '" class="tts-quick-action">';
+            echo '<span class="dashicons ' . esc_attr($action['icon']) . '"></span>';
+            echo esc_html($action['title']);
+            echo '</a>';
+        }
+        
+        echo '</div>';
         echo '</div>';
     }
 

@@ -25,13 +25,13 @@ class TTS_Health_Page {
      * Register the health status menu page.
      */
     public function register_menu() {
-        add_menu_page(
+        add_submenu_page(
+            'tts-main',
             __( 'Stato', 'trello-social-auto-publisher' ),
             __( 'Stato', 'trello-social-auto-publisher' ),
             'manage_tts_posts',
             'tts-health',
-            array( $this, 'render_page' ),
-            'dashicons-heart'
+            array( $this, 'render_page' )
         );
     }
 

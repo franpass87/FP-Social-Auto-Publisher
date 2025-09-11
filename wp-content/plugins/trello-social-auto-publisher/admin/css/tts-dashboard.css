@@ -1,0 +1,138 @@
+/* Social Auto Publisher Dashboard Styles */
+
+.tts-stats-row {
+    display: flex;
+    gap: 20px;
+    margin: 20px 0;
+    flex-wrap: wrap;
+}
+
+.tts-stat-card {
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-radius: 4px;
+    padding: 20px;
+    flex: 1;
+    min-width: 200px;
+    text-align: center;
+    box-shadow: 0 1px 1px rgba(0,0,0,0.04);
+}
+
+.tts-stat-card h3 {
+    margin: 0 0 10px 0;
+    font-size: 14px;
+    color: #50575e;
+    font-weight: 600;
+}
+
+.tts-stat-number {
+    display: block;
+    font-size: 32px;
+    font-weight: bold;
+    color: #135e96;
+    line-height: 1;
+}
+
+.tts-dashboard-sections {
+    display: flex;
+    gap: 20px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+}
+
+.tts-dashboard-left {
+    flex: 2;
+    min-width: 400px;
+}
+
+.tts-dashboard-right {
+    flex: 1;
+    min-width: 300px;
+}
+
+.tts-dashboard-section {
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-radius: 4px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 1px rgba(0,0,0,0.04);
+}
+
+.tts-dashboard-section h2 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 18px;
+    color: #1d2327;
+}
+
+.tts-quick-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.tts-quick-action {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    background: #f6f7f7;
+    border: 1px solid #dcdcde;
+    border-radius: 4px;
+    text-decoration: none;
+    color: #1d2327;
+    transition: all 0.2s ease;
+}
+
+.tts-quick-action:hover {
+    background: #135e96;
+    color: #fff;
+    border-color: #135e96;
+    text-decoration: none;
+}
+
+.tts-quick-action .dashicons {
+    margin-right: 10px;
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+}
+
+.tts-dashboard-section table {
+    margin-top: 10px;
+}
+
+.tts-dashboard-section table th {
+    background: #f6f7f7;
+    font-weight: 600;
+}
+
+.tts-dashboard-section table td {
+    padding: 12px 8px;
+}
+
+.tts-dashboard-section table td a {
+    color: #135e96;
+    text-decoration: none;
+}
+
+.tts-dashboard-section table td a:hover {
+    color: #0a4b78;
+    text-decoration: underline;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .tts-stats-row {
+        flex-direction: column;
+    }
+    
+    .tts-dashboard-sections {
+        flex-direction: column;
+    }
+    
+    .tts-dashboard-left,
+    .tts-dashboard-right {
+        min-width: auto;
+    }
+}

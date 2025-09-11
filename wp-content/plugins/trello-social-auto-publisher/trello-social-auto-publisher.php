@@ -56,9 +56,16 @@ add_action( 'plugins_loaded', function () {
         new TTS_Health_Page();
 
         add_action( 'admin_enqueue_scripts', function( $hook ) {
-            if ( 'toplevel_page_tts-calendar' !== $hook ) {
+            if ( 'social-auto-publisher_page_tts-calendar' !== $hook ) {
                 return;
             }
+
+            wp_enqueue_style(
+                'tts-calendar',
+                plugin_dir_url( __FILE__ ) . 'admin/css/tts-calendar.css',
+                array(),
+                '1.0'
+            );
 
             wp_enqueue_script(
                 'tts-calendar',
