@@ -68,6 +68,8 @@ class TTS_Scheduler {
             return;
         }
 
+        $notifier = new TTS_Notifier();
+
         $attempt      = (int) get_post_meta( $post_id, '_tts_retry_count', true );
         $max_attempts = 5;
 
@@ -162,8 +164,6 @@ class TTS_Scheduler {
                         $log[ $ch ]  = $e->getMessage();
                         tts_log_event( $post_id, $ch, 'error', $e->getMessage(), '' );
                     }
-
-                    tts_notify_publication( $post_id, 'processed', $ch );
                 }
             }
         }
@@ -171,7 +171,10 @@ class TTS_Scheduler {
         if ( $error ) {
             if ( $attempt >= $max_attempts ) {
                 tts_log_event( $post_id, 'scheduler', 'error', __( 'Maximum retry attempts reached', 'trello-social-auto-publisher' ), '' );
-                tts_notify_publication( $post_id, 'error', 'scheduler' );
+                $log_url = admin_url( 'admin.php?page=tts-log&post_id=' . $post_id );
+                $message = sprintf( __( 'Publishing failed for post %1$s. Log: %2$s', 'trello-social-auto-publisher' ), get_the_title( $post_id ), $log_url );
+                $notifier->notify_slack( $message );
+                $notifier->notify_email( __( 'Social publishing failed', 'trello-social-auto-publisher' ), $message );
                 return;
             }
 
@@ -270,6 +273,11 @@ class TTS_Scheduler {
         }
 
         tts_log_event( $post_id, 'scheduler', 'complete', __( 'Publish process completed', 'trello-social-auto-publisher' ), $log );
+
+        $log_url = admin_url( 'admin.php?page=tts-log&post_id=' . $post_id );
+        $message = sprintf( __( 'Publishing completed for post %1$s. Log: %2$s', 'trello-social-auto-publisher' ), get_the_title( $post_id ), $log_url );
+        $notifier->notify_slack( $message );
+        $notifier->notify_email( __( 'Social publishing completed', 'trello-social-auto-publisher' ), $message );
     }
 
     /**
