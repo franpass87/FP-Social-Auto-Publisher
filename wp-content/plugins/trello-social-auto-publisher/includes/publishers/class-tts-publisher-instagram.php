@@ -15,6 +15,20 @@ if ( ! defined( 'ABSPATH' ) ) {
 class TTS_Publisher_Instagram {
 
     /**
+     * Stored access token for subsequent API calls.
+     *
+     * @var string
+     */
+    private $token = '';
+
+    /**
+     * Last post ID used for logging.
+     *
+     * @var int
+     */
+    private $post_id = 0;
+
+    /**
      * Publish the post to Instagram.
      *
      * Credentials must be provided in the form `{ig-user-id}|{access-token}` where `ig-user-id` is
@@ -24,9 +38,10 @@ class TTS_Publisher_Instagram {
      * @param int         $post_id     Post ID.
      * @param string      $credentials Instagram user ID and access token.
      * @param string      $message     Message to publish.
-     * @return string|\WP_Error Log message or error.
+     * @return array|\WP_Error Log data or error.
      */
     public function publish( $post_id, $credentials, $message ) {
+        $this->post_id = $post_id;
         if ( empty( $credentials ) ) {
             $message = __( 'Instagram token missing', 'trello-social-auto-publisher' );
             tts_log_event( $post_id, 'instagram', 'error', $message, '' );
@@ -41,6 +56,8 @@ class TTS_Publisher_Instagram {
             tts_notify_publication( $post_id, 'error', 'instagram' );
             return new \WP_Error( 'instagram_bad_credentials', $error );
         }
+
+        $this->token = $token;
 
         $lat = get_post_meta( $post_id, '_tts_lat', true );
         $lng = get_post_meta( $post_id, '_tts_lng', true );
@@ -88,6 +105,7 @@ class TTS_Publisher_Instagram {
             tts_notify_publication( $post_id, 'error', 'instagram' );
             return new \WP_Error( 'instagram_no_media', $error );
         }
+        $first_media_id = '';
         foreach ( $media_items as $index => $item ) {
             $endpoint = sprintf( 'https://graph.facebook.com/%s/media', $ig_user_id );
             $body     = array(
@@ -153,10 +171,55 @@ class TTS_Publisher_Instagram {
                 tts_notify_publication( $post_id, 'error', 'instagram' );
                 return new \WP_Error( 'instagram_error', $error, $publish_data );
             }
+            if ( '' === $first_media_id ) {
+                $first_media_id = $publish_data['id'];
+            }
         }
-        $response = __( 'Published to Instagram', 'trello-social-auto-publisher' );
-        tts_log_event( $post_id, 'instagram', 'success', $response, '' );
+        $response = array(
+            'message' => __( 'Published to Instagram', 'trello-social-auto-publisher' ),
+            'id'      => $first_media_id,
+        );
+        tts_log_event( $post_id, 'instagram', 'success', $response['message'], '' );
         tts_notify_publication( $post_id, 'success', 'instagram' );
         return $response;
+    }
+
+    /**
+     * Post a comment to a published Instagram media.
+     *
+     * @param string $media_id Media ID returned by Instagram.
+     * @param string $text     Comment text.
+     * @return string|\WP_Error Result message or error.
+     */
+    public function post_comment( $media_id, $text ) {
+        if ( empty( $this->token ) || empty( $media_id ) || empty( $text ) ) {
+            return new \WP_Error( 'instagram_comment_missing_data', __( 'Missing data for Instagram comment', 'trello-social-auto-publisher' ) );
+        }
+        $endpoint = sprintf( 'https://graph.facebook.com/%s/comments', $media_id );
+        $result   = wp_remote_post(
+            $endpoint,
+            array(
+                'body'    => array(
+                    'message'      => $text,
+                    'access_token' => $this->token,
+                ),
+                'timeout' => 20,
+            )
+        );
+        if ( is_wp_error( $result ) ) {
+            $error = $result->get_error_message();
+            tts_log_event( $this->post_id, 'instagram', 'error', $error, '' );
+            return $result;
+        }
+        $code = wp_remote_retrieve_response_code( $result );
+        $data = json_decode( wp_remote_retrieve_body( $result ), true );
+        if ( 200 !== $code || empty( $data['id'] ) ) {
+            $error = isset( $data['error']['message'] ) ? $data['error']['message'] : __( 'Unknown error', 'trello-social-auto-publisher' );
+            tts_log_event( $this->post_id, 'instagram', 'error', $error, $data );
+            return new \WP_Error( 'instagram_comment_error', $error, $data );
+        }
+        $success = __( 'Comment posted to Instagram', 'trello-social-auto-publisher' );
+        tts_log_event( $this->post_id, 'instagram', 'success', $success, $data );
+        return $success;
     }
 }
