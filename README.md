@@ -45,6 +45,15 @@ Per pubblicare contenuti su TikTok è necessario un account **Business** abilita
 2. Genera un **Access Token** con i permessi necessari per l'upload e la pubblicazione dei video.
 3. Inserisci il token nel campo *TikTok Access Token* del client.
 
+## Requisiti per la pubblicazione delle Stories
+
+Per pubblicare Stories su Facebook e Instagram il file deve avere orientamento verticale:
+
+- **Immagini**: 1080×1920 pixel (rapporto 9:16).
+- **Video**: durata massima 60 secondi con risoluzione 1080×1920 pixel.
+
+Quando è selezionato il flag *Pubblica come Story* il campo `_tts_story_media` deve contenere un file che rispetti questi requisiti.
+
 ## Mappatura Trello → Canali Social
 
 Nel metabox del custom post type `tts_client` è possibile definire una mappatura tra l'`idList` di Trello e il relativo `canale_social`.
