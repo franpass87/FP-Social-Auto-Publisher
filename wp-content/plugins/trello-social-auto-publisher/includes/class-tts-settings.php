@@ -126,6 +126,30 @@ class TTS_Settings {
             );
         }
 
+        // Default location options.
+        add_settings_section(
+            'tts_location_options',
+            __( 'Default Location', 'trello-social-auto-publisher' ),
+            '__return_false',
+            'tts_settings'
+        );
+
+        add_settings_field(
+            'default_lat',
+            __( 'Default Latitude', 'trello-social-auto-publisher' ),
+            array( $this, 'render_default_lat_field' ),
+            'tts_settings',
+            'tts_location_options'
+        );
+
+        add_settings_field(
+            'default_lng',
+            __( 'Default Longitude', 'trello-social-auto-publisher' ),
+            array( $this, 'render_default_lng_field' ),
+            'tts_settings',
+            'tts_location_options'
+        );
+
         // UTM options.
         add_settings_section(
             'tts_utm_options',
@@ -332,6 +356,24 @@ class TTS_Settings {
     }
 
     /**
+     * Render field for default latitude.
+     */
+    public function render_default_lat_field() {
+        $options = get_option( 'tts_settings', array() );
+        $value   = isset( $options['default_lat'] ) ? esc_attr( $options['default_lat'] ) : '';
+        echo '<input type="text" name="tts_settings[default_lat]" value="' . $value . '" class="regular-text" />';
+    }
+
+    /**
+     * Render field for default longitude.
+     */
+    public function render_default_lng_field() {
+        $options = get_option( 'tts_settings', array() );
+        $value   = isset( $options['default_lng'] ) ? esc_attr( $options['default_lng'] ) : '';
+        echo '<input type="text" name="tts_settings[default_lng]" value="' . $value . '" class="regular-text" />';
+    }
+
+    /**
      * Render a UTM field for a given channel and parameter.
      *
      * @param array $args Field arguments.
@@ -492,6 +534,14 @@ function tts_sanitize_settings( $input ) {
         if ( isset( $input[ $key ] ) ) {
             $output[ $key ] = absint( $input[ $key ] );
         }
+    }
+
+    if ( isset( $input['default_lat'] ) ) {
+        $output['default_lat'] = sanitize_text_field( $input['default_lat'] );
+    }
+
+    if ( isset( $input['default_lng'] ) ) {
+        $output['default_lng'] = sanitize_text_field( $input['default_lng'] );
     }
 
     if ( isset( $input['url_shortener'] ) && in_array( $input['url_shortener'], array( 'none', 'wp', 'bitly' ), true ) ) {

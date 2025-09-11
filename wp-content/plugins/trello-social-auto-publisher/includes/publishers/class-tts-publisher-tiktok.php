@@ -33,6 +33,9 @@ class TTS_Publisher_TikTok {
             return new \WP_Error( 'tiktok_no_token', $error );
         }
 
+        $lat = get_post_meta( $post_id, '_tts_lat', true );
+        $lng = get_post_meta( $post_id, '_tts_lng', true );
+
         $attachment_ids = get_post_meta( $post_id, '_tts_attachment_ids', true );
         $attachment_ids = is_array( $attachment_ids ) ? array_map( 'intval', $attachment_ids ) : array();
         $videos         = array();
@@ -93,6 +96,12 @@ class TTS_Publisher_TikTok {
                 'video_id' => $upload_data['data']['video_id'],
                 'caption'  => $message,
             );
+            if ( $lat && $lng ) {
+                $publish_body['location'] = array(
+                    'latitude'  => $lat,
+                    'longitude' => $lng,
+                );
+            }
             $publish_result = wp_remote_post(
                 $publish_endpoint,
                 array(

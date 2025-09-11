@@ -42,6 +42,9 @@ class TTS_Publisher_Instagram {
             return new \WP_Error( 'instagram_bad_credentials', $error );
         }
 
+        $lat = get_post_meta( $post_id, '_tts_lat', true );
+        $lng = get_post_meta( $post_id, '_tts_lng', true );
+
         $attachment_ids = get_post_meta( $post_id, '_tts_attachment_ids', true );
         $attachment_ids = is_array( $attachment_ids ) ? array_map( 'intval', $attachment_ids ) : array();
         $media_items    = array();
@@ -88,6 +91,12 @@ class TTS_Publisher_Instagram {
                 'caption'      => 0 === $index ? $message : '',
                 'access_token' => $token,
             );
+            if ( $lat && $lng ) {
+                $body['location'] = array(
+                    'latitude'  => $lat,
+                    'longitude' => $lng,
+                );
+            }
             if ( 'IMAGE' === $item['type'] ) {
                 $body['image_url'] = $item['url'];
             } else {
