@@ -110,3 +110,34 @@ add_action(
 
 // Hook the analytics fetcher.
 add_action( 'tts_fetch_metrics', array( 'TTS_Analytics', 'fetch_all' ) );
+
+// Schedule daily link checks.
+add_action(
+    'init',
+    function () {
+        if ( ! wp_next_scheduled( 'tts_check_links' ) ) {
+            wp_schedule_event( time(), 'daily', 'tts_check_links' );
+        }
+    }
+);
+
+// Hook the link checker.
+add_action(
+    'tts_check_links',
+    function () {
+        $posts = get_posts(
+            array(
+                'post_type'      => 'tts_social_post',
+                'post_status'    => 'any',
+                'posts_per_page' => -1,
+                'fields'         => 'ids',
+                'meta_key'       => '_published_status',
+                'meta_value'     => 'scheduled',
+            )
+        );
+
+        foreach ( $posts as $post_id ) {
+            TTS_Link_Checker::verify_urls( $post_id );
+        }
+    }
+);
