@@ -587,7 +587,7 @@ class TTSAdvancedFeatures {
                 this.clearCache();
                 break;
             default:
-                console.log('Unknown action:', action);
+                // Unknown action - silently ignore for production
         }
     }
 

@@ -1,11 +1,11 @@
 <?php
 /**
  * Plugin Name: Trello Social Auto Publisher
- * Plugin URI:  https://example.com/
+ * Plugin URI:  https://github.com/franpass87/FP-Social-Auto-Publisher
  * Description: Publish social posts triggered by Trello cards.
  * Version:     1.0.0
  * Author:      FP-Social-Auto-Publisher
- * Author URI:  https://example.com/
+ * Author URI:  https://github.com/franpass87/FP-Social-Auto-Publisher
  * Text Domain: trello-social-auto-publisher
  *
  * @package TrelloSocialAutoPublisher
