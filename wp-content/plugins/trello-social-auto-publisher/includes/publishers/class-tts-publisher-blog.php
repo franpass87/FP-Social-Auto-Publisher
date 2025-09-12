@@ -239,6 +239,11 @@ class TTS_Publisher_Blog {
         
         global $sitepress;
         
+        // Ensure sitepress object exists
+        if ( ! $sitepress ) {
+            return;
+        }
+        
         // Set post language
         $sitepress->set_element_language_details( 
             $blog_post_id, 
