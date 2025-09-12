@@ -2927,15 +2927,160 @@ class TTS_Social_Posts_Table extends WP_List_Table {
      * @return array Rate limit information.
      */
     private function get_platform_rate_limits( $platform ) {
-        // This would normally query the actual APIs, but for demo purposes we'll return mock data
-        $limits = array(
-            'facebook' => array( 'used' => 45, 'limit' => 200, 'remaining' => 155, 'reset_time' => '1 hour' ),
-            'instagram' => array( 'used' => 23, 'limit' => 100, 'remaining' => 77, 'reset_time' => '45 minutes' ),
-            'youtube' => array( 'used' => 8500, 'limit' => 10000, 'remaining' => 1500, 'reset_time' => '12 hours' ),
-            'tiktok' => array( 'used' => 15, 'limit' => 50, 'remaining' => 35, 'reset_time' => '2 hours' )
-        );
+        $settings = get_option( 'tts_settings', array() );
         
-        return isset( $limits[$platform] ) ? $limits[$platform] : array( 'used' => 0, 'limit' => 100, 'remaining' => 100, 'reset_time' => 'Unknown' );
+        // Check if we have cached rate limit data (updated every 15 minutes)
+        $cache_key = "tts_rate_limits_{$platform}";
+        $cached_limits = get_transient( $cache_key );
+        
+        if ( $cached_limits !== false ) {
+            return $cached_limits;
+        }
+        
+        $limits = array( 'used' => 0, 'limit' => 100, 'remaining' => 100, 'reset_time' => 'Unknown' );
+        
+        switch ( $platform ) {
+            case 'facebook':
+                $limits = $this->get_facebook_rate_limits( $settings );
+                break;
+                
+            case 'instagram':
+                $limits = $this->get_instagram_rate_limits( $settings );
+                break;
+                
+            case 'youtube':
+                $limits = $this->get_youtube_rate_limits( $settings );
+                break;
+                
+            case 'tiktok':
+                $limits = $this->get_tiktok_rate_limits( $settings );
+                break;
+        }
+        
+        // Cache the rate limits for 15 minutes
+        set_transient( $cache_key, $limits, 15 * MINUTE_IN_SECONDS );
+        
+        return $limits;
+    }
+    
+    /**
+     * Get Facebook API rate limits.
+     *
+     * @param array $settings Plugin settings.
+     * @return array Rate limit data.
+     */
+    private function get_facebook_rate_limits( $settings ) {
+        $access_token = $settings['facebook_access_token'] ?? '';
+        
+        if ( empty( $access_token ) ) {
+            return array( 'used' => 0, 'limit' => 200, 'remaining' => 200, 'reset_time' => 'No token configured' );
+        }
+        
+        $response = wp_remote_get( 'https://graph.facebook.com/me?access_token=' . $access_token, array(
+            'timeout' => 10
+        ) );
+        
+        if ( is_wp_error( $response ) ) {
+            return array( 'used' => 0, 'limit' => 200, 'remaining' => 200, 'reset_time' => 'API Error' );
+        }
+        
+        $headers = wp_remote_retrieve_headers( $response );
+        
+        return array(
+            'used' => intval( $headers['X-App-Usage'] ?? 0 ),
+            'limit' => 200, // Facebook default
+            'remaining' => 200 - intval( $headers['X-App-Usage'] ?? 0 ),
+            'reset_time' => $headers['X-App-Usage-Reset-Time'] ?? '1 hour'
+        );
+    }
+    
+    /**
+     * Get Instagram API rate limits.
+     *
+     * @param array $settings Plugin settings.
+     * @return array Rate limit data.
+     */
+    private function get_instagram_rate_limits( $settings ) {
+        $access_token = $settings['instagram_access_token'] ?? '';
+        
+        if ( empty( $access_token ) ) {
+            return array( 'used' => 0, 'limit' => 100, 'remaining' => 100, 'reset_time' => 'No token configured' );
+        }
+        
+        // Instagram Basic Display API limits
+        $response = wp_remote_get( 'https://graph.instagram.com/me?access_token=' . $access_token, array(
+            'timeout' => 10
+        ) );
+        
+        if ( is_wp_error( $response ) ) {
+            return array( 'used' => 0, 'limit' => 100, 'remaining' => 100, 'reset_time' => 'API Error' );
+        }
+        
+        $response_code = wp_remote_retrieve_response_code( $response );
+        $headers = wp_remote_retrieve_headers( $response );
+        
+        if ( $response_code === 429 ) {
+            return array( 'used' => 100, 'limit' => 100, 'remaining' => 0, 'reset_time' => 'Rate limited' );
+        }
+        
+        return array(
+            'used' => intval( $headers['X-RateLimit-Used'] ?? 0 ),
+            'limit' => intval( $headers['X-RateLimit-Limit'] ?? 100 ),
+            'remaining' => intval( $headers['X-RateLimit-Remaining'] ?? 100 ),
+            'reset_time' => $headers['X-RateLimit-Reset'] ?? '1 hour'
+        );
+    }
+    
+    /**
+     * Get YouTube API rate limits.
+     *
+     * @param array $settings Plugin settings.
+     * @return array Rate limit data.
+     */
+    private function get_youtube_rate_limits( $settings ) {
+        $api_key = $settings['youtube_api_key'] ?? '';
+        
+        if ( empty( $api_key ) ) {
+            return array( 'used' => 0, 'limit' => 10000, 'remaining' => 10000, 'reset_time' => 'No API key configured' );
+        }
+        
+        // YouTube Data API quota information isn't directly available via API
+        // We track usage internally
+        $daily_usage = get_option( 'tts_youtube_daily_usage', 0 );
+        $daily_limit = 10000; // YouTube default quota
+        
+        return array(
+            'used' => $daily_usage,
+            'limit' => $daily_limit,
+            'remaining' => max( 0, $daily_limit - $daily_usage ),
+            'reset_time' => 'Daily at midnight PST'
+        );
+    }
+    
+    /**
+     * Get TikTok API rate limits.
+     *
+     * @param array $settings Plugin settings.
+     * @return array Rate limit data.
+     */
+    private function get_tiktok_rate_limits( $settings ) {
+        $access_token = $settings['tiktok_access_token'] ?? '';
+        
+        if ( empty( $access_token ) ) {
+            return array( 'used' => 0, 'limit' => 50, 'remaining' => 50, 'reset_time' => 'No token configured' );
+        }
+        
+        // TikTok for Business API has limited public rate limit endpoints
+        // We track usage internally based on API calls
+        $hourly_usage = get_transient( 'tts_tiktok_hourly_usage' ) ?: 0;
+        $hourly_limit = 50; // Typical TikTok limit
+        
+        return array(
+            'used' => $hourly_usage,
+            'limit' => $hourly_limit,
+            'remaining' => max( 0, $hourly_limit - $hourly_usage ),
+            'reset_time' => 'Hourly'
+        );
     }
     
     /**

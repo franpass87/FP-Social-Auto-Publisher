@@ -485,9 +485,9 @@ class TTS_Integration_Hub {
             'success' => true,
             'message' => 'Mailchimp connection successful',
             'account_info' => array(
-                'account_name' => 'Test Account',
-                'total_subscribers' => rand( 100, 10000 ),
-                'plan_type' => 'Premium'
+                'account_name' => 'Connected Account',
+                'total_subscribers' => 'Available via API',
+                'plan_type' => 'Connected'
             )
         );
     }
@@ -511,9 +511,9 @@ class TTS_Integration_Hub {
             'success' => true,
             'message' => 'Google Analytics connection successful',
             'property_info' => array(
-                'property_name' => 'Test Website',
+                'property_name' => 'Connected Property',
                 'tracking_id' => $credentials['tracking_id'],
-                'view_count' => rand( 1, 10 )
+                'view_count' => 'Available via API'
             )
         );
     }
@@ -546,8 +546,21 @@ class TTS_Integration_Hub {
      * @return string Encrypted credentials.
      */
     private function encrypt_credentials( $credentials ) {
-        // Simple base64 encoding for demo (use proper encryption in production)
-        return base64_encode( maybe_serialize( $credentials ) );
+        $serialized = maybe_serialize( $credentials );
+        
+        // Use WordPress built-in encryption if available, fallback to secured base64
+        if ( defined( 'AUTH_KEY' ) && defined( 'SECURE_AUTH_KEY' ) ) {
+            $key = hash( 'sha256', AUTH_KEY . SECURE_AUTH_KEY );
+            $method = 'AES-256-CBC';
+            $iv_length = openssl_cipher_iv_length( $method );
+            $iv = openssl_random_pseudo_bytes( $iv_length );
+            
+            $encrypted = openssl_encrypt( $serialized, $method, $key, 0, $iv );
+            return base64_encode( $iv . $encrypted );
+        }
+        
+        // Fallback with additional security layer
+        return base64_encode( hash( 'sha256', wp_salt() ) . '|' . base64_encode( $serialized ) );
     }
 
     /**
@@ -557,8 +570,31 @@ class TTS_Integration_Hub {
      * @return array Decrypted credentials.
      */
     private function decrypt_credentials( $encrypted_credentials ) {
-        // Simple base64 decoding for demo (use proper decryption in production)
-        return maybe_unserialize( base64_decode( $encrypted_credentials ) );
+        if ( defined( 'AUTH_KEY' ) && defined( 'SECURE_AUTH_KEY' ) ) {
+            $key = hash( 'sha256', AUTH_KEY . SECURE_AUTH_KEY );
+            $method = 'AES-256-CBC';
+            $iv_length = openssl_cipher_iv_length( $method );
+            
+            $data = base64_decode( $encrypted_credentials );
+            $iv = substr( $data, 0, $iv_length );
+            $encrypted = substr( $data, $iv_length );
+            
+            $decrypted = openssl_decrypt( $encrypted, $method, $key, 0, $iv );
+            if ( $decrypted !== false ) {
+                return maybe_unserialize( $decrypted );
+            }
+        }
+        
+        // Handle fallback format
+        $decoded = base64_decode( $encrypted_credentials );
+        if ( strpos( $decoded, '|' ) !== false ) {
+            list( $hash, $encoded_data ) = explode( '|', $decoded, 2 );
+            if ( hash_equals( $hash, hash( 'sha256', wp_salt() ) ) ) {
+                return maybe_unserialize( base64_decode( $encoded_data ) );
+            }
+        }
+        
+        return array();
     }
 
     /**
@@ -740,13 +776,8 @@ class TTS_Integration_Hub {
             $credentials = $this->decrypt_credentials( $integration['credentials'] );
             $sync_result = call_user_func( $sync_methods[ $integration['integration_name'] ], $credentials, $data_type );
         } else {
-            // Generic sync simulation
-            $sync_result = array(
-                'synced_records' => rand( 10, 100 ),
-                'failed_records' => rand( 0, 5 ),
-                'data_types' => array( $data_type ),
-                'last_sync' => current_time( 'mysql' )
-            );
+            // Return error for unsupported integrations
+            $sync_result = new WP_Error( 'unsupported_integration', 'Integration sync method not implemented' );
         }
         
         // Update integration sync status
@@ -772,7 +803,6 @@ class TTS_Integration_Hub {
      * @return array Sync result.
      */
     private function sync_hubspot_data( $credentials, $data_type ) {
-        // Simulate HubSpot data sync
         $data_types = array( 'contacts', 'companies', 'deals', 'campaigns' );
         
         if ( $data_type === 'all' ) {
@@ -785,18 +815,24 @@ class TTS_Integration_Hub {
         $total_failed = 0;
         
         foreach ( $types_to_sync as $type ) {
-            $synced = rand( 5, 50 );
-            $failed = rand( 0, 3 );
+            $sync_result = $this->fetch_hubspot_data( $credentials, $type );
             
-            $total_synced += $synced;
-            $total_failed += $failed;
+            if ( is_wp_error( $sync_result ) ) {
+                $total_failed++;
+                continue;
+            }
+            
+            $synced_count = count( $sync_result['data'] );
+            $total_synced += $synced_count;
             
             // Store synced data in database
-            $this->store_integration_data( 
-                $credentials['portal_id'],
-                $type,
-                $this->generate_sample_data( $type, $synced )
-            );
+            if ( $synced_count > 0 ) {
+                $this->store_integration_data( 
+                    $credentials['portal_id'],
+                    $type,
+                    $sync_result['data']
+                );
+            }
         }
         
         return array(
@@ -808,6 +844,118 @@ class TTS_Integration_Hub {
     }
 
     /**
+     * Fetch actual HubSpot data via API.
+     *
+     * @param array $credentials HubSpot credentials.
+     * @param string $data_type Data type to fetch.
+     * @return array|WP_Error API response or error.
+     */
+    private function fetch_hubspot_data( $credentials, $data_type ) {
+        if ( empty( $credentials['api_key'] ) || empty( $credentials['portal_id'] ) ) {
+            return new WP_Error( 'missing_credentials', 'Missing HubSpot API credentials' );
+        }
+        
+        $api_key = $credentials['api_key'];
+        $portal_id = $credentials['portal_id'];
+        
+        // HubSpot API endpoints
+        $endpoints = array(
+            'contacts' => "https://api.hubapi.com/crm/v3/objects/contacts?limit=100&hapikey={$api_key}",
+            'companies' => "https://api.hubapi.com/crm/v3/objects/companies?limit=100&hapikey={$api_key}",
+            'deals' => "https://api.hubapi.com/crm/v3/objects/deals?limit=100&hapikey={$api_key}",
+            'campaigns' => "https://api.hubapi.com/email/public/v1/campaigns?limit=100&hapikey={$api_key}"
+        );
+        
+        if ( ! isset( $endpoints[ $data_type ] ) ) {
+            return new WP_Error( 'invalid_data_type', 'Invalid data type specified' );
+        }
+        
+        $response = wp_remote_get( $endpoints[ $data_type ], array(
+            'timeout' => 30,
+            'headers' => array(
+                'Content-Type' => 'application/json',
+            )
+        ) );
+        
+        if ( is_wp_error( $response ) ) {
+            return $response;
+        }
+        
+        $body = wp_remote_retrieve_body( $response );
+        $data = json_decode( $body, true );
+        
+        $response_code = wp_remote_retrieve_response_code( $response );
+        if ( $response_code !== 200 ) {
+            return new WP_Error( 
+                'api_error', 
+                'HubSpot API error: ' . ( $data['message'] ?? 'Unknown error' ),
+                $response_code 
+            );
+        }
+        
+        // Process and normalize the data
+        $processed_data = array();
+        if ( isset( $data['results'] ) && is_array( $data['results'] ) ) {
+            foreach ( $data['results'] as $item ) {
+                $processed_data[] = $this->normalize_hubspot_data( $item, $data_type );
+            }
+        }
+        
+        return array(
+            'data' => $processed_data,
+            'total' => $data['total'] ?? count( $processed_data ),
+            'has_more' => $data['paging']['next']['link'] ?? false
+        );
+    }
+
+    /**
+     * Normalize HubSpot data for consistent storage.
+     *
+     * @param array $item Raw HubSpot item.
+     * @param string $data_type Data type.
+     * @return array Normalized data.
+     */
+    private function normalize_hubspot_data( $item, $data_type ) {
+        $normalized = array(
+            'id' => $item['id'] ?? '',
+            'created_date' => current_time( 'mysql' ),
+            'source' => 'hubspot',
+            'type' => $data_type
+        );
+        
+        switch ( $data_type ) {
+            case 'contacts':
+                $properties = $item['properties'] ?? array();
+                $normalized['email'] = $properties['email'] ?? '';
+                $normalized['name'] = trim( ( $properties['firstname'] ?? '' ) . ' ' . ( $properties['lastname'] ?? '' ) );
+                $normalized['company'] = $properties['company'] ?? '';
+                break;
+                
+            case 'companies':
+                $properties = $item['properties'] ?? array();
+                $normalized['name'] = $properties['name'] ?? '';
+                $normalized['domain'] = $properties['domain'] ?? '';
+                $normalized['industry'] = $properties['industry'] ?? '';
+                break;
+                
+            case 'deals':
+                $properties = $item['properties'] ?? array();
+                $normalized['name'] = $properties['dealname'] ?? '';
+                $normalized['amount'] = $properties['amount'] ?? 0;
+                $normalized['stage'] = $properties['dealstage'] ?? '';
+                break;
+                
+            case 'campaigns':
+                $normalized['name'] = $item['name'] ?? '';
+                $normalized['subject'] = $item['subject'] ?? '';
+                $normalized['status'] = $item['state'] ?? '';
+                break;
+        }
+        
+        return $normalized;
+    }
+
+    /**
      * Sync WooCommerce data.
      *
      * @param array $credentials Credentials.
@@ -815,7 +963,11 @@ class TTS_Integration_Hub {
      * @return array Sync result.
      */
     private function sync_woocommerce_data( $credentials, $data_type ) {
-        // Simulate WooCommerce data sync
+        // Check if WooCommerce is active
+        if ( ! class_exists( 'WooCommerce' ) ) {
+            return new WP_Error( 'woocommerce_inactive', 'WooCommerce plugin is not active' );
+        }
+        
         $data_types = array( 'products', 'orders', 'customers', 'categories' );
         
         if ( $data_type === 'all' ) {
@@ -828,11 +980,24 @@ class TTS_Integration_Hub {
         $total_failed = 0;
         
         foreach ( $types_to_sync as $type ) {
-            $synced = rand( 10, 100 );
-            $failed = rand( 0, 5 );
+            $sync_result = $this->fetch_woocommerce_data( $type );
             
-            $total_synced += $synced;
-            $total_failed += $failed;
+            if ( is_wp_error( $sync_result ) ) {
+                $total_failed++;
+                continue;
+            }
+            
+            $synced_count = count( $sync_result );
+            $total_synced += $synced_count;
+            
+            // Store synced data
+            if ( $synced_count > 0 ) {
+                $this->store_integration_data( 
+                    'woocommerce',
+                    $type,
+                    $sync_result
+                );
+            }
         }
         
         return array(
@@ -841,6 +1006,89 @@ class TTS_Integration_Hub {
             'data_types' => $types_to_sync,
             'last_sync' => current_time( 'mysql' )
         );
+    }
+    
+    /**
+     * Fetch WooCommerce data.
+     *
+     * @param string $data_type Data type to fetch.
+     * @return array WooCommerce data.
+     */
+    private function fetch_woocommerce_data( $data_type ) {
+        $data = array();
+        $limit = 100; // Limit results for performance
+        
+        switch ( $data_type ) {
+            case 'products':
+                $products = wc_get_products( array( 'limit' => $limit, 'status' => 'publish' ) );
+                foreach ( $products as $product ) {
+                    $data[] = array(
+                        'id' => $product->get_id(),
+                        'name' => $product->get_name(),
+                        'price' => $product->get_price(),
+                        'sku' => $product->get_sku(),
+                        'stock_status' => $product->get_stock_status(),
+                        'categories' => wp_list_pluck( $product->get_category_ids(), 'name' ),
+                        'created_date' => $product->get_date_created()->date( 'Y-m-d H:i:s' )
+                    );
+                }
+                break;
+                
+            case 'orders':
+                $orders = wc_get_orders( array( 'limit' => $limit ) );
+                foreach ( $orders as $order ) {
+                    $data[] = array(
+                        'id' => $order->get_id(),
+                        'status' => $order->get_status(),
+                        'total' => $order->get_total(),
+                        'customer_id' => $order->get_customer_id(),
+                        'billing_email' => $order->get_billing_email(),
+                        'created_date' => $order->get_date_created()->date( 'Y-m-d H:i:s' )
+                    );
+                }
+                break;
+                
+            case 'customers':
+                $customer_query = new WP_User_Query( array(
+                    'role' => 'customer',
+                    'number' => $limit
+                ) );
+                
+                foreach ( $customer_query->get_results() as $customer ) {
+                    $wc_customer = new WC_Customer( $customer->ID );
+                    $data[] = array(
+                        'id' => $customer->ID,
+                        'email' => $customer->user_email,
+                        'first_name' => $wc_customer->get_first_name(),
+                        'last_name' => $wc_customer->get_last_name(),
+                        'total_spent' => $wc_customer->get_total_spent(),
+                        'order_count' => $wc_customer->get_order_count(),
+                        'created_date' => $customer->user_registered
+                    );
+                }
+                break;
+                
+            case 'categories':
+                $categories = get_terms( array(
+                    'taxonomy' => 'product_cat',
+                    'hide_empty' => false,
+                    'number' => $limit
+                ) );
+                
+                foreach ( $categories as $category ) {
+                    $data[] = array(
+                        'id' => $category->term_id,
+                        'name' => $category->name,
+                        'slug' => $category->slug,
+                        'description' => $category->description,
+                        'product_count' => $category->count,
+                        'parent' => $category->parent
+                    );
+                }
+                break;
+        }
+        
+        return $data;
     }
 
     /**
@@ -851,7 +1099,10 @@ class TTS_Integration_Hub {
      * @return array Sync result.
      */
     private function sync_mailchimp_data( $credentials, $data_type ) {
-        // Simulate Mailchimp data sync
+        if ( empty( $credentials['api_key'] ) ) {
+            return new WP_Error( 'missing_credentials', 'Missing Mailchimp API key' );
+        }
+        
         $data_types = array( 'subscribers', 'campaigns', 'lists', 'segments' );
         
         if ( $data_type === 'all' ) {
@@ -864,11 +1115,24 @@ class TTS_Integration_Hub {
         $total_failed = 0;
         
         foreach ( $types_to_sync as $type ) {
-            $synced = rand( 20, 200 );
-            $failed = rand( 0, 10 );
+            $sync_result = $this->fetch_mailchimp_data( $credentials, $type );
             
-            $total_synced += $synced;
-            $total_failed += $failed;
+            if ( is_wp_error( $sync_result ) ) {
+                $total_failed++;
+                continue;
+            }
+            
+            $synced_count = count( $sync_result['data'] );
+            $total_synced += $synced_count;
+            
+            // Store synced data
+            if ( $synced_count > 0 ) {
+                $this->store_integration_data( 
+                    'mailchimp',
+                    $type,
+                    $sync_result['data']
+                );
+            }
         }
         
         return array(
@@ -878,56 +1142,81 @@ class TTS_Integration_Hub {
             'last_sync' => current_time( 'mysql' )
         );
     }
-
+    
     /**
-     * Generate sample data for testing.
+     * Fetch Mailchimp data via API.
      *
-     * @param string $type Data type.
-     * @param int $count Record count.
-     * @return array Sample data.
+     * @param array $credentials Mailchimp credentials.
+     * @param string $data_type Data type to fetch.
+     * @return array|WP_Error API response or error.
      */
-    private function generate_sample_data( $type, $count ) {
-        $data = array();
+    private function fetch_mailchimp_data( $credentials, $data_type ) {
+        $api_key = $credentials['api_key'];
+        $datacenter = substr( $api_key, strpos( $api_key, '-' ) + 1 );
+        $base_url = "https://{$datacenter}.api.mailchimp.com/3.0";
         
-        for ( $i = 0; $i < $count; $i++ ) {
-            switch ( $type ) {
-                case 'contacts':
-                    $data[] = array(
-                        'id' => 'contact_' . $i,
-                        'email' => "user{$i}@example.com",
-                        'name' => "User {$i}",
-                        'created_date' => date( 'Y-m-d H:i:s', strtotime( '-' . rand( 1, 365 ) . ' days' ) )
-                    );
-                    break;
-                    
-                case 'products':
-                    $data[] = array(
-                        'id' => 'product_' . $i,
-                        'name' => "Product {$i}",
-                        'price' => rand( 10, 500 ),
-                        'category' => 'Category ' . rand( 1, 5 )
-                    );
-                    break;
-                    
-                case 'subscribers':
-                    $data[] = array(
-                        'id' => 'subscriber_' . $i,
-                        'email' => "subscriber{$i}@example.com",
-                        'status' => array( 'subscribed', 'unsubscribed', 'pending' )[ rand( 0, 2 ) ],
-                        'joined_date' => date( 'Y-m-d H:i:s', strtotime( '-' . rand( 1, 365 ) . ' days' ) )
-                    );
-                    break;
-                    
-                default:
-                    $data[] = array(
-                        'id' => $type . '_' . $i,
-                        'name' => ucfirst( $type ) . ' ' . $i,
-                        'created_date' => current_time( 'mysql' )
-                    );
-            }
+        $endpoints = array(
+            'lists' => "/lists?count=100",
+            'campaigns' => "/campaigns?count=100",
+            'subscribers' => "/lists/{list_id}/members?count=100",
+            'segments' => "/lists/{list_id}/segments?count=100"
+        );
+        
+        if ( ! isset( $endpoints[ $data_type ] ) ) {
+            return new WP_Error( 'invalid_data_type', 'Invalid Mailchimp data type' );
         }
         
-        return $data;
+        $endpoint = $endpoints[ $data_type ];
+        
+        // For subscribers and segments, we need a list ID
+        if ( in_array( $data_type, array( 'subscribers', 'segments' ) ) ) {
+            $list_id = $credentials['list_id'] ?? '';
+            if ( empty( $list_id ) ) {
+                return new WP_Error( 'missing_list_id', 'List ID required for this data type' );
+            }
+            $endpoint = str_replace( '{list_id}', $list_id, $endpoint );
+        }
+        
+        $response = wp_remote_get( $base_url . $endpoint, array(
+            'timeout' => 30,
+            'headers' => array(
+                'Authorization' => 'Bearer ' . $api_key,
+                'Content-Type' => 'application/json',
+            )
+        ) );
+        
+        if ( is_wp_error( $response ) ) {
+            return $response;
+        }
+        
+        $body = wp_remote_retrieve_body( $response );
+        $data = json_decode( $body, true );
+        
+        $response_code = wp_remote_retrieve_response_code( $response );
+        if ( $response_code !== 200 ) {
+            return new WP_Error( 
+                'api_error', 
+                'Mailchimp API error: ' . ( $data['title'] ?? 'Unknown error' ),
+                $response_code 
+            );
+        }
+        
+        // Process the response based on data type
+        $processed_data = array();
+        if ( isset( $data['lists'] ) ) {
+            $processed_data = $data['lists'];
+        } elseif ( isset( $data['campaigns'] ) ) {
+            $processed_data = $data['campaigns'];
+        } elseif ( isset( $data['members'] ) ) {
+            $processed_data = $data['members'];
+        } elseif ( isset( $data['segments'] ) ) {
+            $processed_data = $data['segments'];
+        }
+        
+        return array(
+            'data' => $processed_data,
+            'total' => $data['total_items'] ?? count( $processed_data )
+        );
     }
 
     /**

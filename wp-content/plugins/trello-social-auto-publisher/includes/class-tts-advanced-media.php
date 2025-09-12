@@ -455,17 +455,109 @@ class TTS_Advanced_Media {
         
         $position = $positions[ $watermark_position ] ?? $positions['bottom-right'];
         
-        // Create watermark (simplified - would use GD or Imagick in production)
+        // Create watermark using GD library
         if ( $watermark_type === 'text' && ! empty( $watermark_text ) ) {
-            // For this example, we'll just simulate watermark addition
-            // In production, you would use imagestring() or imagettftext() with GD
-            // or similar functions with Imagick
+            // Check if GD extension is available
+            if ( ! extension_loaded( 'gd' ) ) {
+                throw new Exception( 'GD extension is required for watermarking' );
+            }
             
             $path_info = pathinfo( $image_path );
             $new_filename = $path_info['dirname'] . '/' . $path_info['filename'] . '-watermarked.' . $path_info['extension'];
             
-            // Copy original file (in production, this would be the watermarked version)
-            copy( $image_path, $new_filename );
+            // Load the original image
+            $image_type = exif_imagetype( $image_path );
+            
+            switch ( $image_type ) {
+                case IMAGETYPE_JPEG:
+                    $source_image = imagecreatefromjpeg( $image_path );
+                    break;
+                case IMAGETYPE_PNG:
+                    $source_image = imagecreatefrompng( $image_path );
+                    break;
+                case IMAGETYPE_GIF:
+                    $source_image = imagecreatefromgif( $image_path );
+                    break;
+                default:
+                    throw new Exception( 'Unsupported image type for watermarking' );
+            }
+            
+            if ( ! $source_image ) {
+                throw new Exception( 'Failed to load source image' );
+            }
+            
+            // Get image dimensions
+            $image_width = imagesx( $source_image );
+            $image_height = imagesy( $source_image );
+            
+            // Calculate font size based on image size
+            $font_size = max( 12, min( 48, $image_width / 20 ) );
+            
+            // Calculate text dimensions
+            $text_box = imagettfbbox( $font_size, 0, $this->get_watermark_font(), $watermark_text );
+            $text_width = abs( $text_box[4] - $text_box[0] );
+            $text_height = abs( $text_box[5] - $text_box[1] );
+            
+            // Calculate position
+            $positions = array(
+                'top-left' => array( 'x' => 20, 'y' => 20 + $text_height ),
+                'top-right' => array( 'x' => $image_width - $text_width - 20, 'y' => 20 + $text_height ),
+                'bottom-left' => array( 'x' => 20, 'y' => $image_height - 20 ),
+                'bottom-right' => array( 'x' => $image_width - $text_width - 20, 'y' => $image_height - 20 ),
+                'center' => array( 'x' => ( $image_width - $text_width ) / 2, 'y' => ( $image_height + $text_height ) / 2 )
+            );
+            
+            $position = $positions[ $watermark_position ] ?? $positions['bottom-right'];
+            
+            // Create watermark color with opacity
+            $alpha = 127 - ( $watermark_opacity * 127 / 100 );
+            $watermark_color = imagecolorallocatealpha( $source_image, 255, 255, 255, $alpha );
+            
+            // Add text watermark
+            $font_path = $this->get_watermark_font();
+            if ( $font_path && file_exists( $font_path ) ) {
+                imagettftext( 
+                    $source_image, 
+                    $font_size, 
+                    0, 
+                    $position['x'], 
+                    $position['y'], 
+                    $watermark_color, 
+                    $font_path, 
+                    $watermark_text 
+                );
+            } else {
+                // Fallback to built-in font
+                imagestring( 
+                    $source_image, 
+                    5, 
+                    $position['x'], 
+                    $position['y'] - $text_height, 
+                    $watermark_text, 
+                    $watermark_color 
+                );
+            }
+            
+            // Save the watermarked image
+            $save_success = false;
+            switch ( $image_type ) {
+                case IMAGETYPE_JPEG:
+                    $save_success = imagejpeg( $source_image, $new_filename, 90 );
+                    break;
+                case IMAGETYPE_PNG:
+                    $save_success = imagepng( $source_image, $new_filename, 9 );
+                    break;
+                case IMAGETYPE_GIF:
+                    $save_success = imagegif( $source_image, $new_filename );
+                    break;
+            }
+            
+            // Clean up memory
+            imagedestroy( $source_image );
+            
+            if ( ! $save_success ) {
+                throw new Exception( 'Failed to save watermarked image' );
+            }
             
             // Get URL
             $upload_dir = wp_upload_dir();
@@ -494,6 +586,30 @@ class TTS_Advanced_Media {
         }
         
         throw new Exception( 'Invalid watermark configuration' );
+    }
+    
+    /**
+     * Get watermark font path.
+     *
+     * @return string|false Font path or false if not available.
+     */
+    private function get_watermark_font() {
+        // Try to find a suitable font file
+        $font_paths = array(
+            TSAP_PLUGIN_DIR . 'assets/fonts/arial.ttf',
+            TSAP_PLUGIN_DIR . 'assets/fonts/default.ttf',
+            '/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf',
+            '/System/Library/Fonts/Arial.ttf', // macOS
+            'C:\\Windows\\Fonts\\arial.ttf' // Windows
+        );
+        
+        foreach ( $font_paths as $font_path ) {
+            if ( file_exists( $font_path ) ) {
+                return $font_path;
+            }
+        }
+        
+        return false;
     }
 
     /**
