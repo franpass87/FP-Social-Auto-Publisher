@@ -85,7 +85,36 @@ La mappatura viene salvata nel meta `_tts_trello_map` come array serializzato da
 
 Ogni elemento dell'array associa una lista Trello al canale social su cui pubblicare.
 
-Canali supportati: `facebook`, `instagram`, `youtube`, `tiktok`.
+Canali supportati: `facebook`, `instagram`, `youtube`, `tiktok`, `blog`.
+
+## Pubblicazione su Blog WordPress
+
+Il plugin supporta la pubblicazione automatica di articoli su blog WordPress con le seguenti funzionalità:
+
+### Configurazione Blog
+Nel metabox *Client Credentials* è possibile configurare le impostazioni per la pubblicazione su blog tramite il campo **Blog Settings** nel formato:
+```
+post_type:post|post_status:draft|author_id:1|category_id:1|language:it|keywords:keyword1:url1|keyword2:url2
+```
+
+### Funzionalità Supportate
+- **Supporto WPML**: Gestione automatica dei contenuti in italiano e inglese
+- **Featured Image**: Collegamento automatico delle immagini allegate alle Trello card come immagini in evidenza
+- **SEO WordPress**: Supporto per meta description, focus keyword, canonical URL e SEO title
+- **Link Juicer**: Inserimento automatico di link per parole chiave specificate
+- **Rilevamento Lingua**: Rilevamento automatico della lingua del contenuto (italiano/inglese)
+
+### Parametri Configurabili
+- `post_type`: Tipo di post WordPress (default: `post`)
+- `post_status`: Stato del post (`draft`, `publish`, `private`)
+- `author_id`: ID dell'autore del post
+- `category_id`: ID della categoria del post
+- `language`: Lingua del contenuto (`it`, `en`) per WPML
+- `keywords`: Coppie parola chiave:URL per il link juicer (formato: `keyword1:url1|keyword2:url2`)
+- `meta_description`: Meta description personalizzata per SEO
+- `focus_keyword`: Parola chiave focus per SEO
+- `canonical_url`: URL canonico personalizzato
+- `seo_title`: Titolo SEO personalizzato
 
 ## Hashtag di default
 

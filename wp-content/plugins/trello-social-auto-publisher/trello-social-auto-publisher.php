@@ -68,6 +68,7 @@ add_action( 'plugins_loaded', function () {
         'publishers/class-tts-publisher-instagram.php',
         'publishers/class-tts-publisher-tiktok.php',
         'publishers/class-tts-publisher-youtube.php',
+        'publishers/class-tts-publisher-blog.php',
     );
     
     foreach ( $tsap_includes as $include_file ) {

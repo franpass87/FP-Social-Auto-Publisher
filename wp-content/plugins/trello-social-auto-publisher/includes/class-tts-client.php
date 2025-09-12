@@ -84,6 +84,7 @@ class TTS_Client {
         $ig_hashtags     = get_post_meta( $post->ID, '_tts_default_hashtags_instagram', true );
         $yt_hashtags     = get_post_meta( $post->ID, '_tts_default_hashtags_youtube', true );
         $tt_hashtags     = get_post_meta( $post->ID, '_tts_default_hashtags_tiktok', true );
+        $blog_settings   = get_post_meta( $post->ID, '_tts_blog_settings', true );
         $trello_map      = get_post_meta( $post->ID, '_tts_trello_map', true );
 
         if ( ! is_array( $trello_map ) ) {
@@ -155,6 +156,14 @@ class TTS_Client {
         echo '<input type="text" id="tts_tt_token" name="tts_tt_token" value="' . esc_attr( $tt_token ) . '" class="widefat" /></p>';
         echo '<p><label for="tts_default_hashtags_tiktok">' . esc_html__( 'TikTok Default Hashtags', 'trello-social-auto-publisher' ) . '</label>';
         echo '<textarea id="tts_default_hashtags_tiktok" name="tts_default_hashtags_tiktok" class="widefat" rows="3">' . esc_textarea( $tt_hashtags ) . '</textarea></p>';
+
+        echo '<h3>' . esc_html__( 'Blog Publishing Settings', 'trello-social-auto-publisher' ) . '</h3>';
+        echo '<p><label for="tts_blog_settings">' . esc_html__( 'Blog Settings', 'trello-social-auto-publisher' ) . '</label>';
+        echo '<textarea id="tts_blog_settings" name="tts_blog_settings" class="widefat" rows="4" placeholder="post_type:post|post_status:draft|author_id:1|category_id:1|language:it|keywords:keyword1:url1|keyword2:url2">' . esc_textarea( $blog_settings ) . '</textarea>';
+        echo '<small>' . esc_html__( 'Format: post_type:post|post_status:draft|author_id:1|category_id:1|language:it|keywords:keyword1:url1|keyword2:url2', 'trello-social-auto-publisher' ) . '</small></p>';
+
+        echo '<h3>' . esc_html__( 'Trello List Mapping', 'trello-social-auto-publisher' ) . '</h3>';
+        echo '<p>' . esc_html__( 'Map Trello lists to social channels. Supported channels: facebook, instagram, youtube, tiktok, blog', 'trello-social-auto-publisher' ) . '</p>';
 
         ?>
         <div id="tts_trello_map">
@@ -244,6 +253,13 @@ class TTS_Client {
             } else {
                 delete_post_meta( $post_id, $meta_key );
             }
+        }
+
+        // Save blog settings
+        if ( isset( $_POST['tts_blog_settings'] ) && '' !== $_POST['tts_blog_settings'] ) {
+            update_post_meta( $post_id, '_tts_blog_settings', sanitize_textarea_field( wp_unslash( $_POST['tts_blog_settings'] ) ) );
+        } else {
+            delete_post_meta( $post_id, '_tts_blog_settings' );
         }
 
         if ( isset( $_POST['tts_trello_boards'] ) && is_array( $_POST['tts_trello_boards'] ) ) {
