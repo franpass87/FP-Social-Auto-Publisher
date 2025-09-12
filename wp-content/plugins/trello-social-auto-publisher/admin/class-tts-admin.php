@@ -1853,7 +1853,13 @@ class TTS_Admin {
             echo '<div class="wrap">';
             echo '<h1>' . esc_html__( 'Log', 'trello-social-auto-publisher' ) . '</h1>';
             if ( ! empty( $log ) ) {
-                echo '<pre>' . esc_html( print_r( $log, true ) ) . '</pre>';
+                echo '<div class="tts-log-display">';
+                if ( is_array( $log ) || is_object( $log ) ) {
+                    echo '<pre class="tts-log-content">' . esc_html( wp_json_encode( $log, JSON_PRETTY_PRINT ) ) . '</pre>';
+                } else {
+                    echo '<pre class="tts-log-content">' . esc_html( $log ) . '</pre>';
+                }
+                echo '</div>';
             } else {
                 echo '<p>' . esc_html__( 'No log entries found.', 'trello-social-auto-publisher' ) . '</p>';
             }
