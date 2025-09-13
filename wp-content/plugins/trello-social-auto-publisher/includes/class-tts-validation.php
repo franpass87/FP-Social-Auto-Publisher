@@ -2,7 +2,7 @@
 /**
  * Enhanced validation utilities for Trello Social Auto Publisher.
  *
- * @package TrelloSocialAutoPublisher
+ * @package FPPublisher
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -30,17 +30,17 @@ class TTS_Validation {
      */
     public static function validate_trello_credentials( $key, $token ) {
         if ( empty( $key ) || empty( $token ) ) {
-            self::add_error( __( 'Trello API key and token are required.', 'trello-social-auto-publisher' ) );
+            self::add_error( __( 'Trello API key and token are required.', 'fp-publisher' ) );
             return false;
         }
         
         if ( strlen( $key ) !== 32 ) {
-            self::add_error( __( 'Invalid Trello API key format.', 'trello-social-auto-publisher' ) );
+            self::add_error( __( 'Invalid Trello API key format.', 'fp-publisher' ) );
             return false;
         }
         
         if ( strlen( $token ) !== 64 ) {
-            self::add_error( __( 'Invalid Trello token format.', 'trello-social-auto-publisher' ) );
+            self::add_error( __( 'Invalid Trello token format.', 'fp-publisher' ) );
             return false;
         }
         
@@ -55,14 +55,14 @@ class TTS_Validation {
      */
     public static function validate_social_channels( $channels ) {
         if ( empty( $channels ) || ! is_array( $channels ) ) {
-            self::add_error( __( 'At least one social media channel must be selected.', 'trello-social-auto-publisher' ) );
+            self::add_error( __( 'At least one social media channel must be selected.', 'fp-publisher' ) );
             return false;
         }
         
         $allowed_channels = array( 'facebook', 'instagram', 'youtube', 'tiktok' );
         foreach ( $channels as $channel ) {
             if ( ! in_array( $channel, $allowed_channels, true ) ) {
-                self::add_error( sprintf( __( 'Invalid social media channel: %s', 'trello-social-auto-publisher' ), esc_html( $channel ) ) );
+                self::add_error( sprintf( __( 'Invalid social media channel: %s', 'fp-publisher' ), esc_html( $channel ) ) );
                 return false;
             }
         }
@@ -83,19 +83,19 @@ class TTS_Validation {
         
         $timestamp = strtotime( $datetime );
         if ( false === $timestamp ) {
-            self::add_error( __( 'Invalid date and time format.', 'trello-social-auto-publisher' ) );
+            self::add_error( __( 'Invalid date and time format.', 'fp-publisher' ) );
             return false;
         }
         
         // Check if the date is in the past
         if ( $timestamp < current_time( 'timestamp' ) ) {
-            self::add_error( __( 'Publish date cannot be in the past.', 'trello-social-auto-publisher' ) );
+            self::add_error( __( 'Publish date cannot be in the past.', 'fp-publisher' ) );
             return false;
         }
         
         // Check if the date is too far in the future (max 1 year)
         if ( $timestamp > current_time( 'timestamp' ) + YEAR_IN_SECONDS ) {
-            self::add_error( __( 'Publish date cannot be more than 1 year in the future.', 'trello-social-auto-publisher' ) );
+            self::add_error( __( 'Publish date cannot be more than 1 year in the future.', 'fp-publisher' ) );
             return false;
         }
         
@@ -156,7 +156,7 @@ class TTS_Validation {
      */
     public static function validate_media_upload( $file ) {
         if ( empty( $file['tmp_name'] ) ) {
-            self::add_error( __( 'No file uploaded.', 'trello-social-auto-publisher' ) );
+            self::add_error( __( 'No file uploaded.', 'fp-publisher' ) );
             return false;
         }
         
@@ -164,14 +164,14 @@ class TTS_Validation {
         $file_type = wp_check_filetype( $file['name'] );
         
         if ( ! in_array( $file_type['type'], $allowed_types, true ) ) {
-            self::add_error( __( 'Unsupported file type. Please upload JPG, PNG, GIF, MP4, or AVI files.', 'trello-social-auto-publisher' ) );
+            self::add_error( __( 'Unsupported file type. Please upload JPG, PNG, GIF, MP4, or AVI files.', 'fp-publisher' ) );
             return false;
         }
         
         // Check file size (max 100MB)
         $max_size = 100 * 1024 * 1024; // 100MB
         if ( $file['size'] > $max_size ) {
-            self::add_error( __( 'File size too large. Maximum allowed size is 100MB.', 'trello-social-auto-publisher' ) );
+            self::add_error( __( 'File size too large. Maximum allowed size is 100MB.', 'fp-publisher' ) );
             return false;
         }
         
@@ -221,25 +221,25 @@ class TTS_Validation {
         $allowed_actions = array( 'approve', 'delete', 'schedule' );
         
         if ( ! in_array( $action, $allowed_actions, true ) ) {
-            self::add_error( __( 'Invalid bulk action specified.', 'trello-social-auto-publisher' ) );
+            self::add_error( __( 'Invalid bulk action specified.', 'fp-publisher' ) );
             return false;
         }
         
         if ( empty( $post_ids ) || ! is_array( $post_ids ) ) {
-            self::add_error( __( 'No posts selected for bulk action.', 'trello-social-auto-publisher' ) );
+            self::add_error( __( 'No posts selected for bulk action.', 'fp-publisher' ) );
             return false;
         }
         
         // Limit bulk actions to prevent performance issues
         if ( count( $post_ids ) > 100 ) {
-            self::add_error( __( 'Too many posts selected. Maximum 100 posts allowed for bulk actions.', 'trello-social-auto-publisher' ) );
+            self::add_error( __( 'Too many posts selected. Maximum 100 posts allowed for bulk actions.', 'fp-publisher' ) );
             return false;
         }
         
         // Validate all post IDs are numeric
         foreach ( $post_ids as $post_id ) {
             if ( ! is_numeric( $post_id ) || $post_id <= 0 ) {
-                self::add_error( __( 'Invalid post ID in selection.', 'trello-social-auto-publisher' ) );
+                self::add_error( __( 'Invalid post ID in selection.', 'fp-publisher' ) );
                 return false;
             }
         }

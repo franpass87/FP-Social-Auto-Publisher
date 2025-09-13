@@ -2,7 +2,7 @@
 /**
  * Remote media importer.
  *
- * @package TrelloSocialAutoPublisher
+ * @package FPPublisher
  */
 
 if ( ! defined( 'ABSPATH' ) ) {

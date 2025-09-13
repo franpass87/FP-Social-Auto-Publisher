@@ -2,7 +2,7 @@
 /**
  * Admin page to display monthly calendar of scheduled posts.
  *
- * @package TrelloSocialAutoPublisher
+ * @package FPPublisher
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -26,9 +26,9 @@ class TTS_Calendar_Page {
      */
     public function register_menu() {
         add_submenu_page(
-            'tts-main',
-            __( 'Calendario', 'trello-social-auto-publisher' ),
-            __( 'Calendario', 'trello-social-auto-publisher' ),
+            'fp-publisher',
+            __( 'Calendario', 'fp-publisher' ),
+            __( 'Calendario', 'fp-publisher' ),
             'manage_options',
             'tts-calendar',
             array( $this, 'render_page' )
@@ -96,29 +96,29 @@ class TTS_Calendar_Page {
         $next_month     = date( 'Y-m', strtotime( '+1 month', $timestamp ) );
 
         echo '<div class="wrap">';
-        echo '<h1>' . esc_html__( 'Calendario', 'trello-social-auto-publisher' ) . '</h1>';
+        echo '<h1>' . esc_html__( 'Calendario', 'fp-publisher' ) . '</h1>';
         
         // Add navigation and summary info
         echo '<div class="tts-calendar-header">';
         echo '<div class="tts-calendar-nav">';
-        echo '<a href="#" data-month="' . esc_attr( $prev_month ) . '" class="button">&laquo; ' . esc_html__('Previous', 'trello-social-auto-publisher') . '</a> ';
+        echo '<a href="#" data-month="' . esc_attr( $prev_month ) . '" class="button">&laquo; ' . esc_html__('Previous', 'fp-publisher') . '</a> ';
         echo '<span class="tts-current-month">' . esc_html( date_i18n( 'F Y', $timestamp ) ) . '</span> ';
-        echo '<a href="#" data-month="' . esc_attr( $next_month ) . '" class="button">' . esc_html__('Next', 'trello-social-auto-publisher') . ' &raquo;</a>';
+        echo '<a href="#" data-month="' . esc_attr( $next_month ) . '" class="button">' . esc_html__('Next', 'fp-publisher') . ' &raquo;</a>';
         echo '</div>';
         
         echo '<div class="tts-calendar-summary">';
-        echo '<span class="tts-posts-count">' . sprintf(esc_html__('%d posts scheduled this month', 'trello-social-auto-publisher'), count($posts)) . '</span>';
+        echo '<span class="tts-posts-count">' . sprintf(esc_html__('%d posts scheduled this month', 'fp-publisher'), count($posts)) . '</span>';
         echo '</div>';
         echo '</div>';
 
         $weekdays = array(
-            __( 'Lun', 'trello-social-auto-publisher' ),
-            __( 'Mar', 'trello-social-auto-publisher' ),
-            __( 'Mer', 'trello-social-auto-publisher' ),
-            __( 'Gio', 'trello-social-auto-publisher' ),
-            __( 'Ven', 'trello-social-auto-publisher' ),
-            __( 'Sab', 'trello-social-auto-publisher' ),
-            __( 'Dom', 'trello-social-auto-publisher' ),
+            __( 'Lun', 'fp-publisher' ),
+            __( 'Mar', 'fp-publisher' ),
+            __( 'Mer', 'fp-publisher' ),
+            __( 'Gio', 'fp-publisher' ),
+            __( 'Ven', 'fp-publisher' ),
+            __( 'Sab', 'fp-publisher' ),
+            __( 'Dom', 'fp-publisher' ),
         );
 
         echo '<table class="widefat fixed tts-calendar">';
@@ -154,7 +154,7 @@ class TTS_Calendar_Page {
                         echo ' <span class="entry-time">(' . esc_html($time_display) . ')</span>';
                     }
                     echo '</div>';
-                    echo '<div class="entry-actions"><a href="' . esc_url( $edit_link ) . '" class="button-small">' . esc_html__( 'Modifica', 'trello-social-auto-publisher' ) . '</a></div>';
+                    echo '<div class="entry-actions"><a href="' . esc_url( $edit_link ) . '" class="button-small">' . esc_html__( 'Modifica', 'fp-publisher' ) . '</a></div>';
                     echo '</div>';
                 }
                 echo '</div>';

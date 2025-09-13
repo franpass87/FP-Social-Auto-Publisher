@@ -2,7 +2,7 @@
 /**
  * Admin page to display analytics charts.
  *
- * @package TrelloSocialAutoPublisher
+ * @package FPPublisher
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -27,9 +27,9 @@ class TTS_Analytics_Page {
      */
     public function register_menu() {
         add_submenu_page(
-            'tts-main',
-            __( 'Analytics', 'trello-social-auto-publisher' ),
-            __( 'Analytics', 'trello-social-auto-publisher' ),
+            'fp-publisher',
+            __( 'Analytics', 'fp-publisher' ),
+            __( 'Analytics', 'fp-publisher' ),
             'manage_options',
             'tts-analytics',
             array( $this, 'render_page' )
@@ -42,7 +42,7 @@ class TTS_Analytics_Page {
      * @param string $hook Current admin page hook.
      */
     public function enqueue_assets( $hook ) {
-        if ( 'social-auto-publisher_page_tts-analytics' !== $hook ) {
+        if ( 'fp-publisher_page_tts-analytics' !== $hook ) {
             return;
         }
 
@@ -96,7 +96,7 @@ class TTS_Analytics_Page {
         $channels = $this->get_available_channels();
 
         echo '<div class="wrap">';
-        echo '<h1>' . esc_html__( 'Analytics', 'trello-social-auto-publisher' ) . '</h1>';
+        echo '<h1>' . esc_html__( 'Analytics', 'fp-publisher' ) . '</h1>';
         
         // Summary stats
         $this->render_analytics_summary($data);
@@ -107,9 +107,9 @@ class TTS_Analytics_Page {
         echo '<input type="hidden" name="page" value="tts-analytics" />';
 
         echo '<div class="filter-group">';
-        echo '<label for="channel">' . esc_html__( 'Channel', 'trello-social-auto-publisher' ) . '</label>';
+        echo '<label for="channel">' . esc_html__( 'Channel', 'fp-publisher' ) . '</label>';
         echo '<select name="channel" id="channel">';
-        echo '<option value="">' . esc_html__( 'All Channels', 'trello-social-auto-publisher' ) . '</option>';
+        echo '<option value="">' . esc_html__( 'All Channels', 'fp-publisher' ) . '</option>';
         foreach ( $channels as $ch ) {
             printf( '<option value="%1$s" %2$s>%1$s</option>', esc_attr( $ch ), selected( $ch, $channel, false ) );
         }
@@ -117,20 +117,20 @@ class TTS_Analytics_Page {
         echo '</div>';
 
         echo '<div class="filter-group">';
-        echo '<label for="start">' . esc_html__( 'From', 'trello-social-auto-publisher' ) . '</label>';
+        echo '<label for="start">' . esc_html__( 'From', 'fp-publisher' ) . '</label>';
         printf( '<input type="date" name="start" id="start" value="%s" />', esc_attr( $start ) );
         echo '</div>';
         
         echo '<div class="filter-group">';
-        echo '<label for="end">' . esc_html__( 'To', 'trello-social-auto-publisher' ) . '</label>';
+        echo '<label for="end">' . esc_html__( 'To', 'fp-publisher' ) . '</label>';
         printf( '<input type="date" name="end" id="end" value="%s" />', esc_attr( $end ) );
         echo '</div>';
 
         echo '<div class="filter-actions">';
-        submit_button( __( 'Filter', 'trello-social-auto-publisher' ), 'primary', '', false );
+        submit_button( __( 'Filter', 'fp-publisher' ), 'primary', '', false );
 
         $export_url = add_query_arg( array_merge( $_GET, array( 'export' => 'csv' ) ) );
-        echo ' <a href="' . esc_url( $export_url ) . '" class="button">' . esc_html__( 'Export CSV', 'trello-social-auto-publisher' ) . '</a>';
+        echo ' <a href="' . esc_url( $export_url ) . '" class="button">' . esc_html__( 'Export CSV', 'fp-publisher' ) . '</a>';
         echo '</div>';
 
         echo '</form>';
@@ -176,23 +176,23 @@ class TTS_Analytics_Page {
         echo '<div class="tts-summary-cards">';
         
         echo '<div class="tts-summary-card">';
-        echo '<h3>' . esc_html__('Total Interactions', 'trello-social-auto-publisher') . '</h3>';
+        echo '<h3>' . esc_html__('Total Interactions', 'fp-publisher') . '</h3>';
         echo '<span class="tts-summary-number">' . number_format($total_interactions) . '</span>';
         echo '</div>';
         
         echo '<div class="tts-summary-card">';
-        echo '<h3>' . esc_html__('Active Channels', 'trello-social-auto-publisher') . '</h3>';
+        echo '<h3>' . esc_html__('Active Channels', 'fp-publisher') . '</h3>';
         echo '<span class="tts-summary-number">' . count($channel_totals) . '</span>';
         echo '</div>';
         
         echo '<div class="tts-summary-card">';
-        echo '<h3>' . esc_html__('Top Channel', 'trello-social-auto-publisher') . '</h3>';
-        echo '<span class="tts-summary-text">' . ($top_channel ? esc_html($top_channel) : esc_html__('N/A', 'trello-social-auto-publisher')) . '</span>';
+        echo '<h3>' . esc_html__('Top Channel', 'fp-publisher') . '</h3>';
+        echo '<span class="tts-summary-text">' . ($top_channel ? esc_html($top_channel) : esc_html__('N/A', 'fp-publisher')) . '</span>';
         echo '</div>';
         
         echo '<div class="tts-summary-card">';
-        echo '<h3>' . esc_html__('Date Range', 'trello-social-auto-publisher') . '</h3>';
-        echo '<span class="tts-summary-text">' . ($date_range_text ? esc_html($date_range_text) : esc_html__('No data', 'trello-social-auto-publisher')) . '</span>';
+        echo '<h3>' . esc_html__('Date Range', 'fp-publisher') . '</h3>';
+        echo '<span class="tts-summary-text">' . ($date_range_text ? esc_html($date_range_text) : esc_html__('No data', 'fp-publisher')) . '</span>';
         echo '</div>';
         
         echo '</div>';

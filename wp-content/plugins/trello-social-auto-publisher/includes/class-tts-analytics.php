@@ -2,7 +2,7 @@
 /**
  * Fetch social metrics for published posts.
  *
- * @package TrelloSocialAutoPublisher
+ * @package FPPublisher
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -91,12 +91,12 @@ class TTS_Analytics {
      */
     public static function fetch_facebook_metrics( $post_id, $credentials ) {
         if ( empty( $credentials ) ) {
-            return new WP_Error( 'fb_no_token', __( 'Facebook token missing', 'trello-social-auto-publisher' ) );
+            return new WP_Error( 'fb_no_token', __( 'Facebook token missing', 'fp-publisher' ) );
         }
 
         $remote_id = get_post_meta( $post_id, '_tts_facebook_id', true );
         if ( empty( $remote_id ) ) {
-            return new WP_Error( 'fb_no_id', __( 'Missing Facebook post ID', 'trello-social-auto-publisher' ) );
+            return new WP_Error( 'fb_no_id', __( 'Missing Facebook post ID', 'fp-publisher' ) );
         }
 
         $endpoint = sprintf( 'https://graph.facebook.com/%s?fields=engagement&access_token=%s', rawurlencode( $remote_id ), rawurlencode( $credentials ) );
@@ -119,12 +119,12 @@ class TTS_Analytics {
      */
     public static function fetch_instagram_metrics( $post_id, $credentials ) {
         if ( empty( $credentials ) ) {
-            return new WP_Error( 'ig_no_token', __( 'Instagram token missing', 'trello-social-auto-publisher' ) );
+            return new WP_Error( 'ig_no_token', __( 'Instagram token missing', 'fp-publisher' ) );
         }
 
         $remote_id = get_post_meta( $post_id, '_tts_instagram_id', true );
         if ( empty( $remote_id ) ) {
-            return new WP_Error( 'ig_no_id', __( 'Missing Instagram media ID', 'trello-social-auto-publisher' ) );
+            return new WP_Error( 'ig_no_id', __( 'Missing Instagram media ID', 'fp-publisher' ) );
         }
 
         $endpoint = sprintf( 'https://graph.facebook.com/%s?fields=like_count,comments_count&access_token=%s', rawurlencode( $remote_id ), rawurlencode( $credentials ) );
@@ -147,12 +147,12 @@ class TTS_Analytics {
      */
     public static function fetch_youtube_metrics( $post_id, $credentials ) {
         if ( empty( $credentials ) ) {
-            return new WP_Error( 'yt_no_token', __( 'YouTube token missing', 'trello-social-auto-publisher' ) );
+            return new WP_Error( 'yt_no_token', __( 'YouTube token missing', 'fp-publisher' ) );
         }
 
         $remote_id = get_post_meta( $post_id, '_tts_youtube_id', true );
         if ( empty( $remote_id ) ) {
-            return new WP_Error( 'yt_no_id', __( 'Missing YouTube video ID', 'trello-social-auto-publisher' ) );
+            return new WP_Error( 'yt_no_id', __( 'Missing YouTube video ID', 'fp-publisher' ) );
         }
 
         $endpoint = add_query_arg(
@@ -185,12 +185,12 @@ class TTS_Analytics {
      */
     public static function fetch_tiktok_metrics( $post_id, $credentials ) {
         if ( empty( $credentials ) ) {
-            return new WP_Error( 'tt_no_token', __( 'TikTok token missing', 'trello-social-auto-publisher' ) );
+            return new WP_Error( 'tt_no_token', __( 'TikTok token missing', 'fp-publisher' ) );
         }
 
         $remote_id = get_post_meta( $post_id, '_tts_tiktok_id', true );
         if ( empty( $remote_id ) ) {
-            return new WP_Error( 'tt_no_id', __( 'Missing TikTok video ID', 'trello-social-auto-publisher' ) );
+            return new WP_Error( 'tt_no_id', __( 'Missing TikTok video ID', 'fp-publisher' ) );
         }
 
         $endpoint = sprintf( 'https://open.tiktokapis.com/v2/video/%s/metrics?access_token=%s', rawurlencode( $remote_id ), rawurlencode( $credentials ) );

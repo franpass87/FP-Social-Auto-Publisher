@@ -2,7 +2,7 @@
 /**
  * Notification handler for Trello Social Auto Publisher.
  *
- * @package TrelloSocialAutoPublisher
+ * @package FPPublisher
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -28,11 +28,11 @@ class TTS_Notifier {
      */
     public static function notify_post_approved( $post_id ) {
         $title   = get_the_title( $post_id );
-        $message = sprintf( __( 'Post "%s" approvato', 'trello-social-auto-publisher' ), $title );
+        $message = sprintf( __( 'Post "%s" approvato', 'fp-publisher' ), $title );
 
         $notifier = new self();
         $notifier->notify_slack( $message );
-        $notifier->notify_email( __( 'Post approvato', 'trello-social-auto-publisher' ), $message );
+        $notifier->notify_email( __( 'Post approvato', 'fp-publisher' ), $message );
     }
 
     /**

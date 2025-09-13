@@ -2,7 +2,7 @@
 /**
  * Verify URLs in scheduled messages.
  *
- * @package TrelloSocialAutoPublisher
+ * @package FPPublisher
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -58,13 +58,13 @@ class TTS_Link_Checker {
                         $post_id,
                         'link_checker',
                         'error',
-                        sprintf( __( 'URL check failed for %s', 'trello-social-auto-publisher' ), $url ),
+                        sprintf( __( 'URL check failed for %s', 'fp-publisher' ), $url ),
                         $error_message
                     );
 
-                    $notify_msg = sprintf( __( 'Invalid URL %1$s in post "%2$s"', 'trello-social-auto-publisher' ), $url, get_the_title( $post_id ) );
+                    $notify_msg = sprintf( __( 'Invalid URL %1$s in post "%2$s"', 'fp-publisher' ), $url, get_the_title( $post_id ) );
                     $notifier->notify_slack( $notify_msg );
-                    $notifier->notify_email( __( 'Invalid URL detected', 'trello-social-auto-publisher' ), $notify_msg );
+                    $notifier->notify_email( __( 'Invalid URL detected', 'fp-publisher' ), $notify_msg );
                 }
             }
         }

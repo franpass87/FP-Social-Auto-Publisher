@@ -2,7 +2,7 @@
 /**
  * Custom post type for Trello Social Auto Publisher.
  *
- * @package TrelloSocialAutoPublisher
+ * @package FPPublisher
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -45,7 +45,7 @@ class TTS_CPT {
             'show_ui'            => true,
             'supports'           => array( 'title', 'editor', 'custom-fields', 'thumbnail' ),
             'show_in_rest'       => true,
-            'label'              => __( 'Social Posts', 'trello-social-auto-publisher' ),
+            'label'              => __( 'Social Posts', 'fp-publisher' ),
         );
 
         register_post_type( 'tts_social_post', $args );
@@ -155,7 +155,7 @@ class TTS_CPT {
     public function add_schedule_metabox() {
         add_meta_box(
             'tts_programmazione',
-            __( 'Programmazione', 'trello-social-auto-publisher' ),
+            __( 'Programmazione', 'fp-publisher' ),
             array( $this, 'render_schedule_metabox' ),
             'tts_social_post',
             'side'
@@ -168,7 +168,7 @@ class TTS_CPT {
     public function add_preview_metabox() {
         add_meta_box(
             'tts_anteprima',
-            __( 'Preview', 'trello-social-auto-publisher' ),
+            __( 'Preview', 'fp-publisher' ),
             array( $this, 'render_preview_metabox' ),
             'tts_social_post',
             'normal'
@@ -181,7 +181,7 @@ class TTS_CPT {
     public function add_channel_metabox() {
         add_meta_box(
             'tts_social_channel',
-            __( 'Channels', 'trello-social-auto-publisher' ),
+            __( 'Channels', 'fp-publisher' ),
             array( $this, 'render_channel_metabox' ),
             'tts_social_post',
             'side'
@@ -194,7 +194,7 @@ class TTS_CPT {
     public function add_media_metabox() {
         add_meta_box(
             'tts_manual_media',
-            __( 'Media', 'trello-social-auto-publisher' ),
+            __( 'Media', 'fp-publisher' ),
             array( $this, 'render_media_metabox' ),
             'tts_social_post',
             'side'
@@ -207,7 +207,7 @@ class TTS_CPT {
     public function add_messages_metabox() {
         add_meta_box(
             'tts_messages',
-            __( 'Messaggi per canale', 'trello-social-auto-publisher' ),
+            __( 'Messaggi per canale', 'fp-publisher' ),
             array( $this, 'render_messages_metabox' ),
             'tts_social_post',
             'normal'
@@ -220,7 +220,7 @@ class TTS_CPT {
     public function add_location_metabox() {
         add_meta_box(
             'tts_location',
-            __( 'Localizzazione', 'trello-social-auto-publisher' ),
+            __( 'Localizzazione', 'fp-publisher' ),
             array( $this, 'render_location_metabox' ),
             'tts_social_post',
             'side'
@@ -233,7 +233,7 @@ class TTS_CPT {
     public function add_approval_metabox() {
         add_meta_box(
             'tts_approval_status',
-            __( 'Stato di approvazione', 'trello-social-auto-publisher' ),
+            __( 'Stato di approvazione', 'fp-publisher' ),
             array( $this, 'render_approval_metabox' ),
             'tts_social_post',
             'side'
@@ -250,7 +250,7 @@ class TTS_CPT {
         $value     = get_post_meta( $post->ID, '_tts_publish_at', true );
         $formatted = $value ? date( 'Y-m-d\\TH:i', strtotime( $value ) ) : '';
 
-        echo '<label for="_tts_publish_at">' . esc_html__( 'Data di pubblicazione', 'trello-social-auto-publisher' ) . '</label>';
+        echo '<label for="_tts_publish_at">' . esc_html__( 'Data di pubblicazione', 'fp-publisher' ) . '</label>';
         echo '<input type="datetime-local" id="_tts_publish_at" name="_tts_publish_at" value="' . esc_attr( $formatted ) . '" class="widefat" />';
 
         $channels = get_post_meta( $post->ID, '_tts_social_channel', true );
@@ -258,7 +258,7 @@ class TTS_CPT {
         if ( $channel && class_exists( 'TTS_Timing' ) ) {
             $suggested = TTS_Timing::suggest_time( $channel );
             if ( $suggested ) {
-                echo '<p class="description">' . sprintf( esc_html__( 'Orario suggerito: %s', 'trello-social-auto-publisher' ), esc_html( $suggested ) ) . '</p>';
+                echo '<p class="description">' . sprintf( esc_html__( 'Orario suggerito: %s', 'fp-publisher' ), esc_html( $suggested ) ) . '</p>';
             }
         }
     }
@@ -307,7 +307,7 @@ class TTS_CPT {
 
         foreach ( $channels as $key => $label ) {
             $offset  = isset( $options[ $key . '_offset' ] ) ? intval( $options[ $key . '_offset' ] ) : 0;
-            $display = sprintf( __( '%1$s (%2$d min)', 'trello-social-auto-publisher' ), $label, $offset );
+            $display = sprintf( __( '%1$s (%2$d min)', 'fp-publisher' ), $label, $offset );
             printf(
                 '<p><label><input type="checkbox" name="_tts_social_channel[]" value="%1$s" %2$s /> %3$s</label></p>',
                 esc_attr( $key ),
@@ -337,16 +337,16 @@ class TTS_CPT {
         echo '<input type="hidden" id="tts_attachment_ids" name="_tts_attachment_ids" value="' . esc_attr( implode( ',', $attachments ) ) . '" />';
         $value = get_post_meta( $post->ID, '_tts_manual_media', true );
         echo '<input type="hidden" id="tts_manual_media" name="_tts_manual_media" value="' . esc_attr( $value ) . '" />';
-        echo '<button type="button" class="button tts-select-media">' . esc_html__( 'Seleziona/Carica file', 'trello-social-auto-publisher' ) . '</button>';
+        echo '<button type="button" class="button tts-select-media">' . esc_html__( 'Seleziona/Carica file', 'fp-publisher' ) . '</button>';
 
         $story_enabled = (bool) get_post_meta( $post->ID, '_tts_publish_story', true );
         $story_media   = (int) get_post_meta( $post->ID, '_tts_story_media', true );
         $story_thumb   = $story_media ? wp_get_attachment_image( $story_media, array( 80, 80 ) ) : '';
-        echo '<p><label><input type="checkbox" id="tts_publish_story" name="_tts_publish_story" value="1" ' . checked( $story_enabled, true, false ) . ' /> ' . esc_html__( 'Pubblica come Story', 'trello-social-auto-publisher' ) . '</label></p>';
+        echo '<p><label><input type="checkbox" id="tts_publish_story" name="_tts_publish_story" value="1" ' . checked( $story_enabled, true, false ) . ' /> ' . esc_html__( 'Pubblica come Story', 'fp-publisher' ) . '</label></p>';
         echo '<div id="tts_story_media_wrapper"' . ( $story_enabled ? '' : ' style="display:none;"' ) . '>';
         echo '<div id="tts_story_media_preview">' . $story_thumb . '</div>';
         echo '<input type="hidden" id="tts_story_media" name="_tts_story_media" value="' . esc_attr( $story_media ) . '" />';
-        echo '<button type="button" class="button tts-select-story-media">' . esc_html__( 'Seleziona media Story', 'trello-social-auto-publisher' ) . '</button>';
+        echo '<button type="button" class="button tts-select-story-media">' . esc_html__( 'Seleziona media Story', 'fp-publisher' ) . '</button>';
         echo '</div>';
     }
 
@@ -371,7 +371,7 @@ class TTS_CPT {
 
             if ( 'instagram' === $key ) {
                 $comment = get_post_meta( $post->ID, '_tts_instagram_first_comment', true );
-                echo '<p><label for="tts_instagram_first_comment">' . esc_html__( 'Commento iniziale Instagram', 'trello-social-auto-publisher' ) . '</label>';
+                echo '<p><label for="tts_instagram_first_comment">' . esc_html__( 'Commento iniziale Instagram', 'fp-publisher' ) . '</label>';
                 echo '<textarea id="tts_instagram_first_comment" name="_tts_instagram_first_comment" rows="3" class="widefat">' . esc_textarea( $comment ) . '</textarea></p>';
             }
         }
@@ -395,9 +395,9 @@ class TTS_CPT {
             $lng = $options['default_lng'];
         }
 
-        echo '<p><label for="_tts_lat">' . esc_html__( 'Latitude', 'trello-social-auto-publisher' ) . '</label>';
+        echo '<p><label for="_tts_lat">' . esc_html__( 'Latitude', 'fp-publisher' ) . '</label>';
         echo '<input type="text" id="_tts_lat" name="_tts_lat" value="' . esc_attr( $lat ) . '" class="widefat" /></p>';
-        echo '<p><label for="_tts_lng">' . esc_html__( 'Longitude', 'trello-social-auto-publisher' ) . '</label>';
+        echo '<p><label for="_tts_lng">' . esc_html__( 'Longitude', 'fp-publisher' ) . '</label>';
         echo '<input type="text" id="_tts_lng" name="_tts_lng" value="' . esc_attr( $lng ) . '" class="widefat" /></p>';
     }
 
@@ -567,7 +567,7 @@ class TTS_CPT {
         wp_nonce_field( 'tts_approval_metabox', 'tts_approval_nonce' );
         $approved = (bool) get_post_meta( $post->ID, '_tts_approved', true );
         echo '<label><input type="checkbox" name="_tts_approved" value="1" ' . checked( $approved, true, false ) . ' /> ';
-        echo esc_html__( 'Approvato', 'trello-social-auto-publisher' ) . '</label>';
+        echo esc_html__( 'Approvato', 'fp-publisher' ) . '</label>';
     }
 
     /**

@@ -2,7 +2,7 @@
 /**
  * Blog publisher for WordPress.
  *
- * @package TrelloSocialAutoPublisher\Publishers
+ * @package FPPublisher\Publishers
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -26,7 +26,7 @@ class TTS_Publisher_Blog {
      */
     public function publish( $post_id, $credentials, $message ) {
         if ( empty( $message ) ) {
-            $error = __( 'Blog content is empty', 'trello-social-auto-publisher' );
+            $error = __( 'Blog content is empty', 'fp-publisher' );
             tts_log_event( $post_id, 'blog', 'error', $error, '' );
             tts_notify_publication( $post_id, 'error', 'blog' );
             return new \WP_Error( 'blog_no_content', $error );
@@ -61,7 +61,7 @@ class TTS_Publisher_Blog {
         
         if ( is_wp_error( $blog_post_id ) ) {
             $error = sprintf( 
-                __( 'Failed to create blog post: %s', 'trello-social-auto-publisher' ), 
+                __( 'Failed to create blog post: %s', 'fp-publisher' ), 
                 $blog_post_id->get_error_message() 
             );
             tts_log_event( $post_id, 'blog', 'error', $error, '' );
@@ -91,7 +91,7 @@ class TTS_Publisher_Blog {
         );
         
         $response = sprintf( 
-            __( 'Published to blog (Post ID: %d)', 'trello-social-auto-publisher' ), 
+            __( 'Published to blog (Post ID: %d)', 'fp-publisher' ), 
             $blog_post_id 
         );
         
@@ -144,7 +144,7 @@ class TTS_Publisher_Blog {
             if ( $source_url ) {
                 $content .= sprintf( 
                     '<p><em>%s: <a href="%s">%s</a></em></p>', 
-                    __( 'Source', 'trello-social-auto-publisher' ),
+                    __( 'Source', 'fp-publisher' ),
                     esc_url( $source_url ),
                     esc_html( get_the_title( $post_id ) )
                 );

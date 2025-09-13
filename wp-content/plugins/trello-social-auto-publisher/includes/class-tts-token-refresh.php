@@ -2,7 +2,7 @@
 /**
  * Token refresh utilities.
  *
- * @package TrelloSocialAutoPublisher
+ * @package FPPublisher
  */
 
 if ( ! defined( 'ABSPATH' ) ) {

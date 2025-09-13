@@ -2,7 +2,7 @@
 /**
  * Timing utilities for engagement-based suggestions.
  *
- * @package TrelloSocialAutoPublisher
+ * @package FPPublisher
  */
 
 if ( ! defined( 'ABSPATH' ) ) {

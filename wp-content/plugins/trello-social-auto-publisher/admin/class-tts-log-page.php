@@ -2,7 +2,7 @@
 /**
  * Admin page to display logs.
  *
- * @package TrelloSocialAutoPublisher
+ * @package FPPublisher
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -30,9 +30,9 @@ class TTS_Log_Page {
      */
     public function register_menu() {
         add_submenu_page(
-            'tts-main',
-            __( 'Log', 'trello-social-auto-publisher' ),
-            __( 'Log', 'trello-social-auto-publisher' ),
+            'fp-publisher',
+            __( 'Log', 'fp-publisher' ),
+            __( 'Log', 'fp-publisher' ),
             'manage_options',
             'tts-log',
             array( $this, 'render_page' )
@@ -48,7 +48,7 @@ class TTS_Log_Page {
         $table->prepare_items();
 
         echo '<div class="wrap">';
-        echo '<h1>' . esc_html__( 'Log', 'trello-social-auto-publisher' ) . '</h1>';
+        echo '<h1>' . esc_html__( 'Log', 'fp-publisher' ) . '</h1>';
         echo '<form method="get">';
         echo '<input type="hidden" name="page" value="tts-log" />';
         $table->display();
@@ -69,13 +69,13 @@ class TTS_Log_Table extends WP_List_Table {
      */
     public function get_columns() {
         return array(
-            'id'         => __( 'ID', 'trello-social-auto-publisher' ),
-            'post_id'    => __( 'Post ID', 'trello-social-auto-publisher' ),
-            'channel'    => __( 'Channel', 'trello-social-auto-publisher' ),
-            'status'     => __( 'Status', 'trello-social-auto-publisher' ),
-            'message'    => __( 'Message', 'trello-social-auto-publisher' ),
-            'metrics'    => __( 'Metrics', 'trello-social-auto-publisher' ),
-            'created_at' => __( 'Date', 'trello-social-auto-publisher' ),
+            'id'         => __( 'ID', 'fp-publisher' ),
+            'post_id'    => __( 'Post ID', 'fp-publisher' ),
+            'channel'    => __( 'Channel', 'fp-publisher' ),
+            'status'     => __( 'Status', 'fp-publisher' ),
+            'message'    => __( 'Message', 'fp-publisher' ),
+            'metrics'    => __( 'Metrics', 'fp-publisher' ),
+            'created_at' => __( 'Date', 'fp-publisher' ),
         );
     }
 
@@ -146,7 +146,7 @@ class TTS_Log_Table extends WP_List_Table {
         );
 
         $actions = array(
-            'delete' => sprintf( '<a href="%s">%s</a>', esc_url( $delete_url ), __( 'Delete', 'trello-social-auto-publisher' ) ),
+            'delete' => sprintf( '<a href="%s">%s</a>', esc_url( $delete_url ), __( 'Delete', 'fp-publisher' ) ),
         );
 
         return sprintf( '%1$s %2$s', esc_html( $item['message'] ), $this->row_actions( $actions ) );
@@ -193,20 +193,20 @@ class TTS_Log_Table extends WP_List_Table {
 
         echo '<div class="alignleft actions">';
         echo '<select name="channel">';
-        echo '<option value="">' . esc_html__( 'All Channels', 'trello-social-auto-publisher' ) . '</option>';
+        echo '<option value="">' . esc_html__( 'All Channels', 'fp-publisher' ) . '</option>';
         foreach ( $channels as $ch ) {
             printf( '<option value="%1$s" %2$s>%1$s</option>', esc_attr( $ch ), selected( $ch, $current_channel, false ) );
         }
         echo '</select>';
 
         echo '<select name="status">';
-        echo '<option value="">' . esc_html__( 'All Statuses', 'trello-social-auto-publisher' ) . '</option>';
+        echo '<option value="">' . esc_html__( 'All Statuses', 'fp-publisher' ) . '</option>';
         foreach ( $statuses as $st ) {
             printf( '<option value="%1$s" %2$s>%1$s</option>', esc_attr( $st ), selected( $st, $current_status, false ) );
         }
         echo '</select>';
 
-        submit_button( __( 'Filter', 'trello-social-auto-publisher' ), '', 'filter_action', false );
+        submit_button( __( 'Filter', 'fp-publisher' ), '', 'filter_action', false );
         echo '</div>';
     }
 

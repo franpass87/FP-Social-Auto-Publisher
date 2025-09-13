@@ -3,7 +3,7 @@
  * Advanced utilities for Trello Social Auto Publisher.
  * Export/Import, Batch Operations, and System Maintenance.
  *
- * @package TrelloSocialAutoPublisher
+ * @package FPPublisher
  */
 
 if ( ! defined( 'ABSPATH' ) ) {

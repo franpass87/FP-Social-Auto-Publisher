@@ -2,7 +2,7 @@
 /**
  * Prevent direct access to this file.
  *
- * @package TrelloSocialAutoPublisher
+ * @package FPPublisher
  */
 
 if ( ! defined( 'ABSPATH' ) ) {

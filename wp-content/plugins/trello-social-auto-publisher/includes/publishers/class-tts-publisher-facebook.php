@@ -2,7 +2,7 @@
 /**
  * Facebook publisher.
  *
- * @package TrelloSocialAutoPublisher\Publishers
+ * @package FPPublisher\Publishers
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -27,7 +27,7 @@ class TTS_Publisher_Facebook {
      */
     public function publish( $post_id, $credentials, $message ) {
         if ( empty( $credentials ) ) {
-            $error = __( 'Facebook token missing', 'trello-social-auto-publisher' );
+            $error = __( 'Facebook token missing', 'fp-publisher' );
             tts_log_event( $post_id, 'facebook', 'error', $error, '' );
             tts_notify_publication( $post_id, 'error', 'facebook' );
             return new \WP_Error( 'facebook_no_token', $error );
@@ -45,7 +45,7 @@ class TTS_Publisher_Facebook {
         }
 
         if ( empty( $page_id ) || empty( $token ) ) {
-            $error = __( 'Invalid Facebook credentials', 'trello-social-auto-publisher' );
+            $error = __( 'Invalid Facebook credentials', 'fp-publisher' );
             tts_log_event( $post_id, 'facebook', 'error', $error, '' );
             tts_notify_publication( $post_id, 'error', 'facebook' );
             return new \WP_Error( 'facebook_bad_credentials', $error );
@@ -113,12 +113,12 @@ class TTS_Publisher_Facebook {
             $code = wp_remote_retrieve_response_code( $result );
             $data = json_decode( wp_remote_retrieve_body( $result ), true );
             if ( 200 === $code && isset( $data['id'] ) ) {
-                $response = __( 'Published to Facebook', 'trello-social-auto-publisher' );
+                $response = __( 'Published to Facebook', 'fp-publisher' );
                 tts_log_event( $post_id, 'facebook', 'success', $response, $data );
                 tts_notify_publication( $post_id, 'success', 'facebook' );
                 return $response;
             }
-            $error = isset( $data['error']['message'] ) ? $data['error']['message'] : __( 'Unknown error', 'trello-social-auto-publisher' );
+            $error = isset( $data['error']['message'] ) ? $data['error']['message'] : __( 'Unknown error', 'fp-publisher' );
             tts_log_event( $post_id, 'facebook', 'error', $error, $data );
             tts_notify_publication( $post_id, 'error', 'facebook' );
             return new \WP_Error( 'facebook_error', $error, $data );
@@ -155,7 +155,7 @@ class TTS_Publisher_Facebook {
             $code = wp_remote_retrieve_response_code( $result );
             $data = json_decode( wp_remote_retrieve_body( $result ), true );
             if ( 200 !== $code || empty( $data['id'] ) ) {
-                $error = isset( $data['error']['message'] ) ? $data['error']['message'] : __( 'Unknown error', 'trello-social-auto-publisher' );
+                $error = isset( $data['error']['message'] ) ? $data['error']['message'] : __( 'Unknown error', 'fp-publisher' );
                 tts_log_event( $post_id, 'facebook', 'error', $error, $data );
                 tts_notify_publication( $post_id, 'error', 'facebook' );
                 return new \WP_Error( 'facebook_error', $error, $data );
@@ -193,14 +193,14 @@ class TTS_Publisher_Facebook {
             $code = wp_remote_retrieve_response_code( $result );
             $data = json_decode( wp_remote_retrieve_body( $result ), true );
             if ( 200 !== $code || empty( $data['id'] ) ) {
-                $error = isset( $data['error']['message'] ) ? $data['error']['message'] : __( 'Unknown error', 'trello-social-auto-publisher' );
+                $error = isset( $data['error']['message'] ) ? $data['error']['message'] : __( 'Unknown error', 'fp-publisher' );
                 tts_log_event( $post_id, 'facebook', 'error', $error, $data );
                 tts_notify_publication( $post_id, 'error', 'facebook' );
                 return new \WP_Error( 'facebook_error', $error, $data );
             }
         }
 
-        $response = __( 'Published to Facebook', 'trello-social-auto-publisher' );
+        $response = __( 'Published to Facebook', 'fp-publisher' );
         tts_log_event( $post_id, 'facebook', 'success', $response, $data );
         tts_notify_publication( $post_id, 'success', 'facebook' );
         return $response;

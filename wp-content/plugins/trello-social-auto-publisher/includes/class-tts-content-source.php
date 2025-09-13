@@ -3,7 +3,7 @@
  * Content Source Management for Social Auto Publisher.
  * Handles multiple content sources: local uploads, Dropbox, Google Drive, and optionally Trello.
  *
- * @package TrelloSocialAutoPublisher
+ * @package FPPublisher
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -93,8 +93,8 @@ class TTS_Content_Source {
         // Always available
         $sources['local'] = array(
             'type' => self::SOURCE_LOCAL,
-            'name' => __( 'Local Upload', 'trello-social-auto-publisher' ),
-            'description' => __( 'Upload files directly from your computer', 'trello-social-auto-publisher' ),
+            'name' => __( 'Local Upload', 'fp-publisher' ),
+            'description' => __( 'Upload files directly from your computer', 'fp-publisher' ),
             'enabled' => true,
         );
 
@@ -103,8 +103,8 @@ class TTS_Content_Source {
             $dropbox_token = get_post_meta( $client_id, '_tts_dropbox_token', true );
             $sources['dropbox'] = array(
                 'type' => self::SOURCE_DROPBOX,
-                'name' => __( 'Dropbox', 'trello-social-auto-publisher' ),
-                'description' => __( 'Sync content from Dropbox folders', 'trello-social-auto-publisher' ),
+                'name' => __( 'Dropbox', 'fp-publisher' ),
+                'description' => __( 'Sync content from Dropbox folders', 'fp-publisher' ),
                 'enabled' => ! empty( $dropbox_token ),
             );
 
@@ -112,8 +112,8 @@ class TTS_Content_Source {
             $gdrive_token = get_post_meta( $client_id, '_tts_google_drive_token', true );
             $sources['google_drive'] = array(
                 'type' => self::SOURCE_GOOGLE_DRIVE,
-                'name' => __( 'Google Drive', 'trello-social-auto-publisher' ),
-                'description' => __( 'Sync content from Google Drive folders', 'trello-social-auto-publisher' ),
+                'name' => __( 'Google Drive', 'fp-publisher' ),
+                'description' => __( 'Sync content from Google Drive folders', 'fp-publisher' ),
                 'enabled' => ! empty( $gdrive_token ),
             );
 
@@ -122,8 +122,8 @@ class TTS_Content_Source {
             $trello_token = get_post_meta( $client_id, '_tts_trello_token', true );
             $sources['trello'] = array(
                 'type' => self::SOURCE_TRELLO,
-                'name' => __( 'Trello', 'trello-social-auto-publisher' ),
-                'description' => __( 'Import content from Trello cards (optional)', 'trello-social-auto-publisher' ),
+                'name' => __( 'Trello', 'fp-publisher' ),
+                'description' => __( 'Import content from Trello cards (optional)', 'fp-publisher' ),
                 'enabled' => ! empty( $trello_key ) && ! empty( $trello_token ),
             );
         }
@@ -136,13 +136,13 @@ class TTS_Content_Source {
      */
     public function handle_local_upload() {
         if ( ! current_user_can( 'upload_files' ) ) {
-            wp_die( esc_html__( 'Insufficient permissions', 'trello-social-auto-publisher' ) );
+            wp_die( esc_html__( 'Insufficient permissions', 'fp-publisher' ) );
         }
 
         check_ajax_referer( 'tts_upload_nonce', 'nonce' );
 
         if ( empty( $_FILES['file'] ) ) {
-            wp_send_json_error( array( 'message' => __( 'No file uploaded', 'trello-social-auto-publisher' ) ) );
+            wp_send_json_error( array( 'message' => __( 'No file uploaded', 'fp-publisher' ) ) );
         }
 
         $file = $_FILES['file'];
@@ -173,15 +173,15 @@ class TTS_Content_Source {
 
             if ( $post_id ) {
                 wp_send_json_success( array(
-                    'message' => __( 'Content uploaded successfully', 'trello-social-auto-publisher' ),
+                    'message' => __( 'Content uploaded successfully', 'fp-publisher' ),
                     'post_id' => $post_id,
                     'attachment_id' => $attachment_id,
                 ) );
             } else {
-                wp_send_json_error( array( 'message' => __( 'Failed to create social post', 'trello-social-auto-publisher' ) ) );
+                wp_send_json_error( array( 'message' => __( 'Failed to create social post', 'fp-publisher' ) ) );
             }
         } else {
-            wp_send_json_error( array( 'message' => $movefile['error'] ?? __( 'Upload failed', 'trello-social-auto-publisher' ) ) );
+            wp_send_json_error( array( 'message' => $movefile['error'] ?? __( 'Upload failed', 'fp-publisher' ) ) );
         }
     }
 
@@ -221,7 +221,7 @@ class TTS_Content_Source {
      */
     private function create_social_post_from_upload( $data ) {
         $post_data = array(
-            'post_title'   => $data['title'] ?: __( 'Untitled Post', 'trello-social-auto-publisher' ),
+            'post_title'   => $data['title'] ?: __( 'Untitled Post', 'fp-publisher' ),
             'post_content' => $data['content'],
             'post_status'  => 'draft',
             'post_type'    => 'tts_social_post',
@@ -252,7 +252,7 @@ class TTS_Content_Source {
      */
     public function sync_dropbox_content() {
         if ( ! current_user_can( 'manage_options' ) ) {
-            wp_die( esc_html__( 'Insufficient permissions', 'trello-social-auto-publisher' ) );
+            wp_die( esc_html__( 'Insufficient permissions', 'fp-publisher' ) );
         }
 
         check_ajax_referer( 'tts_sync_nonce', 'nonce' );
@@ -261,7 +261,7 @@ class TTS_Content_Source {
         $dropbox_token = get_post_meta( $client_id, '_tts_dropbox_token', true );
 
         if ( empty( $dropbox_token ) ) {
-            wp_send_json_error( array( 'message' => __( 'Dropbox not configured', 'trello-social-auto-publisher' ) ) );
+            wp_send_json_error( array( 'message' => __( 'Dropbox not configured', 'fp-publisher' ) ) );
         }
 
         // Schedule background sync
@@ -273,7 +273,7 @@ class TTS_Content_Source {
         );
 
         wp_send_json_success( array(
-            'message' => __( 'Dropbox sync started in background', 'trello-social-auto-publisher' ),
+            'message' => __( 'Dropbox sync started in background', 'fp-publisher' ),
             'client_id' => $client_id,
         ) );
     }
@@ -283,7 +283,7 @@ class TTS_Content_Source {
      */
     public function sync_google_drive_content() {
         if ( ! current_user_can( 'manage_options' ) ) {
-            wp_die( esc_html__( 'Insufficient permissions', 'trello-social-auto-publisher' ) );
+            wp_die( esc_html__( 'Insufficient permissions', 'fp-publisher' ) );
         }
 
         check_ajax_referer( 'tts_sync_nonce', 'nonce' );
@@ -292,7 +292,7 @@ class TTS_Content_Source {
         $gdrive_token = get_post_meta( $client_id, '_tts_google_drive_token', true );
 
         if ( empty( $gdrive_token ) ) {
-            wp_send_json_error( array( 'message' => __( 'Google Drive not configured', 'trello-social-auto-publisher' ) ) );
+            wp_send_json_error( array( 'message' => __( 'Google Drive not configured', 'fp-publisher' ) ) );
         }
 
         // Schedule background sync
@@ -304,7 +304,7 @@ class TTS_Content_Source {
         );
 
         wp_send_json_success( array(
-            'message' => __( 'Google Drive sync started in background', 'trello-social-auto-publisher' ),
+            'message' => __( 'Google Drive sync started in background', 'fp-publisher' ),
             'client_id' => $client_id,
         ) );
     }
@@ -314,7 +314,7 @@ class TTS_Content_Source {
      */
     public function create_content_post() {
         if ( ! current_user_can( 'edit_posts' ) ) {
-            wp_die( esc_html__( 'Insufficient permissions', 'trello-social-auto-publisher' ) );
+            wp_die( esc_html__( 'Insufficient permissions', 'fp-publisher' ) );
         }
 
         check_ajax_referer( 'tts_create_content_nonce', 'nonce' );
@@ -326,7 +326,7 @@ class TTS_Content_Source {
         $schedule_date = sanitize_text_field( $_POST['schedule_date'] ?? '' );
 
         if ( empty( $title ) || empty( $content ) ) {
-            wp_send_json_error( array( 'message' => __( 'Title and content are required', 'trello-social-auto-publisher' ) ) );
+            wp_send_json_error( array( 'message' => __( 'Title and content are required', 'fp-publisher' ) ) );
         }
 
         $post_id = $this->create_social_post_from_upload( array(
@@ -341,12 +341,12 @@ class TTS_Content_Source {
 
         if ( $post_id ) {
             wp_send_json_success( array(
-                'message' => __( 'Content created successfully', 'trello-social-auto-publisher' ),
+                'message' => __( 'Content created successfully', 'fp-publisher' ),
                 'post_id' => $post_id,
                 'edit_url' => admin_url( "post.php?post={$post_id}&action=edit" ),
             ) );
         } else {
-            wp_send_json_error( array( 'message' => __( 'Failed to create content', 'trello-social-auto-publisher' ) ) );
+            wp_send_json_error( array( 'message' => __( 'Failed to create content', 'fp-publisher' ) ) );
         }
     }
 
@@ -368,7 +368,7 @@ class TTS_Content_Source {
             case self::SOURCE_TRELLO:
                 return $this->sync_trello_api( $client_id );
             default:
-                return new WP_Error( 'invalid_source', __( 'Invalid content source type', 'trello-social-auto-publisher' ), array( 'status' => 400 ) );
+                return new WP_Error( 'invalid_source', __( 'Invalid content source type', 'fp-publisher' ), array( 'status' => 400 ) );
         }
     }
 
@@ -386,7 +386,7 @@ class TTS_Content_Source {
         $schedule_date = sanitize_text_field( $request->get_param( 'schedule_date' ) );
 
         if ( empty( $title ) || empty( $content ) ) {
-            return new WP_Error( 'missing_data', __( 'Title and content are required', 'trello-social-auto-publisher' ), array( 'status' => 400 ) );
+            return new WP_Error( 'missing_data', __( 'Title and content are required', 'fp-publisher' ), array( 'status' => 400 ) );
         }
 
         $post_id = $this->create_social_post_from_upload( array(
@@ -401,11 +401,11 @@ class TTS_Content_Source {
 
         if ( $post_id ) {
             return rest_ensure_response( array(
-                'message' => __( 'Content created successfully', 'trello-social-auto-publisher' ),
+                'message' => __( 'Content created successfully', 'fp-publisher' ),
                 'post_id' => $post_id,
             ) );
         } else {
-            return new WP_Error( 'creation_failed', __( 'Failed to create content', 'trello-social-auto-publisher' ), array( 'status' => 500 ) );
+            return new WP_Error( 'creation_failed', __( 'Failed to create content', 'fp-publisher' ), array( 'status' => 500 ) );
         }
     }
 
@@ -419,7 +419,7 @@ class TTS_Content_Source {
         $dropbox_token = get_post_meta( $client_id, '_tts_dropbox_token', true );
 
         if ( empty( $dropbox_token ) ) {
-            return new WP_Error( 'dropbox_not_configured', __( 'Dropbox not configured for this client', 'trello-social-auto-publisher' ), array( 'status' => 400 ) );
+            return new WP_Error( 'dropbox_not_configured', __( 'Dropbox not configured for this client', 'fp-publisher' ), array( 'status' => 400 ) );
         }
 
         // Schedule background sync
@@ -431,7 +431,7 @@ class TTS_Content_Source {
         );
 
         return rest_ensure_response( array(
-            'message' => __( 'Dropbox sync started in background', 'trello-social-auto-publisher' ),
+            'message' => __( 'Dropbox sync started in background', 'fp-publisher' ),
             'client_id' => $client_id,
         ) );
     }
@@ -446,7 +446,7 @@ class TTS_Content_Source {
         $gdrive_token = get_post_meta( $client_id, '_tts_google_drive_token', true );
 
         if ( empty( $gdrive_token ) ) {
-            return new WP_Error( 'google_drive_not_configured', __( 'Google Drive not configured for this client', 'trello-social-auto-publisher' ), array( 'status' => 400 ) );
+            return new WP_Error( 'google_drive_not_configured', __( 'Google Drive not configured for this client', 'fp-publisher' ), array( 'status' => 400 ) );
         }
 
         // Schedule background sync
@@ -458,7 +458,7 @@ class TTS_Content_Source {
         );
 
         return rest_ensure_response( array(
-            'message' => __( 'Google Drive sync started in background', 'trello-social-auto-publisher' ),
+            'message' => __( 'Google Drive sync started in background', 'fp-publisher' ),
             'client_id' => $client_id,
         ) );
     }
@@ -474,13 +474,13 @@ class TTS_Content_Source {
         $trello_token = get_post_meta( $client_id, '_tts_trello_token', true );
 
         if ( empty( $trello_key ) || empty( $trello_token ) ) {
-            return new WP_Error( 'trello_not_configured', __( 'Trello not configured for this client', 'trello-social-auto-publisher' ), array( 'status' => 400 ) );
+            return new WP_Error( 'trello_not_configured', __( 'Trello not configured for this client', 'fp-publisher' ), array( 'status' => 400 ) );
         }
 
         // Use existing Trello integration logic
         // This is a placeholder - actual implementation would use existing webhook logic
         return rest_ensure_response( array(
-            'message' => __( 'Trello sync completed', 'trello-social-auto-publisher' ),
+            'message' => __( 'Trello sync completed', 'fp-publisher' ),
             'cards_synced' => 0,
         ) );
     }
@@ -757,7 +757,7 @@ class TTS_Content_Source {
         // Create social post
         $post_id = $this->create_social_post_from_upload( array(
             'title' => $title,
-            'content' => sprintf( __( 'Content imported from %s', 'trello-social-auto-publisher' ), ucfirst( str_replace( '_', ' ', $source ) ) ),
+            'content' => sprintf( __( 'Content imported from %s', 'fp-publisher' ), ucfirst( str_replace( '_', ' ', $source ) ) ),
             'attachment_id' => $attachment_id,
             'client_id' => $client_id,
             'schedule_date' => '',

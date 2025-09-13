@@ -2,7 +2,7 @@
 /**
  * Advanced Workflow and Collaboration System
  *
- * @package TrelloSocialAutoPublisher
+ * @package FPPublisher
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -131,7 +131,7 @@ class TTS_Workflow_System {
         check_ajax_referer( 'tts_workflow_nonce', 'nonce' );
 
         if ( ! current_user_can( 'edit_posts' ) ) {
-            wp_die( esc_html__( 'You do not have sufficient permissions.', 'trello-social-auto-publisher' ) );
+            wp_die( esc_html__( 'You do not have sufficient permissions.', 'fp-publisher' ) );
         }
 
         $post_id = intval( $_POST['post_id'] ?? 0 );
@@ -141,7 +141,7 @@ class TTS_Workflow_System {
         $notes = sanitize_textarea_field( wp_unslash( $_POST['notes'] ?? '' ) );
 
         if ( empty( $post_id ) ) {
-            wp_send_json_error( array( 'message' => __( 'Invalid post ID.', 'trello-social-auto-publisher' ) ) );
+            wp_send_json_error( array( 'message' => __( 'Invalid post ID.', 'fp-publisher' ) ) );
         }
 
         try {
@@ -149,11 +149,11 @@ class TTS_Workflow_System {
             
             wp_send_json_success( array(
                 'workflow_id' => $workflow_id,
-                'message' => __( 'Content submitted for approval successfully!', 'trello-social-auto-publisher' )
+                'message' => __( 'Content submitted for approval successfully!', 'fp-publisher' )
             ) );
         } catch ( Exception $e ) {
             error_log( 'TTS Workflow Submission Error: ' . $e->getMessage() );
-            wp_send_json_error( array( 'message' => __( 'Failed to submit for approval. Please try again.', 'trello-social-auto-publisher' ) ) );
+            wp_send_json_error( array( 'message' => __( 'Failed to submit for approval. Please try again.', 'fp-publisher' ) ) );
         }
     }
 
@@ -245,25 +245,25 @@ class TTS_Workflow_System {
         check_ajax_referer( 'tts_workflow_nonce', 'nonce' );
 
         if ( ! current_user_can( 'publish_posts' ) ) {
-            wp_die( esc_html__( 'You do not have sufficient permissions.', 'trello-social-auto-publisher' ) );
+            wp_die( esc_html__( 'You do not have sufficient permissions.', 'fp-publisher' ) );
         }
 
         $workflow_id = intval( $_POST['workflow_id'] ?? 0 );
         $comments = sanitize_textarea_field( wp_unslash( $_POST['comments'] ?? '' ) );
 
         if ( empty( $workflow_id ) ) {
-            wp_send_json_error( array( 'message' => __( 'Invalid workflow ID.', 'trello-social-auto-publisher' ) ) );
+            wp_send_json_error( array( 'message' => __( 'Invalid workflow ID.', 'fp-publisher' ) ) );
         }
 
         try {
             $this->approve_content( $workflow_id, $comments );
             
             wp_send_json_success( array(
-                'message' => __( 'Content approved successfully!', 'trello-social-auto-publisher' )
+                'message' => __( 'Content approved successfully!', 'fp-publisher' )
             ) );
         } catch ( Exception $e ) {
             error_log( 'TTS Workflow Approval Error: ' . $e->getMessage() );
-            wp_send_json_error( array( 'message' => __( 'Failed to approve content. Please try again.', 'trello-social-auto-publisher' ) ) );
+            wp_send_json_error( array( 'message' => __( 'Failed to approve content. Please try again.', 'fp-publisher' ) ) );
         }
     }
 
@@ -329,25 +329,25 @@ class TTS_Workflow_System {
         check_ajax_referer( 'tts_workflow_nonce', 'nonce' );
 
         if ( ! current_user_can( 'publish_posts' ) ) {
-            wp_die( esc_html__( 'You do not have sufficient permissions.', 'trello-social-auto-publisher' ) );
+            wp_die( esc_html__( 'You do not have sufficient permissions.', 'fp-publisher' ) );
         }
 
         $workflow_id = intval( $_POST['workflow_id'] ?? 0 );
         $reason = sanitize_textarea_field( wp_unslash( $_POST['reason'] ?? '' ) );
 
         if ( empty( $workflow_id ) || empty( $reason ) ) {
-            wp_send_json_error( array( 'message' => __( 'Workflow ID and rejection reason are required.', 'trello-social-auto-publisher' ) ) );
+            wp_send_json_error( array( 'message' => __( 'Workflow ID and rejection reason are required.', 'fp-publisher' ) ) );
         }
 
         try {
             $this->reject_content( $workflow_id, $reason );
             
             wp_send_json_success( array(
-                'message' => __( 'Content rejected successfully!', 'trello-social-auto-publisher' )
+                'message' => __( 'Content rejected successfully!', 'fp-publisher' )
             ) );
         } catch ( Exception $e ) {
             error_log( 'TTS Workflow Rejection Error: ' . $e->getMessage() );
-            wp_send_json_error( array( 'message' => __( 'Failed to reject content. Please try again.', 'trello-social-auto-publisher' ) ) );
+            wp_send_json_error( array( 'message' => __( 'Failed to reject content. Please try again.', 'fp-publisher' ) ) );
         }
     }
 
@@ -412,7 +412,7 @@ class TTS_Workflow_System {
         check_ajax_referer( 'tts_workflow_nonce', 'nonce' );
 
         if ( ! current_user_can( 'edit_posts' ) ) {
-            wp_die( esc_html__( 'You do not have sufficient permissions.', 'trello-social-auto-publisher' ) );
+            wp_die( esc_html__( 'You do not have sufficient permissions.', 'fp-publisher' ) );
         }
 
         $workflow_id = intval( $_POST['workflow_id'] ?? 0 );
@@ -420,7 +420,7 @@ class TTS_Workflow_System {
         $comment_type = sanitize_text_field( wp_unslash( $_POST['comment_type'] ?? 'general' ) );
 
         if ( empty( $workflow_id ) || empty( $comment ) ) {
-            wp_send_json_error( array( 'message' => __( 'Workflow ID and comment are required.', 'trello-social-auto-publisher' ) ) );
+            wp_send_json_error( array( 'message' => __( 'Workflow ID and comment are required.', 'fp-publisher' ) ) );
         }
 
         try {
@@ -428,11 +428,11 @@ class TTS_Workflow_System {
             
             wp_send_json_success( array(
                 'comment_id' => $comment_id,
-                'message' => __( 'Comment added successfully!', 'trello-social-auto-publisher' )
+                'message' => __( 'Comment added successfully!', 'fp-publisher' )
             ) );
         } catch ( Exception $e ) {
             error_log( 'TTS Workflow Comment Error: ' . $e->getMessage() );
-            wp_send_json_error( array( 'message' => __( 'Failed to add comment. Please try again.', 'trello-social-auto-publisher' ) ) );
+            wp_send_json_error( array( 'message' => __( 'Failed to add comment. Please try again.', 'fp-publisher' ) ) );
         }
     }
 
@@ -475,7 +475,7 @@ class TTS_Workflow_System {
         check_ajax_referer( 'tts_workflow_nonce', 'nonce' );
 
         if ( ! current_user_can( 'edit_others_posts' ) ) {
-            wp_die( esc_html__( 'You do not have sufficient permissions.', 'trello-social-auto-publisher' ) );
+            wp_die( esc_html__( 'You do not have sufficient permissions.', 'fp-publisher' ) );
         }
 
         $post_id = intval( $_POST['post_id'] ?? 0 );
@@ -485,7 +485,7 @@ class TTS_Workflow_System {
         $instructions = sanitize_textarea_field( wp_unslash( $_POST['instructions'] ?? '' ) );
 
         if ( empty( $post_id ) || empty( $assigned_to ) ) {
-            wp_send_json_error( array( 'message' => __( 'Post ID and assignee are required.', 'trello-social-auto-publisher' ) ) );
+            wp_send_json_error( array( 'message' => __( 'Post ID and assignee are required.', 'fp-publisher' ) ) );
         }
 
         try {
@@ -493,11 +493,11 @@ class TTS_Workflow_System {
             
             wp_send_json_success( array(
                 'assignment_id' => $assignment_id,
-                'message' => __( 'Task assigned successfully!', 'trello-social-auto-publisher' )
+                'message' => __( 'Task assigned successfully!', 'fp-publisher' )
             ) );
         } catch ( Exception $e ) {
             error_log( 'TTS Task Assignment Error: ' . $e->getMessage() );
-            wp_send_json_error( array( 'message' => __( 'Failed to assign task. Please try again.', 'trello-social-auto-publisher' ) ) );
+            wp_send_json_error( array( 'message' => __( 'Failed to assign task. Please try again.', 'fp-publisher' ) ) );
         }
     }
 
@@ -571,13 +571,13 @@ class TTS_Workflow_System {
         check_ajax_referer( 'tts_workflow_nonce', 'nonce' );
 
         if ( ! current_user_can( 'read' ) ) {
-            wp_die( esc_html__( 'You do not have sufficient permissions.', 'trello-social-auto-publisher' ) );
+            wp_die( esc_html__( 'You do not have sufficient permissions.', 'fp-publisher' ) );
         }
 
         $post_id = intval( $_POST['post_id'] ?? 0 );
 
         if ( empty( $post_id ) ) {
-            wp_send_json_error( array( 'message' => __( 'Invalid post ID.', 'trello-social-auto-publisher' ) ) );
+            wp_send_json_error( array( 'message' => __( 'Invalid post ID.', 'fp-publisher' ) ) );
         }
 
         try {
@@ -585,11 +585,11 @@ class TTS_Workflow_System {
             
             wp_send_json_success( array(
                 'status' => $status,
-                'message' => __( 'Workflow status retrieved successfully!', 'trello-social-auto-publisher' )
+                'message' => __( 'Workflow status retrieved successfully!', 'fp-publisher' )
             ) );
         } catch ( Exception $e ) {
             error_log( 'TTS Workflow Status Error: ' . $e->getMessage() );
-            wp_send_json_error( array( 'message' => __( 'Failed to get workflow status. Please try again.', 'trello-social-auto-publisher' ) ) );
+            wp_send_json_error( array( 'message' => __( 'Failed to get workflow status. Please try again.', 'fp-publisher' ) ) );
         }
     }
 
@@ -663,7 +663,7 @@ class TTS_Workflow_System {
         check_ajax_referer( 'tts_workflow_nonce', 'nonce' );
 
         if ( ! current_user_can( 'edit_posts' ) ) {
-            wp_die( esc_html__( 'You do not have sufficient permissions.', 'trello-social-auto-publisher' ) );
+            wp_die( esc_html__( 'You do not have sufficient permissions.', 'fp-publisher' ) );
         }
 
         $name = sanitize_text_field( wp_unslash( $_POST['name'] ?? '' ) );
@@ -674,7 +674,7 @@ class TTS_Workflow_System {
         $category = sanitize_text_field( wp_unslash( $_POST['category'] ?? '' ) );
 
         if ( empty( $name ) || empty( $template_content ) ) {
-            wp_send_json_error( array( 'message' => __( 'Template name and content are required.', 'trello-social-auto-publisher' ) ) );
+            wp_send_json_error( array( 'message' => __( 'Template name and content are required.', 'fp-publisher' ) ) );
         }
 
         try {
@@ -682,11 +682,11 @@ class TTS_Workflow_System {
             
             wp_send_json_success( array(
                 'template_id' => $template_id,
-                'message' => __( 'Content template created successfully!', 'trello-social-auto-publisher' )
+                'message' => __( 'Content template created successfully!', 'fp-publisher' )
             ) );
         } catch ( Exception $e ) {
             error_log( 'TTS Template Creation Error: ' . $e->getMessage() );
-            wp_send_json_error( array( 'message' => __( 'Failed to create template. Please try again.', 'trello-social-auto-publisher' ) ) );
+            wp_send_json_error( array( 'message' => __( 'Failed to create template. Please try again.', 'fp-publisher' ) ) );
         }
     }
 
@@ -734,7 +734,7 @@ class TTS_Workflow_System {
         check_ajax_referer( 'tts_workflow_nonce', 'nonce' );
 
         if ( ! current_user_can( 'read' ) ) {
-            wp_die( esc_html__( 'You do not have sufficient permissions.', 'trello-social-auto-publisher' ) );
+            wp_die( esc_html__( 'You do not have sufficient permissions.', 'fp-publisher' ) );
         }
 
         try {
@@ -742,11 +742,11 @@ class TTS_Workflow_System {
             
             wp_send_json_success( array(
                 'dashboard' => $dashboard,
-                'message' => __( 'Team dashboard data retrieved successfully!', 'trello-social-auto-publisher' )
+                'message' => __( 'Team dashboard data retrieved successfully!', 'fp-publisher' )
             ) );
         } catch ( Exception $e ) {
             error_log( 'TTS Team Dashboard Error: ' . $e->getMessage() );
-            wp_send_json_error( array( 'message' => __( 'Failed to get dashboard data. Please try again.', 'trello-social-auto-publisher' ) ) );
+            wp_send_json_error( array( 'message' => __( 'Failed to get dashboard data. Please try again.', 'fp-publisher' ) ) );
         }
     }
 
@@ -847,13 +847,13 @@ class TTS_Workflow_System {
         }
         
         $subject = sprintf( 
-            __( '[%s] Content Approval Required: %s', 'trello-social-auto-publisher' ),
+            __( '[%s] Content Approval Required: %s', 'fp-publisher' ),
             get_bloginfo( 'name' ),
             $post->post_title
         );
         
         $message = sprintf(
-            __( "Hi %s,\n\nNew content has been submitted for your approval:\n\nTitle: %s\nSubmitted by: %s\nPriority: %s\nDeadline: %s\n\nPlease review and approve or reject this content in your dashboard.\n\nBest regards,\nSocial Auto Publisher", 'trello-social-auto-publisher' ),
+            __( "Hi %s,\n\nNew content has been submitted for your approval:\n\nTitle: %s\nSubmitted by: %s\nPriority: %s\nDeadline: %s\n\nPlease review and approve or reject this content in your dashboard.\n\nBest regards,\nSocial Auto Publisher", 'fp-publisher' ),
             $assigned_user->display_name,
             $post->post_title,
             $submitted_user->display_name,
@@ -893,13 +893,13 @@ class TTS_Workflow_System {
         }
         
         $subject = sprintf( 
-            __( '[%s] Content Approved: %s', 'trello-social-auto-publisher' ),
+            __( '[%s] Content Approved: %s', 'fp-publisher' ),
             get_bloginfo( 'name' ),
             $post->post_title
         );
         
         $message = sprintf(
-            __( "Hi %s,\n\nYour content has been approved:\n\nTitle: %s\nApproved by: %s\nApproved on: %s\n\nYour content is now ready for publishing.\n\nBest regards,\nSocial Auto Publisher", 'trello-social-auto-publisher' ),
+            __( "Hi %s,\n\nYour content has been approved:\n\nTitle: %s\nApproved by: %s\nApproved on: %s\n\nYour content is now ready for publishing.\n\nBest regards,\nSocial Auto Publisher", 'fp-publisher' ),
             $submitted_user->display_name,
             $post->post_title,
             $approved_user->display_name,
@@ -939,13 +939,13 @@ class TTS_Workflow_System {
         }
         
         $subject = sprintf( 
-            __( '[%s] Content Rejected: %s', 'trello-social-auto-publisher' ),
+            __( '[%s] Content Rejected: %s', 'fp-publisher' ),
             get_bloginfo( 'name' ),
             $post->post_title
         );
         
         $message = sprintf(
-            __( "Hi %s,\n\nYour content has been rejected:\n\nTitle: %s\nRejected by: %s\nRejected on: %s\nReason: %s\n\nPlease review the feedback and resubmit when ready.\n\nBest regards,\nSocial Auto Publisher", 'trello-social-auto-publisher' ),
+            __( "Hi %s,\n\nYour content has been rejected:\n\nTitle: %s\nRejected by: %s\nRejected on: %s\nReason: %s\n\nPlease review the feedback and resubmit when ready.\n\nBest regards,\nSocial Auto Publisher", 'fp-publisher' ),
             $submitted_user->display_name,
             $post->post_title,
             $rejected_user->display_name,

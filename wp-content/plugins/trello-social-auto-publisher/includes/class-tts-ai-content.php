@@ -2,7 +2,7 @@
 /**
  * AI-Powered Content Enhancement System
  *
- * @package TrelloSocialAutoPublisher
+ * @package FPPublisher
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -33,14 +33,14 @@ class TTS_AI_Content {
         check_ajax_referer( 'tts_ai_nonce', 'nonce' );
 
         if ( ! current_user_can( 'edit_posts' ) ) {
-            wp_die( esc_html__( 'You do not have sufficient permissions.', 'trello-social-auto-publisher' ) );
+            wp_die( esc_html__( 'You do not have sufficient permissions.', 'fp-publisher' ) );
         }
 
         $content = sanitize_textarea_field( wp_unslash( $_POST['content'] ?? '' ) );
         $platform = sanitize_text_field( wp_unslash( $_POST['platform'] ?? 'general' ) );
 
         if ( empty( $content ) ) {
-            wp_send_json_error( array( 'message' => __( 'Content is required for hashtag generation.', 'trello-social-auto-publisher' ) ) );
+            wp_send_json_error( array( 'message' => __( 'Content is required for hashtag generation.', 'fp-publisher' ) ) );
         }
 
         try {
@@ -48,11 +48,11 @@ class TTS_AI_Content {
             
             wp_send_json_success( array(
                 'hashtags' => $hashtags,
-                'message' => __( 'Hashtags generated successfully!', 'trello-social-auto-publisher' )
+                'message' => __( 'Hashtags generated successfully!', 'fp-publisher' )
             ) );
         } catch ( Exception $e ) {
             error_log( 'TTS AI Hashtag Generation Error: ' . $e->getMessage() );
-            wp_send_json_error( array( 'message' => __( 'Failed to generate hashtags. Please try again.', 'trello-social-auto-publisher' ) ) );
+            wp_send_json_error( array( 'message' => __( 'Failed to generate hashtags. Please try again.', 'fp-publisher' ) ) );
         }
     }
 
@@ -179,14 +179,14 @@ class TTS_AI_Content {
         check_ajax_referer( 'tts_ai_nonce', 'nonce' );
 
         if ( ! current_user_can( 'edit_posts' ) ) {
-            wp_die( esc_html__( 'You do not have sufficient permissions.', 'trello-social-auto-publisher' ) );
+            wp_die( esc_html__( 'You do not have sufficient permissions.', 'fp-publisher' ) );
         }
 
         $content = sanitize_textarea_field( wp_unslash( $_POST['content'] ?? '' ) );
         $platform = sanitize_text_field( wp_unslash( $_POST['platform'] ?? 'general' ) );
 
         if ( empty( $content ) ) {
-            wp_send_json_error( array( 'message' => __( 'Content is required for analysis.', 'trello-social-auto-publisher' ) ) );
+            wp_send_json_error( array( 'message' => __( 'Content is required for analysis.', 'fp-publisher' ) ) );
         }
 
         try {
@@ -194,11 +194,11 @@ class TTS_AI_Content {
             
             wp_send_json_success( array(
                 'analysis' => $analysis,
-                'message' => __( 'Content analyzed successfully!', 'trello-social-auto-publisher' )
+                'message' => __( 'Content analyzed successfully!', 'fp-publisher' )
             ) );
         } catch ( Exception $e ) {
             error_log( 'TTS AI Content Analysis Error: ' . $e->getMessage() );
-            wp_send_json_error( array( 'message' => __( 'Failed to analyze content. Please try again.', 'trello-social-auto-publisher' ) ) );
+            wp_send_json_error( array( 'message' => __( 'Failed to analyze content. Please try again.', 'fp-publisher' ) ) );
         }
     }
 
@@ -237,7 +237,7 @@ class TTS_AI_Content {
             $analysis['score'] += 30;
         } else {
             $analysis['suggestions'][] = sprintf(
-                __( 'Optimal content length for %s is %d-%d characters. Current: %d', 'trello-social-auto-publisher' ),
+                __( 'Optimal content length for %s is %d-%d characters. Current: %d', 'fp-publisher' ),
                 $platform,
                 $platform_limits['min'],
                 $platform_limits['max'],
@@ -252,7 +252,7 @@ class TTS_AI_Content {
         if ( $hashtag_count > 0 ) {
             $analysis['score'] += 20;
         } else {
-            $analysis['suggestions'][] = __( 'Add relevant hashtags to increase discoverability', 'trello-social-auto-publisher' );
+            $analysis['suggestions'][] = __( 'Add relevant hashtags to increase discoverability', 'fp-publisher' );
         }
 
         // Check for engagement triggers
@@ -280,7 +280,7 @@ class TTS_AI_Content {
             $analysis['score'] += 10;
         } else {
             $analysis['readability'] = 40;
-            $analysis['suggestions'][] = __( 'Consider using shorter sentences for better readability', 'trello-social-auto-publisher' );
+            $analysis['suggestions'][] = __( 'Consider using shorter sentences for better readability', 'fp-publisher' );
         }
 
         // Store metrics
@@ -304,14 +304,14 @@ class TTS_AI_Content {
         check_ajax_referer( 'tts_ai_nonce', 'nonce' );
 
         if ( ! current_user_can( 'edit_posts' ) ) {
-            wp_die( esc_html__( 'You do not have sufficient permissions.', 'trello-social-auto-publisher' ) );
+            wp_die( esc_html__( 'You do not have sufficient permissions.', 'fp-publisher' ) );
         }
 
         $content = sanitize_textarea_field( wp_unslash( $_POST['content'] ?? '' ) );
         $platform = sanitize_text_field( wp_unslash( $_POST['platform'] ?? 'general' ) );
 
         if ( empty( $content ) ) {
-            wp_send_json_error( array( 'message' => __( 'Content is required for performance prediction.', 'trello-social-auto-publisher' ) ) );
+            wp_send_json_error( array( 'message' => __( 'Content is required for performance prediction.', 'fp-publisher' ) ) );
         }
 
         try {
@@ -319,11 +319,11 @@ class TTS_AI_Content {
             
             wp_send_json_success( array(
                 'prediction' => $prediction,
-                'message' => __( 'Performance predicted successfully!', 'trello-social-auto-publisher' )
+                'message' => __( 'Performance predicted successfully!', 'fp-publisher' )
             ) );
         } catch ( Exception $e ) {
             error_log( 'TTS AI Performance Prediction Error: ' . $e->getMessage() );
-            wp_send_json_error( array( 'message' => __( 'Failed to predict performance. Please try again.', 'trello-social-auto-publisher' ) ) );
+            wp_send_json_error( array( 'message' => __( 'Failed to predict performance. Please try again.', 'fp-publisher' ) ) );
         }
     }
 
@@ -467,13 +467,13 @@ class TTS_AI_Content {
      */
     private function get_performance_recommendation( $score ) {
         if ( $score >= 80 ) {
-            return __( 'Excellent! This content has high engagement potential.', 'trello-social-auto-publisher' );
+            return __( 'Excellent! This content has high engagement potential.', 'fp-publisher' );
         } elseif ( $score >= 60 ) {
-            return __( 'Good content with solid engagement potential. Consider minor optimizations.', 'trello-social-auto-publisher' );
+            return __( 'Good content with solid engagement potential. Consider minor optimizations.', 'fp-publisher' );
         } elseif ( $score >= 40 ) {
-            return __( 'Average content. Consider adding hashtags, questions, or calls-to-action.', 'trello-social-auto-publisher' );
+            return __( 'Average content. Consider adding hashtags, questions, or calls-to-action.', 'fp-publisher' );
         } else {
-            return __( 'This content may underperform. Consider significant revisions for better engagement.', 'trello-social-auto-publisher' );
+            return __( 'This content may underperform. Consider significant revisions for better engagement.', 'fp-publisher' );
         }
     }
 
@@ -484,13 +484,13 @@ class TTS_AI_Content {
         check_ajax_referer( 'tts_ai_nonce', 'nonce' );
 
         if ( ! current_user_can( 'upload_files' ) ) {
-            wp_die( esc_html__( 'You do not have sufficient permissions.', 'trello-social-auto-publisher' ) );
+            wp_die( esc_html__( 'You do not have sufficient permissions.', 'fp-publisher' ) );
         }
 
         $image_url = esc_url_raw( wp_unslash( $_POST['image_url'] ?? '' ) );
 
         if ( empty( $image_url ) ) {
-            wp_send_json_error( array( 'message' => __( 'Image URL is required for auto-tagging.', 'trello-social-auto-publisher' ) ) );
+            wp_send_json_error( array( 'message' => __( 'Image URL is required for auto-tagging.', 'fp-publisher' ) ) );
         }
 
         try {
@@ -498,11 +498,11 @@ class TTS_AI_Content {
             
             wp_send_json_success( array(
                 'tags' => $tags,
-                'message' => __( 'Image analyzed successfully!', 'trello-social-auto-publisher' )
+                'message' => __( 'Image analyzed successfully!', 'fp-publisher' )
             ) );
         } catch ( Exception $e ) {
             error_log( 'TTS AI Image Analysis Error: ' . $e->getMessage() );
-            wp_send_json_error( array( 'message' => __( 'Failed to analyze image. Please try again.', 'trello-social-auto-publisher' ) ) );
+            wp_send_json_error( array( 'message' => __( 'Failed to analyze image. Please try again.', 'fp-publisher' ) ) );
         }
     }
 
@@ -580,7 +580,7 @@ class TTS_AI_Content {
         check_ajax_referer( 'tts_ai_nonce', 'nonce' );
 
         if ( ! current_user_can( 'edit_posts' ) ) {
-            wp_die( esc_html__( 'You do not have sufficient permissions.', 'trello-social-auto-publisher' ) );
+            wp_die( esc_html__( 'You do not have sufficient permissions.', 'fp-publisher' ) );
         }
 
         $platform = sanitize_text_field( wp_unslash( $_POST['platform'] ?? 'general' ) );
@@ -591,11 +591,11 @@ class TTS_AI_Content {
             
             wp_send_json_success( array(
                 'suggestions' => $suggestions,
-                'message' => __( 'Content suggestions generated successfully!', 'trello-social-auto-publisher' )
+                'message' => __( 'Content suggestions generated successfully!', 'fp-publisher' )
             ) );
         } catch ( Exception $e ) {
             error_log( 'TTS AI Content Suggestions Error: ' . $e->getMessage() );
-            wp_send_json_error( array( 'message' => __( 'Failed to generate suggestions. Please try again.', 'trello-social-auto-publisher' ) ) );
+            wp_send_json_error( array( 'message' => __( 'Failed to generate suggestions. Please try again.', 'fp-publisher' ) ) );
         }
     }
 

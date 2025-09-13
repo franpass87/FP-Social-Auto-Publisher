@@ -2,7 +2,7 @@
 /**
  * Content Management Page for Social Auto Publisher.
  *
- * @package TrelloSocialAutoPublisher
+ * @package FPPublisher
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -27,9 +27,9 @@ class TTS_Content_Management_Page {
      */
     public function add_menu_page() {
         add_submenu_page(
-            'social-auto-publisher',
-            __( 'Content Manager', 'trello-social-auto-publisher' ),
-            __( 'Content Manager', 'trello-social-auto-publisher' ),
+            'fp-publisher',
+            __( 'Content Manager', 'fp-publisher' ),
+            __( 'Content Manager', 'fp-publisher' ),
             'edit_posts',
             'tts-content-manager',
             array( $this, 'render_page' )
@@ -42,7 +42,7 @@ class TTS_Content_Management_Page {
      * @param string $hook Current admin page hook.
      */
     public function enqueue_scripts( $hook ) {
-        if ( 'social-auto-publisher_page_tts-content-manager' !== $hook ) {
+        if ( 'fp-publisher_page_tts-content-manager' !== $hook ) {
             return;
         }
 
@@ -75,16 +75,16 @@ class TTS_Content_Management_Page {
                 'create' => wp_create_nonce( 'tts_create_content_nonce' ),
             ),
             'strings' => array(
-                'uploadSuccess' => __( 'Content uploaded successfully!', 'trello-social-auto-publisher' ),
-                'uploadError' => __( 'Upload failed. Please try again.', 'trello-social-auto-publisher' ),
-                'syncSuccess' => __( 'Content synced successfully!', 'trello-social-auto-publisher' ),
-                'syncError' => __( 'Sync failed. Please check your configuration.', 'trello-social-auto-publisher' ),
-                'createSuccess' => __( 'Content created successfully!', 'trello-social-auto-publisher' ),
-                'createError' => __( 'Content creation failed. Please try again.', 'trello-social-auto-publisher' ),
-                'confirmDelete' => __( 'Are you sure you want to delete this content?', 'trello-social-auto-publisher' ),
-                'noFileSelected' => __( 'Please select a file to upload.', 'trello-social-auto-publisher' ),
-                'titleRequired' => __( 'Title is required.', 'trello-social-auto-publisher' ),
-                'contentRequired' => __( 'Content is required.', 'trello-social-auto-publisher' ),
+                'uploadSuccess' => __( 'Content uploaded successfully!', 'fp-publisher' ),
+                'uploadError' => __( 'Upload failed. Please try again.', 'fp-publisher' ),
+                'syncSuccess' => __( 'Content synced successfully!', 'fp-publisher' ),
+                'syncError' => __( 'Sync failed. Please check your configuration.', 'fp-publisher' ),
+                'createSuccess' => __( 'Content created successfully!', 'fp-publisher' ),
+                'createError' => __( 'Content creation failed. Please try again.', 'fp-publisher' ),
+                'confirmDelete' => __( 'Are you sure you want to delete this content?', 'fp-publisher' ),
+                'noFileSelected' => __( 'Please select a file to upload.', 'fp-publisher' ),
+                'titleRequired' => __( 'Title is required.', 'fp-publisher' ),
+                'contentRequired' => __( 'Content is required.', 'fp-publisher' ),
             ),
         ) );
     }
@@ -97,31 +97,31 @@ class TTS_Content_Management_Page {
         $content_posts = $this->get_content_posts();
         ?>
         <div class="wrap tts-content-manager">
-            <h1><?php esc_html_e( 'Content Manager', 'trello-social-auto-publisher' ); ?></h1>
-            <p><?php esc_html_e( 'Create, upload, and manage your social media content from multiple sources.', 'trello-social-auto-publisher' ); ?></p>
+            <h1><?php esc_html_e( 'Content Manager', 'fp-publisher' ); ?></h1>
+            <p><?php esc_html_e( 'Create, upload, and manage your social media content from multiple sources.', 'fp-publisher' ); ?></p>
 
             <div class="tts-content-tabs">
                 <nav class="nav-tab-wrapper">
-                    <a href="#create-content" class="nav-tab nav-tab-active"><?php esc_html_e( 'Create Content', 'trello-social-auto-publisher' ); ?></a>
-                    <a href="#upload-content" class="nav-tab"><?php esc_html_e( 'Upload Files', 'trello-social-auto-publisher' ); ?></a>
-                    <a href="#sync-content" class="nav-tab"><?php esc_html_e( 'Sync Sources', 'trello-social-auto-publisher' ); ?></a>
-                    <a href="#manage-content" class="nav-tab"><?php esc_html_e( 'Manage Content', 'trello-social-auto-publisher' ); ?></a>
+                    <a href="#create-content" class="nav-tab nav-tab-active"><?php esc_html_e( 'Create Content', 'fp-publisher' ); ?></a>
+                    <a href="#upload-content" class="nav-tab"><?php esc_html_e( 'Upload Files', 'fp-publisher' ); ?></a>
+                    <a href="#sync-content" class="nav-tab"><?php esc_html_e( 'Sync Sources', 'fp-publisher' ); ?></a>
+                    <a href="#manage-content" class="nav-tab"><?php esc_html_e( 'Manage Content', 'fp-publisher' ); ?></a>
                 </nav>
 
                 <!-- Create Content Tab -->
                 <div id="create-content" class="tab-content active">
                     <div class="tts-create-content-form">
-                        <h3><?php esc_html_e( 'Create New Content', 'trello-social-auto-publisher' ); ?></h3>
+                        <h3><?php esc_html_e( 'Create New Content', 'fp-publisher' ); ?></h3>
                         <form id="tts-create-content-form">
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label for="content-title"><?php esc_html_e( 'Title', 'trello-social-auto-publisher' ); ?></label>
+                                    <label for="content-title"><?php esc_html_e( 'Title', 'fp-publisher' ); ?></label>
                                     <input type="text" id="content-title" name="title" required>
                                 </div>
                                 <div class="form-group">
-                                    <label for="content-client"><?php esc_html_e( 'Client', 'trello-social-auto-publisher' ); ?></label>
+                                    <label for="content-client"><?php esc_html_e( 'Client', 'fp-publisher' ); ?></label>
                                     <select id="content-client" name="client_id" required>
-                                        <option value=""><?php esc_html_e( 'Select Client', 'trello-social-auto-publisher' ); ?></option>
+                                        <option value=""><?php esc_html_e( 'Select Client', 'fp-publisher' ); ?></option>
                                         <?php foreach ( $clients as $client ) : ?>
                                             <option value="<?php echo esc_attr( $client->ID ); ?>">
                                                 <?php echo esc_html( $client->post_title ); ?>
@@ -132,7 +132,7 @@ class TTS_Content_Management_Page {
                             </div>
                             
                             <div class="form-group">
-                                <label for="content-body"><?php esc_html_e( 'Content', 'trello-social-auto-publisher' ); ?></label>
+                                <label for="content-body"><?php esc_html_e( 'Content', 'fp-publisher' ); ?></label>
                                 <?php
                                 wp_editor( '', 'content-body', array(
                                     'textarea_name' => 'content',
@@ -149,7 +149,7 @@ class TTS_Content_Management_Page {
 
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label><?php esc_html_e( 'Social Channels', 'trello-social-auto-publisher' ); ?></label>
+                                    <label><?php esc_html_e( 'Social Channels', 'fp-publisher' ); ?></label>
                                     <div class="checkbox-group">
                                         <label><input type="checkbox" name="social_channels[]" value="facebook"> Facebook</label>
                                         <label><input type="checkbox" name="social_channels[]" value="instagram"> Instagram</label>
@@ -159,17 +159,17 @@ class TTS_Content_Management_Page {
                                     </div>
                                 </div>
                                 <div class="form-group">
-                                    <label for="content-schedule"><?php esc_html_e( 'Schedule Date (Optional)', 'trello-social-auto-publisher' ); ?></label>
+                                    <label for="content-schedule"><?php esc_html_e( 'Schedule Date (Optional)', 'fp-publisher' ); ?></label>
                                     <input type="datetime-local" id="content-schedule" name="schedule_date">
                                 </div>
                             </div>
 
                             <div class="form-actions">
                                 <button type="submit" class="button button-primary">
-                                    <?php esc_html_e( 'Create Content', 'trello-social-auto-publisher' ); ?>
+                                    <?php esc_html_e( 'Create Content', 'fp-publisher' ); ?>
                                 </button>
                                 <button type="button" class="button" id="preview-content">
-                                    <?php esc_html_e( 'Preview', 'trello-social-auto-publisher' ); ?>
+                                    <?php esc_html_e( 'Preview', 'fp-publisher' ); ?>
                                 </button>
                             </div>
                         </form>
@@ -179,24 +179,24 @@ class TTS_Content_Management_Page {
                 <!-- Upload Content Tab -->
                 <div id="upload-content" class="tab-content">
                     <div class="tts-upload-content-form">
-                        <h3><?php esc_html_e( 'Upload Content Files', 'trello-social-auto-publisher' ); ?></h3>
+                        <h3><?php esc_html_e( 'Upload Content Files', 'fp-publisher' ); ?></h3>
                         <form id="tts-upload-content-form" enctype="multipart/form-data">
                             <div class="upload-area" id="upload-dropzone">
                                 <div class="upload-icon">📁</div>
-                                <p><?php esc_html_e( 'Drag & drop files here or click to browse', 'trello-social-auto-publisher' ); ?></p>
+                                <p><?php esc_html_e( 'Drag & drop files here or click to browse', 'fp-publisher' ); ?></p>
                                 <input type="file" id="content-file" name="file" accept="image/*,video/*" multiple>
                             </div>
 
                             <div class="upload-details" style="display: none;">
                                 <div class="form-row">
                                     <div class="form-group">
-                                        <label for="upload-title"><?php esc_html_e( 'Title', 'trello-social-auto-publisher' ); ?></label>
+                                        <label for="upload-title"><?php esc_html_e( 'Title', 'fp-publisher' ); ?></label>
                                         <input type="text" id="upload-title" name="title">
                                     </div>
                                     <div class="form-group">
-                                        <label for="upload-client"><?php esc_html_e( 'Client', 'trello-social-auto-publisher' ); ?></label>
+                                        <label for="upload-client"><?php esc_html_e( 'Client', 'fp-publisher' ); ?></label>
                                         <select id="upload-client" name="client_id" required>
-                                            <option value=""><?php esc_html_e( 'Select Client', 'trello-social-auto-publisher' ); ?></option>
+                                            <option value=""><?php esc_html_e( 'Select Client', 'fp-publisher' ); ?></option>
                                             <?php foreach ( $clients as $client ) : ?>
                                                 <option value="<?php echo esc_attr( $client->ID ); ?>">
                                                     <?php echo esc_html( $client->post_title ); ?>
@@ -207,13 +207,13 @@ class TTS_Content_Management_Page {
                                 </div>
 
                                 <div class="form-group">
-                                    <label for="upload-content"><?php esc_html_e( 'Description', 'trello-social-auto-publisher' ); ?></label>
+                                    <label for="upload-content"><?php esc_html_e( 'Description', 'fp-publisher' ); ?></label>
                                     <textarea id="upload-content" name="content" rows="5"></textarea>
                                 </div>
 
                                 <div class="form-row">
                                     <div class="form-group">
-                                        <label><?php esc_html_e( 'Social Channels', 'trello-social-auto-publisher' ); ?></label>
+                                        <label><?php esc_html_e( 'Social Channels', 'fp-publisher' ); ?></label>
                                         <div class="checkbox-group">
                                             <label><input type="checkbox" name="social_channels[]" value="facebook"> Facebook</label>
                                             <label><input type="checkbox" name="social_channels[]" value="instagram"> Instagram</label>
@@ -222,14 +222,14 @@ class TTS_Content_Management_Page {
                                         </div>
                                     </div>
                                     <div class="form-group">
-                                        <label for="upload-schedule"><?php esc_html_e( 'Schedule Date (Optional)', 'trello-social-auto-publisher' ); ?></label>
+                                        <label for="upload-schedule"><?php esc_html_e( 'Schedule Date (Optional)', 'fp-publisher' ); ?></label>
                                         <input type="datetime-local" id="upload-schedule" name="schedule_date">
                                     </div>
                                 </div>
 
                                 <div class="form-actions">
                                     <button type="submit" class="button button-primary">
-                                        <?php esc_html_e( 'Upload & Create Post', 'trello-social-auto-publisher' ); ?>
+                                        <?php esc_html_e( 'Upload & Create Post', 'fp-publisher' ); ?>
                                     </button>
                                 </div>
                             </div>
@@ -240,8 +240,8 @@ class TTS_Content_Management_Page {
                 <!-- Sync Content Tab -->
                 <div id="sync-content" class="tab-content">
                     <div class="tts-sync-content">
-                        <h3><?php esc_html_e( 'Sync Content Sources', 'trello-social-auto-publisher' ); ?></h3>
-                        <p><?php esc_html_e( 'Sync content from your configured cloud storage and other sources.', 'trello-social-auto-publisher' ); ?></p>
+                        <h3><?php esc_html_e( 'Sync Content Sources', 'fp-publisher' ); ?></h3>
+                        <p><?php esc_html_e( 'Sync content from your configured cloud storage and other sources.', 'fp-publisher' ); ?></p>
 
                         <div class="sync-sources">
                             <?php foreach ( $clients as $client ) : ?>
@@ -250,19 +250,19 @@ class TTS_Content_Management_Page {
                                     <div class="sync-options" data-client-id="<?php echo esc_attr( $client->ID ); ?>">
                                         <div class="sync-option">
                                             <button type="button" class="button sync-source-btn" data-source="dropbox">
-                                                📦 <?php esc_html_e( 'Sync Dropbox', 'trello-social-auto-publisher' ); ?>
+                                                📦 <?php esc_html_e( 'Sync Dropbox', 'fp-publisher' ); ?>
                                             </button>
                                             <span class="sync-status" id="dropbox-status-<?php echo esc_attr( $client->ID ); ?>"></span>
                                         </div>
                                         <div class="sync-option">
                                             <button type="button" class="button sync-source-btn" data-source="google_drive">
-                                                🗄️ <?php esc_html_e( 'Sync Google Drive', 'trello-social-auto-publisher' ); ?>
+                                                🗄️ <?php esc_html_e( 'Sync Google Drive', 'fp-publisher' ); ?>
                                             </button>
                                             <span class="sync-status" id="google_drive-status-<?php echo esc_attr( $client->ID ); ?>"></span>
                                         </div>
                                         <div class="sync-option">
                                             <button type="button" class="button sync-source-btn" data-source="trello">
-                                                📋 <?php esc_html_e( 'Sync Trello', 'trello-social-auto-publisher' ); ?>
+                                                📋 <?php esc_html_e( 'Sync Trello', 'fp-publisher' ); ?>
                                             </button>
                                             <span class="sync-status" id="trello-status-<?php echo esc_attr( $client->ID ); ?>"></span>
                                         </div>
@@ -276,11 +276,11 @@ class TTS_Content_Management_Page {
                 <!-- Manage Content Tab -->
                 <div id="manage-content" class="tab-content">
                     <div class="tts-manage-content">
-                        <h3><?php esc_html_e( 'Manage Content', 'trello-social-auto-publisher' ); ?></h3>
+                        <h3><?php esc_html_e( 'Manage Content', 'fp-publisher' ); ?></h3>
                         
                         <div class="content-filters">
                             <select id="filter-client">
-                                <option value=""><?php esc_html_e( 'All Clients', 'trello-social-auto-publisher' ); ?></option>
+                                <option value=""><?php esc_html_e( 'All Clients', 'fp-publisher' ); ?></option>
                                 <?php foreach ( $clients as $client ) : ?>
                                     <option value="<?php echo esc_attr( $client->ID ); ?>">
                                         <?php echo esc_html( $client->post_title ); ?>
@@ -289,16 +289,16 @@ class TTS_Content_Management_Page {
                             </select>
                             
                             <select id="filter-status">
-                                <option value=""><?php esc_html_e( 'All Statuses', 'trello-social-auto-publisher' ); ?></option>
-                                <option value="draft"><?php esc_html_e( 'Draft', 'trello-social-auto-publisher' ); ?></option>
-                                <option value="scheduled"><?php esc_html_e( 'Scheduled', 'trello-social-auto-publisher' ); ?></option>
-                                <option value="published"><?php esc_html_e( 'Published', 'trello-social-auto-publisher' ); ?></option>
+                                <option value=""><?php esc_html_e( 'All Statuses', 'fp-publisher' ); ?></option>
+                                <option value="draft"><?php esc_html_e( 'Draft', 'fp-publisher' ); ?></option>
+                                <option value="scheduled"><?php esc_html_e( 'Scheduled', 'fp-publisher' ); ?></option>
+                                <option value="published"><?php esc_html_e( 'Published', 'fp-publisher' ); ?></option>
                             </select>
                             
-                            <input type="search" id="search-content" placeholder="<?php esc_attr_e( 'Search content...', 'trello-social-auto-publisher' ); ?>">
+                            <input type="search" id="search-content" placeholder="<?php esc_attr_e( 'Search content...', 'fp-publisher' ); ?>">
                             
                             <button type="button" id="refresh-content" class="button">
-                                🔄 <?php esc_html_e( 'Refresh', 'trello-social-auto-publisher' ); ?>
+                                🔄 <?php esc_html_e( 'Refresh', 'fp-publisher' ); ?>
                             </button>
                         </div>
 
@@ -314,7 +314,7 @@ class TTS_Content_Management_Page {
         <div id="content-preview-modal" class="tts-modal" style="display: none;">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h3><?php esc_html_e( 'Content Preview', 'trello-social-auto-publisher' ); ?></h3>
+                    <h3><?php esc_html_e( 'Content Preview', 'fp-publisher' ); ?></h3>
                     <span class="close-modal">&times;</span>
                 </div>
                 <div class="modal-body">
@@ -369,7 +369,7 @@ class TTS_Content_Management_Page {
      */
     private function render_content_list( $posts ) {
         if ( empty( $posts ) ) {
-            echo '<p class="no-content">' . esc_html__( 'No content found. Create some content to get started!', 'trello-social-auto-publisher' ) . '</p>';
+            echo '<p class="no-content">' . esc_html__( 'No content found. Create some content to get started!', 'fp-publisher' ) . '</p>';
             return;
         }
 
@@ -396,7 +396,7 @@ class TTS_Content_Management_Page {
                     <h4><?php echo esc_html( $post->post_title ); ?></h4>
                     <p><?php echo esc_html( wp_trim_words( $post->post_content, 20 ) ); ?></p>
                     <div class="content-meta">
-                        <span class="client"><?php echo $client ? esc_html( $client->post_title ) : __( 'No Client', 'trello-social-auto-publisher' ); ?></span>
+                        <span class="client"><?php echo $client ? esc_html( $client->post_title ) : __( 'No Client', 'fp-publisher' ); ?></span>
                         <span class="source"><?php echo esc_html( ucfirst( str_replace( '_', ' ', $source_type ) ) ); ?></span>
                         <span class="status"><?php echo esc_html( ucfirst( $post->post_status ) ); ?></span>
                     </div>
@@ -417,10 +417,10 @@ class TTS_Content_Management_Page {
                 </div>
                 <div class="content-actions">
                     <a href="<?php echo esc_url( admin_url( "post.php?post={$post->ID}&action=edit" ) ); ?>" class="button button-small">
-                        <?php esc_html_e( 'Edit', 'trello-social-auto-publisher' ); ?>
+                        <?php esc_html_e( 'Edit', 'fp-publisher' ); ?>
                     </a>
                     <button type="button" class="button button-small delete-content" data-post-id="<?php echo esc_attr( $post->ID ); ?>">
-                        <?php esc_html_e( 'Delete', 'trello-social-auto-publisher' ); ?>
+                        <?php esc_html_e( 'Delete', 'fp-publisher' ); ?>
                     </button>
                 </div>
             </div>

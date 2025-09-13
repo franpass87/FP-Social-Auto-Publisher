@@ -2,7 +2,7 @@
 /**
  * REST endpoints for manual publish and status checks.
  *
- * @package TrelloSocialAutoPublisher
+ * @package FPPublisher
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -87,7 +87,7 @@ class TTS_REST {
         $id   = intval( $request['id'] );
         $post = get_post( $id );
         if ( ! $post ) {
-            return new WP_Error( 'invalid_post', __( 'Invalid post ID.', 'trello-social-auto-publisher' ), array( 'status' => 404 ) );
+            return new WP_Error( 'invalid_post', __( 'Invalid post ID.', 'fp-publisher' ), array( 'status' => 404 ) );
         }
 
         $post_status      = get_post_status( $id );

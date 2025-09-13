@@ -2,7 +2,7 @@
 /**
  * Advanced monitoring and health check system for Trello Social Auto Publisher.
  *
- * @package TrelloSocialAutoPublisher
+ * @package FPPublisher
  */
 
 if ( ! defined( 'ABSPATH' ) ) {

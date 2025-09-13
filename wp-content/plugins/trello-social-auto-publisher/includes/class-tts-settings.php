@@ -2,7 +2,7 @@
 /**
  * Settings page for Trello Social Auto Publisher.
  *
- * @package TrelloSocialAutoPublisher
+ * @package FPPublisher
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -47,14 +47,14 @@ class TTS_Settings {
         // Trello API credentials.
         add_settings_section(
             'tts_trello_api',
-            __( 'Trello API Credentials', 'trello-social-auto-publisher' ),
+            __( 'Trello API Credentials', 'fp-publisher' ),
             '__return_false',
             'tts_settings'
         );
 
         add_settings_field(
             'trello_api_key',
-            __( 'API Key', 'trello-social-auto-publisher' ),
+            __( 'API Key', 'fp-publisher' ),
             array( $this, 'render_trello_api_key_field' ),
             'tts_settings',
             'tts_trello_api'
@@ -62,7 +62,7 @@ class TTS_Settings {
 
         add_settings_field(
             'trello_api_token',
-            __( 'API Token', 'trello-social-auto-publisher' ),
+            __( 'API Token', 'fp-publisher' ),
             array( $this, 'render_trello_api_token_field' ),
             'tts_settings',
             'tts_trello_api'
@@ -71,14 +71,14 @@ class TTS_Settings {
         // Column mapping.
         add_settings_section(
             'tts_column_mapping',
-            __( 'Trello Column Mapping', 'trello-social-auto-publisher' ),
+            __( 'Trello Column Mapping', 'fp-publisher' ),
             '__return_false',
             'tts_settings'
         );
 
         add_settings_field(
             'column_mapping',
-            __( 'Column Mapping (JSON)', 'trello-social-auto-publisher' ),
+            __( 'Column Mapping (JSON)', 'fp-publisher' ),
             array( $this, 'render_column_mapping_field' ),
             'tts_settings',
             'tts_column_mapping'
@@ -87,14 +87,14 @@ class TTS_Settings {
         // Social access token.
         add_settings_section(
             'tts_social_token',
-            __( 'Social Access Token', 'trello-social-auto-publisher' ),
+            __( 'Social Access Token', 'fp-publisher' ),
             '__return_false',
             'tts_settings'
         );
 
         add_settings_field(
             'social_access_token',
-            __( 'Access Token', 'trello-social-auto-publisher' ),
+            __( 'Access Token', 'fp-publisher' ),
             array( $this, 'render_social_access_token_field' ),
             'tts_settings',
             'tts_social_token'
@@ -103,7 +103,7 @@ class TTS_Settings {
         // Scheduling options.
         add_settings_section(
             'tts_scheduling_options',
-            __( 'Scheduling Options', 'trello-social-auto-publisher' ),
+            __( 'Scheduling Options', 'fp-publisher' ),
             '__return_false',
             'tts_settings'
         );
@@ -111,7 +111,7 @@ class TTS_Settings {
         foreach ( $channels as $channel ) {
             add_settings_field(
                 $channel . '_offset',
-                sprintf( __( '%s Offset (minutes)', 'trello-social-auto-publisher' ), ucfirst( $channel ) ),
+                sprintf( __( '%s Offset (minutes)', 'fp-publisher' ), ucfirst( $channel ) ),
                 array( $this, 'render_offset_field' ),
                 'tts_settings',
                 'tts_scheduling_options',
@@ -124,14 +124,14 @@ class TTS_Settings {
         // Default location options.
         add_settings_section(
             'tts_location_options',
-            __( 'Default Location', 'trello-social-auto-publisher' ),
+            __( 'Default Location', 'fp-publisher' ),
             '__return_false',
             'tts_settings'
         );
 
         add_settings_field(
             'default_lat',
-            __( 'Default Latitude', 'trello-social-auto-publisher' ),
+            __( 'Default Latitude', 'fp-publisher' ),
             array( $this, 'render_default_lat_field' ),
             'tts_settings',
             'tts_location_options'
@@ -139,7 +139,7 @@ class TTS_Settings {
 
         add_settings_field(
             'default_lng',
-            __( 'Default Longitude', 'trello-social-auto-publisher' ),
+            __( 'Default Longitude', 'fp-publisher' ),
             array( $this, 'render_default_lng_field' ),
             'tts_settings',
             'tts_location_options'
@@ -148,7 +148,7 @@ class TTS_Settings {
         // Image size options.
         add_settings_section(
             'tts_image_sizes',
-            __( 'Image Sizes', 'trello-social-auto-publisher' ),
+            __( 'Image Sizes', 'fp-publisher' ),
             '__return_false',
             'tts_settings'
         );
@@ -156,7 +156,7 @@ class TTS_Settings {
         foreach ( $channels as $channel ) {
             add_settings_field(
                 $channel . '_size',
-                sprintf( __( '%s Size (WxH)', 'trello-social-auto-publisher' ), ucfirst( $channel ) ),
+                sprintf( __( '%s Size (WxH)', 'fp-publisher' ), ucfirst( $channel ) ),
                 array( $this, 'render_image_size_field' ),
                 'tts_settings',
                 'tts_image_sizes',
@@ -169,7 +169,7 @@ class TTS_Settings {
         // UTM options.
         add_settings_section(
             'tts_utm_options',
-            __( 'UTM Options', 'trello-social-auto-publisher' ),
+            __( 'UTM Options', 'fp-publisher' ),
             '__return_false',
             'tts_settings'
         );
@@ -179,7 +179,7 @@ class TTS_Settings {
             foreach ( $params as $param ) {
                 add_settings_field(
                     $channel . '_' . $param,
-                    sprintf( __( '%s UTM %s', 'trello-social-auto-publisher' ), ucfirst( $channel ), ucfirst( str_replace( 'utm_', '', $param ) ) ),
+                    sprintf( __( '%s UTM %s', 'fp-publisher' ), ucfirst( $channel ), ucfirst( str_replace( 'utm_', '', $param ) ) ),
                     array( $this, 'render_utm_field' ),
                     'tts_settings',
                     'tts_utm_options',
@@ -194,14 +194,14 @@ class TTS_Settings {
         // Template options.
         add_settings_section(
             'tts_template_options',
-            __( 'Template Options', 'trello-social-auto-publisher' ),
+            __( 'Template Options', 'fp-publisher' ),
             '__return_false',
             'tts_settings'
         );
 
         add_settings_field(
             'facebook_template',
-            __( 'Facebook Template', 'trello-social-auto-publisher' ),
+            __( 'Facebook Template', 'fp-publisher' ),
             array( $this, 'render_facebook_template_field' ),
             'tts_settings',
             'tts_template_options'
@@ -209,7 +209,7 @@ class TTS_Settings {
 
         add_settings_field(
             'instagram_template',
-            __( 'Instagram Template', 'trello-social-auto-publisher' ),
+            __( 'Instagram Template', 'fp-publisher' ),
             array( $this, 'render_instagram_template_field' ),
             'tts_settings',
             'tts_template_options'
@@ -217,7 +217,7 @@ class TTS_Settings {
 
         add_settings_field(
             'youtube_template',
-            __( 'YouTube Template', 'trello-social-auto-publisher' ),
+            __( 'YouTube Template', 'fp-publisher' ),
             array( $this, 'render_youtube_template_field' ),
             'tts_settings',
             'tts_template_options'
@@ -225,7 +225,7 @@ class TTS_Settings {
 
         add_settings_field(
             'tiktok_template',
-            __( 'TikTok Template', 'trello-social-auto-publisher' ),
+            __( 'TikTok Template', 'fp-publisher' ),
             array( $this, 'render_tiktok_template_field' ),
             'tts_settings',
             'tts_template_options'
@@ -233,7 +233,7 @@ class TTS_Settings {
 
         add_settings_field(
             'labels_as_hashtags',
-            __( 'Labels as Hashtags', 'trello-social-auto-publisher' ),
+            __( 'Labels as Hashtags', 'fp-publisher' ),
             array( $this, 'render_labels_as_hashtags_field' ),
             'tts_settings',
             'tts_template_options'
@@ -242,14 +242,14 @@ class TTS_Settings {
         // URL shortener options.
         add_settings_section(
             'tts_url_shortener',
-            __( 'URL Shortener', 'trello-social-auto-publisher' ),
+            __( 'URL Shortener', 'fp-publisher' ),
             '__return_false',
             'tts_settings'
         );
 
         add_settings_field(
             'url_shortener',
-            __( 'URL Shortener', 'trello-social-auto-publisher' ),
+            __( 'URL Shortener', 'fp-publisher' ),
             array( $this, 'render_url_shortener_field' ),
             'tts_settings',
             'tts_url_shortener'
@@ -257,7 +257,7 @@ class TTS_Settings {
 
         add_settings_field(
             'bitly_token',
-            __( 'Bitly Token', 'trello-social-auto-publisher' ),
+            __( 'Bitly Token', 'fp-publisher' ),
             array( $this, 'render_bitly_token_field' ),
             'tts_settings',
             'tts_url_shortener'
@@ -266,14 +266,14 @@ class TTS_Settings {
         // Notification options.
         add_settings_section(
             'tts_notification_options',
-            __( 'Notification Options', 'trello-social-auto-publisher' ),
+            __( 'Notification Options', 'fp-publisher' ),
             '__return_false',
             'tts_settings'
         );
 
         add_settings_field(
             'slack_webhook',
-            __( 'Slack Webhook', 'trello-social-auto-publisher' ),
+            __( 'Slack Webhook', 'fp-publisher' ),
             array( $this, 'render_slack_webhook_field' ),
             'tts_settings',
             'tts_notification_options'
@@ -281,7 +281,7 @@ class TTS_Settings {
 
         add_settings_field(
             'notification_emails',
-            __( 'Notification Emails', 'trello-social-auto-publisher' ),
+            __( 'Notification Emails', 'fp-publisher' ),
             array( $this, 'render_notification_emails_field' ),
             'tts_settings',
             'tts_notification_options'
@@ -290,14 +290,14 @@ class TTS_Settings {
         // Logging options.
         add_settings_section(
             'tts_logging_options',
-            __( 'Logging Options', 'trello-social-auto-publisher' ),
+            __( 'Logging Options', 'fp-publisher' ),
             '__return_false',
             'tts_settings'
         );
 
         add_settings_field(
             'log_retention_days',
-            __( 'Log Retention (days)', 'trello-social-auto-publisher' ),
+            __( 'Log Retention (days)', 'fp-publisher' ),
             array( $this, 'render_log_retention_days_field' ),
             'tts_settings',
             'tts_logging_options'
@@ -310,7 +310,7 @@ class TTS_Settings {
     public function render_settings_page() {
         ?>
         <div class="wrap">
-            <h1><?php esc_html_e( 'Trello Social Settings', 'trello-social-auto-publisher' ); ?></h1>
+            <h1><?php esc_html_e( 'Trello Social Settings', 'fp-publisher' ); ?></h1>
             <form action="options.php" method="post">
                 <?php
                 settings_fields( 'tts_settings_group' );
@@ -428,7 +428,7 @@ class TTS_Settings {
         $options = get_option( 'tts_settings', array() );
         $value   = isset( $options['facebook_template'] ) ? esc_attr( $options['facebook_template'] ) : '';
         echo '<input type="text" name="tts_settings[facebook_template]" value="' . $value . '" class="regular-text" placeholder="{title} {url} {due}" />';
-        echo '<p class="description">' . esc_html__( 'Available placeholders: {title}, {url}, {due}, {labels}, {client_name}', 'trello-social-auto-publisher' ) . '</p>';
+        echo '<p class="description">' . esc_html__( 'Available placeholders: {title}, {url}, {due}, {labels}, {client_name}', 'fp-publisher' ) . '</p>';
     }
 
     /**
@@ -438,7 +438,7 @@ class TTS_Settings {
         $options = get_option( 'tts_settings', array() );
         $value   = isset( $options['instagram_template'] ) ? esc_attr( $options['instagram_template'] ) : '';
         echo '<input type="text" name="tts_settings[instagram_template]" value="' . $value . '" class="regular-text" placeholder="{title} {url} {due}" />';
-        echo '<p class="description">' . esc_html__( 'Available placeholders: {title}, {url}, {due}, {labels}, {client_name}', 'trello-social-auto-publisher' ) . '</p>';
+        echo '<p class="description">' . esc_html__( 'Available placeholders: {title}, {url}, {due}, {labels}, {client_name}', 'fp-publisher' ) . '</p>';
     }
 
     /**
@@ -448,7 +448,7 @@ class TTS_Settings {
         $options = get_option( 'tts_settings', array() );
         $value   = isset( $options['youtube_template'] ) ? esc_attr( $options['youtube_template'] ) : '';
         echo '<input type="text" name="tts_settings[youtube_template]" value="' . $value . '" class="regular-text" placeholder="{title} {url} {due}" />';
-        echo '<p class="description">' . esc_html__( 'Available placeholders: {title}, {url}, {due}, {labels}, {client_name}', 'trello-social-auto-publisher' ) . '</p>';
+        echo '<p class="description">' . esc_html__( 'Available placeholders: {title}, {url}, {due}, {labels}, {client_name}', 'fp-publisher' ) . '</p>';
     }
 
     /**
@@ -458,7 +458,7 @@ class TTS_Settings {
         $options = get_option( 'tts_settings', array() );
         $value   = isset( $options['tiktok_template'] ) ? esc_attr( $options['tiktok_template'] ) : '';
         echo '<input type="text" name="tts_settings[tiktok_template]" value="' . $value . '" class="regular-text" placeholder="{title} {url} {due}" />';
-        echo '<p class="description">' . esc_html__( 'Available placeholders: {title}, {url}, {due}, {labels}, {client_name}', 'trello-social-auto-publisher' ) . '</p>';
+        echo '<p class="description">' . esc_html__( 'Available placeholders: {title}, {url}, {due}, {labels}, {client_name}', 'fp-publisher' ) . '</p>';
     }
 
     /**
@@ -467,7 +467,7 @@ class TTS_Settings {
     public function render_labels_as_hashtags_field() {
         $options = get_option( 'tts_settings', array() );
         $checked = ! empty( $options['labels_as_hashtags'] );
-        echo '<label><input type="checkbox" name="tts_settings[labels_as_hashtags]" value="1"' . checked( $checked, true, false ) . ' /> ' . esc_html__( 'Append Trello labels as hashtags', 'trello-social-auto-publisher' ) . '</label>';
+        echo '<label><input type="checkbox" name="tts_settings[labels_as_hashtags]" value="1"' . checked( $checked, true, false ) . ' /> ' . esc_html__( 'Append Trello labels as hashtags', 'fp-publisher' ) . '</label>';
     }
 
     /**
@@ -478,9 +478,9 @@ class TTS_Settings {
         $value   = isset( $options['url_shortener'] ) ? $options['url_shortener'] : 'none';
 
         $choices = array(
-            'none'  => __( 'None', 'trello-social-auto-publisher' ),
-            'wp'    => __( 'WordPress', 'trello-social-auto-publisher' ),
-            'bitly' => __( 'Bitly', 'trello-social-auto-publisher' ),
+            'none'  => __( 'None', 'fp-publisher' ),
+            'wp'    => __( 'WordPress', 'fp-publisher' ),
+            'bitly' => __( 'Bitly', 'fp-publisher' ),
         );
 
         echo '<select name="tts_settings[url_shortener]">';
@@ -497,7 +497,7 @@ class TTS_Settings {
         $options = get_option( 'tts_settings', array() );
         $value   = isset( $options['bitly_token'] ) ? esc_attr( $options['bitly_token'] ) : '';
         echo '<input type="text" name="tts_settings[bitly_token]" value="' . $value . '" class="regular-text" />';
-        echo '<p class="description">' . esc_html__( 'Required for Bitly shortening.', 'trello-social-auto-publisher' ) . '</p>';
+        echo '<p class="description">' . esc_html__( 'Required for Bitly shortening.', 'fp-publisher' ) . '</p>';
     }
 
     /**
@@ -516,7 +516,7 @@ class TTS_Settings {
         $options = get_option( 'tts_settings', array() );
         $value   = isset( $options['notification_emails'] ) ? esc_attr( $options['notification_emails'] ) : '';
         echo '<input type="text" name="tts_settings[notification_emails]" value="' . $value . '" class="regular-text" />';
-        echo '<p class="description">' . esc_html__( 'Comma-separated list of email addresses.', 'trello-social-auto-publisher' ) . '</p>';
+        echo '<p class="description">' . esc_html__( 'Comma-separated list of email addresses.', 'fp-publisher' ) . '</p>';
     }
 
     /**

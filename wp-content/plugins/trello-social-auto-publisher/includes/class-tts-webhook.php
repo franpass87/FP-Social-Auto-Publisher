@@ -2,7 +2,7 @@
 /**
  * Trello webhook endpoint.
  *
- * @package TrelloSocialAutoPublisher
+ * @package FPPublisher
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -85,7 +85,7 @@ class TTS_Webhook {
             default:
                 return new WP_Error( 
                     'invalid_source', 
-                    __( 'Invalid content source', 'trello-social-auto-publisher' ), 
+                    __( 'Invalid content source', 'fp-publisher' ), 
                     array( 'status' => 400 ) 
                 );
         }
@@ -291,7 +291,7 @@ class TTS_Webhook {
         }
 
         if ( ! $client_id ) {
-            return new WP_Error( 'client_not_found', __( 'Client not found.', 'trello-social-auto-publisher' ), array( 'status' => 404 ) );
+            return new WP_Error( 'client_not_found', __( 'Client not found.', 'fp-publisher' ), array( 'status' => 404 ) );
         }
 
         // Load Trello credentials for the resolved client.
@@ -300,7 +300,7 @@ class TTS_Webhook {
 
         $provided_token = $request->get_param( 'token' );
         if ( empty( $client_token ) || $provided_token !== $client_token ) {
-            return new WP_Error( 'invalid_token', __( 'Invalid token.', 'trello-social-auto-publisher' ), array( 'status' => 403 ) );
+            return new WP_Error( 'invalid_token', __( 'Invalid token.', 'fp-publisher' ), array( 'status' => 403 ) );
         }
 
         $signature_header = $request->get_header( 'x-trello-webhook' );
@@ -308,28 +308,28 @@ class TTS_Webhook {
         $content          = $request->get_body();
 
         if ( empty( $client_secret ) ) {
-            return new WP_Error( 'missing_secret', __( 'Client secret not configured.', 'trello-social-auto-publisher' ), array( 'status' => 403 ) );
+            return new WP_Error( 'missing_secret', __( 'Client secret not configured.', 'fp-publisher' ), array( 'status' => 403 ) );
         }
 
         if ( $signature_header ) {
             $callback_url = rest_url( 'tts/v1/trello-webhook' );
             $expected     = base64_encode( hash_hmac( 'sha1', $content . $callback_url, $client_secret, true ) );
             if ( ! hash_equals( $signature_header, $expected ) ) {
-                return new WP_Error( 'invalid_signature', __( 'Invalid signature.', 'trello-social-auto-publisher' ), array( 'status' => 403 ) );
+                return new WP_Error( 'invalid_signature', __( 'Invalid signature.', 'fp-publisher' ), array( 'status' => 403 ) );
             }
         } elseif ( $hmac_param ) {
             $expected = hash_hmac( 'sha256', $content, $client_secret );
             if ( ! hash_equals( $hmac_param, $expected ) ) {
-                return new WP_Error( 'invalid_signature', __( 'Invalid signature.', 'trello-social-auto-publisher' ), array( 'status' => 403 ) );
+                return new WP_Error( 'invalid_signature', __( 'Invalid signature.', 'fp-publisher' ), array( 'status' => 403 ) );
             }
         } else {
-            return new WP_Error( 'invalid_signature', __( 'Missing signature.', 'trello-social-auto-publisher' ), array( 'status' => 403 ) );
+            return new WP_Error( 'invalid_signature', __( 'Missing signature.', 'fp-publisher' ), array( 'status' => 403 ) );
         }
 
         $mapping_json = get_post_meta( $client_id, '_tts_column_mapping', true );
         $mapping = ! empty( $mapping_json ) ? json_decode( $mapping_json, true ) : array();
         if ( empty( $result['idList'] ) || ! is_array( $mapping ) || ! array_key_exists( $result['idList'], $mapping ) ) {
-            return rest_ensure_response( array( 'message' => __( 'Unmapped list.', 'trello-social-auto-publisher' ) ) );
+            return rest_ensure_response( array( 'message' => __( 'Unmapped list.', 'fp-publisher' ) ) );
         }
         $existing_post = get_posts(
             array(
@@ -348,7 +348,7 @@ class TTS_Webhook {
 
         if ( ! empty( $existing_post ) ) {
             tts_log_event( $existing_post[0], 'webhook', 'skip', 'Trello card already processed', '' );
-            return rest_ensure_response( array( 'message' => __( 'Card already processed.', 'trello-social-auto-publisher' ) ) );
+            return rest_ensure_response( array( 'message' => __( 'Card already processed.', 'fp-publisher' ) ) );
         }
 
         $post_id = wp_insert_post(
@@ -392,9 +392,9 @@ class TTS_Webhook {
                     }
 
                     update_post_meta( $post_id, '_tts_manual_media', (int) $media_id );
-                    tts_log_event( $post_id, 'webhook', 'success', __( 'Manual media imported', 'trello-social-auto-publisher' ), $manual_url );
+                    tts_log_event( $post_id, 'webhook', 'success', __( 'Manual media imported', 'fp-publisher' ), $manual_url );
                 } else {
-                    tts_log_event( $post_id, 'webhook', 'warning', __( 'No attachments provided', 'trello-social-auto-publisher' ), '' );
+                    tts_log_event( $post_id, 'webhook', 'warning', __( 'No attachments provided', 'fp-publisher' ), '' );
                     return rest_ensure_response( $result );
                 }
             }
@@ -409,7 +409,7 @@ class TTS_Webhook {
                         $post_id,
                         'webhook',
                         'scheduled',
-                        sprintf( __( 'Publish scheduled for %s', 'trello-social-auto-publisher' ), $publish_at ),
+                        sprintf( __( 'Publish scheduled for %s', 'fp-publisher' ), $publish_at ),
                         ''
                     );
                 }
@@ -433,13 +433,13 @@ class TTS_Webhook {
                         )
                     );
                     if ( is_wp_error( $response ) ) {
-                        tts_log_event( $post_id, 'webhook', 'error', __( 'Failed to retrieve attachment.', 'trello-social-auto-publisher' ), $attachment['url'] );
+                        tts_log_event( $post_id, 'webhook', 'error', __( 'Failed to retrieve attachment.', 'fp-publisher' ), $attachment['url'] );
                         continue;
                     }
 
                     $code = wp_remote_retrieve_response_code( $response );
                     if ( 200 !== (int) $code ) {
-                        tts_log_event( $post_id, 'webhook', 'error', sprintf( __( 'Unexpected HTTP response code: %d', 'trello-social-auto-publisher' ), $code ), $attachment['url'] );
+                        tts_log_event( $post_id, 'webhook', 'error', sprintf( __( 'Unexpected HTTP response code: %d', 'fp-publisher' ), $code ), $attachment['url'] );
                         continue;
                     }
 
@@ -447,7 +447,7 @@ class TTS_Webhook {
                     $filetype     = wp_check_filetype( basename( wp_parse_url( $attachment['url'], PHP_URL_PATH ) ) );
 
                     if ( empty( $content_type ) || empty( $filetype['type'] ) || ( 0 !== strpos( $content_type, 'image/' ) && 0 !== strpos( $content_type, 'video/' ) ) ) {
-                        tts_log_event( $post_id, 'webhook', 'error', sprintf( __( 'Unsupported MIME type: %s', 'trello-social-auto-publisher' ), $content_type ), $attachment['url'] );
+                        tts_log_event( $post_id, 'webhook', 'error', sprintf( __( 'Unsupported MIME type: %s', 'fp-publisher' ), $content_type ), $attachment['url'] );
                         continue;
                     }
 
@@ -498,7 +498,7 @@ class TTS_Webhook {
         $boards = get_post_meta( $client_id, '_tts_trello_boards', true );
 
         if ( empty( $key ) || empty( $token ) || empty( $boards ) || ! is_array( $boards ) ) {
-            return new WP_Error( 'missing_data', __( 'Missing Trello credentials or boards.', 'trello-social-auto-publisher' ), array( 'status' => 400 ) );
+            return new WP_Error( 'missing_data', __( 'Missing Trello credentials or boards.', 'fp-publisher' ), array( 'status' => 400 ) );
         }
 
         $callback = rest_url( 'tts/v1/trello-webhook' );

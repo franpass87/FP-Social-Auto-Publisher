@@ -2,7 +2,7 @@
 /**
  * Competitor Analysis and Tracking System
  *
- * @package TrelloSocialAutoPublisher
+ * @package FPPublisher
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -45,7 +45,7 @@ class TTS_Competitor_Analysis {
         check_ajax_referer( 'tts_competitor_nonce', 'nonce' );
 
         if ( ! current_user_can( 'manage_options' ) ) {
-            wp_die( esc_html__( 'You do not have sufficient permissions.', 'trello-social-auto-publisher' ) );
+            wp_die( esc_html__( 'You do not have sufficient permissions.', 'fp-publisher' ) );
         }
 
         $competitor_name = sanitize_text_field( wp_unslash( $_POST['competitor_name'] ?? '' ) );
@@ -53,7 +53,7 @@ class TTS_Competitor_Analysis {
         $handle = sanitize_text_field( wp_unslash( $_POST['handle'] ?? '' ) );
 
         if ( empty( $competitor_name ) || empty( $platform ) || empty( $handle ) ) {
-            wp_send_json_error( array( 'message' => __( 'All fields are required.', 'trello-social-auto-publisher' ) ) );
+            wp_send_json_error( array( 'message' => __( 'All fields are required.', 'fp-publisher' ) ) );
         }
 
         try {
@@ -61,11 +61,11 @@ class TTS_Competitor_Analysis {
             
             wp_send_json_success( array(
                 'competitor_id' => $competitor_id,
-                'message' => __( 'Competitor added successfully!', 'trello-social-auto-publisher' )
+                'message' => __( 'Competitor added successfully!', 'fp-publisher' )
             ) );
         } catch ( Exception $e ) {
             error_log( 'TTS Competitor Add Error: ' . $e->getMessage() );
-            wp_send_json_error( array( 'message' => __( 'Failed to add competitor. Please try again.', 'trello-social-auto-publisher' ) ) );
+            wp_send_json_error( array( 'message' => __( 'Failed to add competitor. Please try again.', 'fp-publisher' ) ) );
         }
     }
 
@@ -142,24 +142,24 @@ class TTS_Competitor_Analysis {
         check_ajax_referer( 'tts_competitor_nonce', 'nonce' );
 
         if ( ! current_user_can( 'manage_options' ) ) {
-            wp_die( esc_html__( 'You do not have sufficient permissions.', 'trello-social-auto-publisher' ) );
+            wp_die( esc_html__( 'You do not have sufficient permissions.', 'fp-publisher' ) );
         }
 
         $competitor_id = intval( $_POST['competitor_id'] ?? 0 );
 
         if ( empty( $competitor_id ) ) {
-            wp_send_json_error( array( 'message' => __( 'Invalid competitor ID.', 'trello-social-auto-publisher' ) ) );
+            wp_send_json_error( array( 'message' => __( 'Invalid competitor ID.', 'fp-publisher' ) ) );
         }
 
         try {
             $this->remove_competitor( $competitor_id );
             
             wp_send_json_success( array(
-                'message' => __( 'Competitor removed successfully!', 'trello-social-auto-publisher' )
+                'message' => __( 'Competitor removed successfully!', 'fp-publisher' )
             ) );
         } catch ( Exception $e ) {
             error_log( 'TTS Competitor Remove Error: ' . $e->getMessage() );
-            wp_send_json_error( array( 'message' => __( 'Failed to remove competitor. Please try again.', 'trello-social-auto-publisher' ) ) );
+            wp_send_json_error( array( 'message' => __( 'Failed to remove competitor. Please try again.', 'fp-publisher' ) ) );
         }
     }
 
@@ -191,13 +191,13 @@ class TTS_Competitor_Analysis {
         check_ajax_referer( 'tts_competitor_nonce', 'nonce' );
 
         if ( ! current_user_can( 'manage_options' ) ) {
-            wp_die( esc_html__( 'You do not have sufficient permissions.', 'trello-social-auto-publisher' ) );
+            wp_die( esc_html__( 'You do not have sufficient permissions.', 'fp-publisher' ) );
         }
 
         $competitor_id = intval( $_POST['competitor_id'] ?? 0 );
 
         if ( empty( $competitor_id ) ) {
-            wp_send_json_error( array( 'message' => __( 'Invalid competitor ID.', 'trello-social-auto-publisher' ) ) );
+            wp_send_json_error( array( 'message' => __( 'Invalid competitor ID.', 'fp-publisher' ) ) );
         }
 
         try {
@@ -205,11 +205,11 @@ class TTS_Competitor_Analysis {
             
             wp_send_json_success( array(
                 'analysis' => $analysis,
-                'message' => __( 'Competitor analyzed successfully!', 'trello-social-auto-publisher' )
+                'message' => __( 'Competitor analyzed successfully!', 'fp-publisher' )
             ) );
         } catch ( Exception $e ) {
             error_log( 'TTS Competitor Analysis Error: ' . $e->getMessage() );
-            wp_send_json_error( array( 'message' => __( 'Failed to analyze competitor. Please try again.', 'trello-social-auto-publisher' ) ) );
+            wp_send_json_error( array( 'message' => __( 'Failed to analyze competitor. Please try again.', 'fp-publisher' ) ) );
         }
     }
 
@@ -545,7 +545,7 @@ class TTS_Competitor_Analysis {
         check_ajax_referer( 'tts_competitor_nonce', 'nonce' );
 
         if ( ! current_user_can( 'manage_options' ) ) {
-            wp_die( esc_html__( 'You do not have sufficient permissions.', 'trello-social-auto-publisher' ) );
+            wp_die( esc_html__( 'You do not have sufficient permissions.', 'fp-publisher' ) );
         }
 
         try {
@@ -553,11 +553,11 @@ class TTS_Competitor_Analysis {
             
             wp_send_json_success( array(
                 'report' => $report,
-                'message' => __( 'Competitor report generated successfully!', 'trello-social-auto-publisher' )
+                'message' => __( 'Competitor report generated successfully!', 'fp-publisher' )
             ) );
         } catch ( Exception $e ) {
             error_log( 'TTS Competitor Report Error: ' . $e->getMessage() );
-            wp_send_json_error( array( 'message' => __( 'Failed to generate report. Please try again.', 'trello-social-auto-publisher' ) ) );
+            wp_send_json_error( array( 'message' => __( 'Failed to generate report. Please try again.', 'fp-publisher' ) ) );
         }
     }
 
@@ -745,13 +745,13 @@ class TTS_Competitor_Analysis {
         check_ajax_referer( 'tts_competitor_nonce', 'nonce' );
 
         if ( ! current_user_can( 'manage_options' ) ) {
-            wp_die( esc_html__( 'You do not have sufficient permissions.', 'trello-social-auto-publisher' ) );
+            wp_die( esc_html__( 'You do not have sufficient permissions.', 'fp-publisher' ) );
         }
 
         $competitor_id = intval( $_POST['competitor_id'] ?? 0 );
 
         if ( empty( $competitor_id ) ) {
-            wp_send_json_error( array( 'message' => __( 'Invalid competitor ID.', 'trello-social-auto-publisher' ) ) );
+            wp_send_json_error( array( 'message' => __( 'Invalid competitor ID.', 'fp-publisher' ) ) );
         }
 
         try {
@@ -759,11 +759,11 @@ class TTS_Competitor_Analysis {
             
             wp_send_json_success( array(
                 'posts' => $posts,
-                'message' => __( 'Competitor posts tracked successfully!', 'trello-social-auto-publisher' )
+                'message' => __( 'Competitor posts tracked successfully!', 'fp-publisher' )
             ) );
         } catch ( Exception $e ) {
             error_log( 'TTS Competitor Posts Tracking Error: ' . $e->getMessage() );
-            wp_send_json_error( array( 'message' => __( 'Failed to track competitor posts. Please try again.', 'trello-social-auto-publisher' ) ) );
+            wp_send_json_error( array( 'message' => __( 'Failed to track competitor posts. Please try again.', 'fp-publisher' ) ) );
         }
     }
 

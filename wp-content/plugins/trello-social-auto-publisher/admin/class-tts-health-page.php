@@ -2,7 +2,7 @@
 /**
  * Admin page displaying plugin health status.
  *
- * @package TrelloSocialAutoPublisher
+ * @package FPPublisher
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -28,7 +28,7 @@ class TTS_Health_Page {
      * @param string $hook Current admin page hook.
      */
     public function enqueue_assets( $hook ) {
-        if ( 'social-auto-publisher_page_tts-health' !== $hook ) {
+        if ( 'fp-publisher_page_tts-health' !== $hook ) {
             return;
         }
 
@@ -45,9 +45,9 @@ class TTS_Health_Page {
      */
     public function register_menu() {
         add_submenu_page(
-            'tts-main',
-            __( 'Stato', 'trello-social-auto-publisher' ),
-            __( 'Stato', 'trello-social-auto-publisher' ),
+            'fp-publisher',
+            __( 'Stato', 'fp-publisher' ),
+            __( 'Stato', 'fp-publisher' ),
             'manage_tts_posts',
             'tts-health',
             array( $this, 'render_page' )
@@ -59,17 +59,17 @@ class TTS_Health_Page {
      */
     public function render_page() {
         echo '<div class="wrap">';
-        echo '<h1>' . esc_html__( 'Stato Sistema', 'trello-social-auto-publisher' ) . '</h1>';
+        echo '<h1>' . esc_html__( 'Stato Sistema', 'fp-publisher' ) . '</h1>';
 
         // Overall health status
         echo '<div class="tts-health-overview">';
-        echo '<h2>' . esc_html__( 'Stato Generale', 'trello-social-auto-publisher' ) . '</h2>';
+        echo '<h2>' . esc_html__( 'Stato Generale', 'fp-publisher' ) . '</h2>';
         $this->render_general_health();
         echo '</div>';
 
         // Token checks.
         echo '<div class="tts-health-section">';
-        echo '<h2>' . esc_html__( 'Token', 'trello-social-auto-publisher' ) . '</h2>';
+        echo '<h2>' . esc_html__( 'Token', 'fp-publisher' ) . '</h2>';
         $clients = get_posts(
             array(
                 'post_type'      => 'tts_client',
@@ -86,46 +86,46 @@ class TTS_Health_Page {
                 echo '<div class="tts-health-card">';
                 echo '<h3>' . esc_html( $title ) . '</h3>';
                 if ( is_wp_error( $result ) || ! $result ) {
-                    $message = is_wp_error( $result ) ? $result->get_error_message() : __( 'Errore', 'trello-social-auto-publisher' );
+                    $message = is_wp_error( $result ) ? $result->get_error_message() : __( 'Errore', 'fp-publisher' );
                     echo '<div class="tts-status-error"><span class="dashicons dashicons-warning"></span>' . esc_html( $message ) . '</div>';
                 } else {
-                    echo '<div class="tts-status-ok"><span class="dashicons dashicons-yes"></span>' . esc_html__( 'Token valido', 'trello-social-auto-publisher' ) . '</div>';
+                    echo '<div class="tts-status-ok"><span class="dashicons dashicons-yes"></span>' . esc_html__( 'Token valido', 'fp-publisher' ) . '</div>';
                 }
                 echo '</div>';
             }
             echo '</div>';
         } else {
-            echo '<p>' . esc_html__( 'Nessun client configurato.', 'trello-social-auto-publisher' ) . '</p>';
+            echo '<p>' . esc_html__( 'Nessun client configurato.', 'fp-publisher' ) . '</p>';
         }
         echo '</div>';
 
         // System checks
         echo '<div class="tts-health-section">';
-        echo '<h2>' . esc_html__( 'Controlli Sistema', 'trello-social-auto-publisher' ) . '</h2>';
+        echo '<h2>' . esc_html__( 'Controlli Sistema', 'fp-publisher' ) . '</h2>';
         echo '<div class="tts-health-grid">';
         
         // Trello webhook check.
         echo '<div class="tts-health-card">';
-        echo '<h3>' . esc_html__( 'Webhook Trello', 'trello-social-auto-publisher' ) . '</h3>';
+        echo '<h3>' . esc_html__( 'Webhook Trello', 'fp-publisher' ) . '</h3>';
         $webhook = TTS_Webhook::check_connection();
         if ( is_wp_error( $webhook ) || ! $webhook ) {
-            $message = is_wp_error( $webhook ) ? $webhook->get_error_message() : __( 'Errore', 'trello-social-auto-publisher' );
+            $message = is_wp_error( $webhook ) ? $webhook->get_error_message() : __( 'Errore', 'fp-publisher' );
             echo '<div class="tts-status-error"><span class="dashicons dashicons-warning"></span>' . esc_html( $message ) . '</div>';
         } else {
-            echo '<div class="tts-status-ok"><span class="dashicons dashicons-yes"></span>' . esc_html__( 'Connessione attiva', 'trello-social-auto-publisher' ) . '</div>';
+            echo '<div class="tts-status-ok"><span class="dashicons dashicons-yes"></span>' . esc_html__( 'Connessione attiva', 'fp-publisher' ) . '</div>';
         }
         echo '</div>';
 
         // Action Scheduler queue check.
         echo '<div class="tts-health-card">';
-        echo '<h3>' . esc_html__( 'Action Scheduler', 'trello-social-auto-publisher' ) . '</h3>';
+        echo '<h3>' . esc_html__( 'Action Scheduler', 'fp-publisher' ) . '</h3>';
         if ( is_callable( array( 'TTS_Scheduler', 'check_queue' ) ) ) {
             $queue = TTS_Scheduler::check_queue();
         } else {
-            $queue = new WP_Error( 'missing_method', __( 'Metodo check_queue non disponibile.', 'trello-social-auto-publisher' ) );
+            $queue = new WP_Error( 'missing_method', __( 'Metodo check_queue non disponibile.', 'fp-publisher' ) );
         }
         if ( is_wp_error( $queue ) || ! $queue ) {
-            $message = is_wp_error( $queue ) ? $queue->get_error_message() : __( 'Errore', 'trello-social-auto-publisher' );
+            $message = is_wp_error( $queue ) ? $queue->get_error_message() : __( 'Errore', 'fp-publisher' );
             echo '<div class="tts-status-error"><span class="dashicons dashicons-warning"></span>' . esc_html( $message ) . '</div>';
         } else {
             echo '<div class="tts-status-ok"><span class="dashicons dashicons-yes"></span>' . esc_html( $queue ) . '</div>';
@@ -134,7 +134,7 @@ class TTS_Health_Page {
 
         // WordPress requirements
         echo '<div class="tts-health-card">';
-        echo '<h3>' . esc_html__( 'Requisiti WordPress', 'trello-social-auto-publisher' ) . '</h3>';
+        echo '<h3>' . esc_html__( 'Requisiti WordPress', 'fp-publisher' ) . '</h3>';
         $this->render_wp_requirements();
         echo '</div>';
 
@@ -179,9 +179,9 @@ class TTS_Health_Page {
         echo '</div>';
         echo '<div class="tts-health-description">';
         if ($issues === 0) {
-            echo '<div class="tts-status-ok"><span class="dashicons dashicons-yes"></span>' . esc_html__('Tutti i sistemi funzionano correttamente', 'trello-social-auto-publisher') . '</div>';
+            echo '<div class="tts-status-ok"><span class="dashicons dashicons-yes"></span>' . esc_html__('Tutti i sistemi funzionano correttamente', 'fp-publisher') . '</div>';
         } else {
-            echo '<div class="tts-status-warning"><span class="dashicons dashicons-warning"></span>' . sprintf(esc_html__('%d problemi rilevati su %d controlli', 'trello-social-auto-publisher'), $issues, $total_checks) . '</div>';
+            echo '<div class="tts-status-warning"><span class="dashicons dashicons-warning"></span>' . sprintf(esc_html__('%d problemi rilevati su %d controlli', 'fp-publisher'), $issues, $total_checks) . '</div>';
         }
         echo '</div>';
         echo '</div>';
@@ -193,21 +193,21 @@ class TTS_Health_Page {
     private function render_wp_requirements() {
         $requirements = array(
             array(
-                'name' => __('WordPress Version', 'trello-social-auto-publisher'),
+                'name' => __('WordPress Version', 'fp-publisher'),
                 'current' => get_bloginfo('version'),
                 'required' => '5.0',
                 'check' => version_compare(get_bloginfo('version'), '5.0', '>=')
             ),
             array(
-                'name' => __('PHP Version', 'trello-social-auto-publisher'),
+                'name' => __('PHP Version', 'fp-publisher'),
                 'current' => PHP_VERSION,
                 'required' => '7.4',
                 'check' => version_compare(PHP_VERSION, '7.4', '>=')
             ),
             array(
-                'name' => __('cURL Extension', 'trello-social-auto-publisher'),
-                'current' => extension_loaded('curl') ? __('Enabled', 'trello-social-auto-publisher') : __('Disabled', 'trello-social-auto-publisher'),
-                'required' => __('Required', 'trello-social-auto-publisher'),
+                'name' => __('cURL Extension', 'fp-publisher'),
+                'current' => extension_loaded('curl') ? __('Enabled', 'fp-publisher') : __('Disabled', 'fp-publisher'),
+                'required' => __('Required', 'fp-publisher'),
                 'check' => extension_loaded('curl')
             )
         );

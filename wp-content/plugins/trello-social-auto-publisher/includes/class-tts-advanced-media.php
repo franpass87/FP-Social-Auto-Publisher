@@ -2,7 +2,7 @@
 /**
  * Advanced Media Management System
  *
- * @package TrelloSocialAutoPublisher
+ * @package FPPublisher
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -110,7 +110,7 @@ class TTS_Advanced_Media {
         check_ajax_referer( 'tts_media_nonce', 'nonce' );
 
         if ( ! current_user_can( 'upload_files' ) ) {
-            wp_die( esc_html__( 'You do not have sufficient permissions.', 'trello-social-auto-publisher' ) );
+            wp_die( esc_html__( 'You do not have sufficient permissions.', 'fp-publisher' ) );
         }
 
         $attachment_id = intval( $_POST['attachment_id'] ?? 0 );
@@ -118,7 +118,7 @@ class TTS_Advanced_Media {
         $format = sanitize_text_field( wp_unslash( $_POST['format'] ?? '' ) );
 
         if ( empty( $attachment_id ) || empty( $platform ) || empty( $format ) ) {
-            wp_send_json_error( array( 'message' => __( 'Attachment ID, platform, and format are required.', 'trello-social-auto-publisher' ) ) );
+            wp_send_json_error( array( 'message' => __( 'Attachment ID, platform, and format are required.', 'fp-publisher' ) ) );
         }
 
         try {
@@ -126,11 +126,11 @@ class TTS_Advanced_Media {
             
             wp_send_json_success( array(
                 'resized_url' => $resized_url,
-                'message' => __( 'Image resized successfully!', 'trello-social-auto-publisher' )
+                'message' => __( 'Image resized successfully!', 'fp-publisher' )
             ) );
         } catch ( Exception $e ) {
             error_log( 'TTS Media Resize Error: ' . $e->getMessage() );
-            wp_send_json_error( array( 'message' => __( 'Failed to resize image. Please try again.', 'trello-social-auto-publisher' ) ) );
+            wp_send_json_error( array( 'message' => __( 'Failed to resize image. Please try again.', 'fp-publisher' ) ) );
         }
     }
 
@@ -206,7 +206,7 @@ class TTS_Advanced_Media {
         check_ajax_referer( 'tts_media_nonce', 'nonce' );
 
         if ( ! current_user_can( 'upload_files' ) ) {
-            wp_die( esc_html__( 'You do not have sufficient permissions.', 'trello-social-auto-publisher' ) );
+            wp_die( esc_html__( 'You do not have sufficient permissions.', 'fp-publisher' ) );
         }
 
         $attachment_id = intval( $_POST['attachment_id'] ?? 0 );
@@ -214,7 +214,7 @@ class TTS_Advanced_Media {
         $quality = sanitize_text_field( wp_unslash( $_POST['quality'] ?? 'medium' ) );
 
         if ( empty( $attachment_id ) || empty( $platform ) ) {
-            wp_send_json_error( array( 'message' => __( 'Attachment ID and platform are required.', 'trello-social-auto-publisher' ) ) );
+            wp_send_json_error( array( 'message' => __( 'Attachment ID and platform are required.', 'fp-publisher' ) ) );
         }
 
         try {
@@ -222,11 +222,11 @@ class TTS_Advanced_Media {
             
             wp_send_json_success( array(
                 'optimized_info' => $optimized_info,
-                'message' => __( 'Video optimized successfully!', 'trello-social-auto-publisher' )
+                'message' => __( 'Video optimized successfully!', 'fp-publisher' )
             ) );
         } catch ( Exception $e ) {
             error_log( 'TTS Video Optimization Error: ' . $e->getMessage() );
-            wp_send_json_error( array( 'message' => __( 'Failed to optimize video. Please try again.', 'trello-social-auto-publisher' ) ) );
+            wp_send_json_error( array( 'message' => __( 'Failed to optimize video. Please try again.', 'fp-publisher' ) ) );
         }
     }
 
@@ -391,7 +391,7 @@ class TTS_Advanced_Media {
         check_ajax_referer( 'tts_media_nonce', 'nonce' );
 
         if ( ! current_user_can( 'upload_files' ) ) {
-            wp_die( esc_html__( 'You do not have sufficient permissions.', 'trello-social-auto-publisher' ) );
+            wp_die( esc_html__( 'You do not have sufficient permissions.', 'fp-publisher' ) );
         }
 
         $attachment_id = intval( $_POST['attachment_id'] ?? 0 );
@@ -401,7 +401,7 @@ class TTS_Advanced_Media {
         $watermark_opacity = intval( $_POST['watermark_opacity'] ?? 50 );
 
         if ( empty( $attachment_id ) ) {
-            wp_send_json_error( array( 'message' => __( 'Attachment ID is required.', 'trello-social-auto-publisher' ) ) );
+            wp_send_json_error( array( 'message' => __( 'Attachment ID is required.', 'fp-publisher' ) ) );
         }
 
         try {
@@ -409,11 +409,11 @@ class TTS_Advanced_Media {
             
             wp_send_json_success( array(
                 'watermarked_url' => $watermarked_url,
-                'message' => __( 'Watermark added successfully!', 'trello-social-auto-publisher' )
+                'message' => __( 'Watermark added successfully!', 'fp-publisher' )
             ) );
         } catch ( Exception $e ) {
             error_log( 'TTS Watermark Error: ' . $e->getMessage() );
-            wp_send_json_error( array( 'message' => __( 'Failed to add watermark. Please try again.', 'trello-social-auto-publisher' ) ) );
+            wp_send_json_error( array( 'message' => __( 'Failed to add watermark. Please try again.', 'fp-publisher' ) ) );
         }
     }
 
@@ -619,7 +619,7 @@ class TTS_Advanced_Media {
         check_ajax_referer( 'tts_media_nonce', 'nonce' );
 
         if ( ! current_user_can( 'upload_files' ) ) {
-            wp_die( esc_html__( 'You do not have sufficient permissions.', 'trello-social-auto-publisher' ) );
+            wp_die( esc_html__( 'You do not have sufficient permissions.', 'fp-publisher' ) );
         }
 
         $attachment_ids = array_map( 'intval', $_POST['attachment_ids'] ?? array() );
@@ -627,12 +627,12 @@ class TTS_Advanced_Media {
         $settings = array_map( 'sanitize_text_field', wp_unslash( $_POST['settings'] ?? array() ) );
 
         if ( empty( $attachment_ids ) || empty( $operation ) ) {
-            wp_send_json_error( array( 'message' => __( 'Attachment IDs and operation are required.', 'trello-social-auto-publisher' ) ) );
+            wp_send_json_error( array( 'message' => __( 'Attachment IDs and operation are required.', 'fp-publisher' ) ) );
         }
 
         // Limit batch size for performance
         if ( count( $attachment_ids ) > 20 ) {
-            wp_send_json_error( array( 'message' => __( 'Maximum 20 files can be processed at once.', 'trello-social-auto-publisher' ) ) );
+            wp_send_json_error( array( 'message' => __( 'Maximum 20 files can be processed at once.', 'fp-publisher' ) ) );
         }
 
         try {
@@ -640,11 +640,11 @@ class TTS_Advanced_Media {
             
             wp_send_json_success( array(
                 'results' => $results,
-                'message' => __( 'Batch processing completed successfully!', 'trello-social-auto-publisher' )
+                'message' => __( 'Batch processing completed successfully!', 'fp-publisher' )
             ) );
         } catch ( Exception $e ) {
             error_log( 'TTS Batch Media Processing Error: ' . $e->getMessage() );
-            wp_send_json_error( array( 'message' => __( 'Failed to process media files. Please try again.', 'trello-social-auto-publisher' ) ) );
+            wp_send_json_error( array( 'message' => __( 'Failed to process media files. Please try again.', 'fp-publisher' ) ) );
         }
     }
 
@@ -733,7 +733,7 @@ class TTS_Advanced_Media {
         check_ajax_referer( 'tts_media_nonce', 'nonce' );
 
         if ( ! current_user_can( 'upload_files' ) ) {
-            wp_die( esc_html__( 'You do not have sufficient permissions.', 'trello-social-auto-publisher' ) );
+            wp_die( esc_html__( 'You do not have sufficient permissions.', 'fp-publisher' ) );
         }
 
         $search_term = sanitize_text_field( wp_unslash( $_POST['search_term'] ?? '' ) );
@@ -741,7 +741,7 @@ class TTS_Advanced_Media {
         $per_page = intval( $_POST['per_page'] ?? 20 );
 
         if ( empty( $search_term ) ) {
-            wp_send_json_error( array( 'message' => __( 'Search term is required.', 'trello-social-auto-publisher' ) ) );
+            wp_send_json_error( array( 'message' => __( 'Search term is required.', 'fp-publisher' ) ) );
         }
 
         try {
@@ -749,11 +749,11 @@ class TTS_Advanced_Media {
             
             wp_send_json_success( array(
                 'photos' => $photos,
-                'message' => __( 'Stock photos retrieved successfully!', 'trello-social-auto-publisher' )
+                'message' => __( 'Stock photos retrieved successfully!', 'fp-publisher' )
             ) );
         } catch ( Exception $e ) {
             error_log( 'TTS Stock Photos Error: ' . $e->getMessage() );
-            wp_send_json_error( array( 'message' => __( 'Failed to retrieve stock photos. Please try again.', 'trello-social-auto-publisher' ) ) );
+            wp_send_json_error( array( 'message' => __( 'Failed to retrieve stock photos. Please try again.', 'fp-publisher' ) ) );
         }
     }
 
@@ -797,14 +797,14 @@ class TTS_Advanced_Media {
         check_ajax_referer( 'tts_media_nonce', 'nonce' );
 
         if ( ! current_user_can( 'upload_files' ) ) {
-            wp_die( esc_html__( 'You do not have sufficient permissions.', 'trello-social-auto-publisher' ) );
+            wp_die( esc_html__( 'You do not have sufficient permissions.', 'fp-publisher' ) );
         }
 
         $attachment_id = intval( $_POST['attachment_id'] ?? 0 );
         $platforms = array_map( 'sanitize_text_field', wp_unslash( $_POST['platforms'] ?? array() ) );
 
         if ( empty( $attachment_id ) || empty( $platforms ) ) {
-            wp_send_json_error( array( 'message' => __( 'Attachment ID and platforms are required.', 'trello-social-auto-publisher' ) ) );
+            wp_send_json_error( array( 'message' => __( 'Attachment ID and platforms are required.', 'fp-publisher' ) ) );
         }
 
         try {
@@ -812,11 +812,11 @@ class TTS_Advanced_Media {
             
             wp_send_json_success( array(
                 'variations' => $variations,
-                'message' => __( 'Media variations created successfully!', 'trello-social-auto-publisher' )
+                'message' => __( 'Media variations created successfully!', 'fp-publisher' )
             ) );
         } catch ( Exception $e ) {
             error_log( 'TTS Media Variations Error: ' . $e->getMessage() );
-            wp_send_json_error( array( 'message' => __( 'Failed to create variations. Please try again.', 'trello-social-auto-publisher' ) ) );
+            wp_send_json_error( array( 'message' => __( 'Failed to create variations. Please try again.', 'fp-publisher' ) ) );
         }
     }
 
@@ -864,14 +864,14 @@ class TTS_Advanced_Media {
         check_ajax_referer( 'tts_media_nonce', 'nonce' );
 
         if ( ! current_user_can( 'upload_files' ) ) {
-            wp_die( esc_html__( 'You do not have sufficient permissions.', 'trello-social-auto-publisher' ) );
+            wp_die( esc_html__( 'You do not have sufficient permissions.', 'fp-publisher' ) );
         }
 
         $attachment_id = intval( $_POST['attachment_id'] ?? 0 );
         $quality = sanitize_text_field( wp_unslash( $_POST['quality'] ?? 'medium' ) );
 
         if ( empty( $attachment_id ) ) {
-            wp_send_json_error( array( 'message' => __( 'Attachment ID is required.', 'trello-social-auto-publisher' ) ) );
+            wp_send_json_error( array( 'message' => __( 'Attachment ID is required.', 'fp-publisher' ) ) );
         }
 
         try {
@@ -879,11 +879,11 @@ class TTS_Advanced_Media {
             
             wp_send_json_success( array(
                 'compression_info' => $compression_info,
-                'message' => __( 'Media compressed successfully!', 'trello-social-auto-publisher' )
+                'message' => __( 'Media compressed successfully!', 'fp-publisher' )
             ) );
         } catch ( Exception $e ) {
             error_log( 'TTS Media Compression Error: ' . $e->getMessage() );
-            wp_send_json_error( array( 'message' => __( 'Failed to compress media. Please try again.', 'trello-social-auto-publisher' ) ) );
+            wp_send_json_error( array( 'message' => __( 'Failed to compress media. Please try again.', 'fp-publisher' ) ) );
         }
     }
 
@@ -974,7 +974,7 @@ class TTS_Advanced_Media {
         check_ajax_referer( 'tts_media_nonce', 'nonce' );
 
         if ( ! current_user_can( 'read' ) ) {
-            wp_die( esc_html__( 'You do not have sufficient permissions.', 'trello-social-auto-publisher' ) );
+            wp_die( esc_html__( 'You do not have sufficient permissions.', 'fp-publisher' ) );
         }
 
         try {
@@ -982,11 +982,11 @@ class TTS_Advanced_Media {
             
             wp_send_json_success( array(
                 'analysis' => $analysis,
-                'message' => __( 'Media performance analyzed successfully!', 'trello-social-auto-publisher' )
+                'message' => __( 'Media performance analyzed successfully!', 'fp-publisher' )
             ) );
         } catch ( Exception $e ) {
             error_log( 'TTS Media Performance Analysis Error: ' . $e->getMessage() );
-            wp_send_json_error( array( 'message' => __( 'Failed to analyze performance. Please try again.', 'trello-social-auto-publisher' ) ) );
+            wp_send_json_error( array( 'message' => __( 'Failed to analyze performance. Please try again.', 'fp-publisher' ) ) );
         }
     }
 
@@ -1095,7 +1095,7 @@ class TTS_Advanced_Media {
     public function add_media_fields( $form_fields, $post ) {
         // Add platform optimization status
         $form_fields['tts_platform_optimized'] = array(
-            'label' => __( 'Platform Optimized', 'trello-social-auto-publisher' ),
+            'label' => __( 'Platform Optimized', 'fp-publisher' ),
             'input' => 'html',
             'html' => '<select name="attachments[' . $post->ID . '][tts_platform_optimized]">
                         <option value="">Not optimized</option>
@@ -1111,10 +1111,10 @@ class TTS_Advanced_Media {
         
         // Add usage rights
         $form_fields['tts_usage_rights'] = array(
-            'label' => __( 'Usage Rights', 'trello-social-auto-publisher' ),
+            'label' => __( 'Usage Rights', 'fp-publisher' ),
             'input' => 'text',
             'value' => get_post_meta( $post->ID, '_tts_usage_rights', true ),
-            'helps' => __( 'Specify usage rights and licensing information', 'trello-social-auto-publisher' )
+            'helps' => __( 'Specify usage rights and licensing information', 'fp-publisher' )
         );
         
         return $form_fields;

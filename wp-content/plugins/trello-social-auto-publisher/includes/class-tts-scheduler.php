@@ -2,7 +2,7 @@
 /**
  * Handles scheduling and publishing of social posts.
  *
- * @package TrelloSocialAutoPublisher
+ * @package FPPublisher
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -93,11 +93,11 @@ class TTS_Scheduler {
 
         $client_id = intval( get_post_meta( $post_id, '_tts_client_id', true ) );
         if ( ! $client_id ) {
-            tts_log_event( $post_id, 'scheduler', 'error', __( 'Missing client ID', 'trello-social-auto-publisher' ), '' );
+            tts_log_event( $post_id, 'scheduler', 'error', __( 'Missing client ID', 'fp-publisher' ), '' );
             return;
         }
 
-        tts_log_event( $post_id, 'scheduler', 'start', __( 'Publishing social post', 'trello-social-auto-publisher' ), '' );
+        tts_log_event( $post_id, 'scheduler', 'start', __( 'Publishing social post', 'fp-publisher' ), '' );
 
         $tokens = array(
             'facebook'  => get_post_meta( $client_id, '_tts_fb_token', true ),
@@ -155,7 +155,7 @@ class TTS_Scheduler {
         }
 
         if ( empty( $channels ) ) {
-            tts_log_event( $post_id, 'scheduler', 'error', __( 'Missing social channel', 'trello-social-auto-publisher' ), '' );
+            tts_log_event( $post_id, 'scheduler', 'error', __( 'Missing social channel', 'fp-publisher' ), '' );
             return;
         }
 
@@ -256,18 +256,18 @@ class TTS_Scheduler {
                     }
                 }
             } else {
-                tts_log_event( $post_id, 'scheduler', 'error', __( 'Missing Story media', 'trello-social-auto-publisher' ), '' );
+                tts_log_event( $post_id, 'scheduler', 'error', __( 'Missing Story media', 'fp-publisher' ), '' );
                 $error = true;
             }
         }
 
         if ( $error ) {
             if ( $attempt >= $max_attempts ) {
-                tts_log_event( $post_id, 'scheduler', 'error', __( 'Maximum retry attempts reached', 'trello-social-auto-publisher' ), '' );
+                tts_log_event( $post_id, 'scheduler', 'error', __( 'Maximum retry attempts reached', 'fp-publisher' ), '' );
                 $log_url = admin_url( 'admin.php?page=tts-log&post_id=' . $post_id );
-                $message = sprintf( __( 'Publishing failed for post %1$s. Log: %2$s', 'trello-social-auto-publisher' ), get_the_title( $post_id ), $log_url );
+                $message = sprintf( __( 'Publishing failed for post %1$s. Log: %2$s', 'fp-publisher' ), get_the_title( $post_id ), $log_url );
                 $notifier->notify_slack( $message );
-                $notifier->notify_email( __( 'Social publishing failed', 'trello-social-auto-publisher' ), $message );
+                $notifier->notify_email( __( 'Social publishing failed', 'fp-publisher' ), $message );
                 return;
             }
 
@@ -278,7 +278,7 @@ class TTS_Scheduler {
             $timestamp = time() + $delay * MINUTE_IN_SECONDS;
             as_schedule_single_action( $timestamp, 'tts_publish_social_post', array( 'post_id' => $post_id ) );
 
-            tts_log_event( $post_id, 'scheduler', 'retry', sprintf( __( 'Retry #%1$d scheduled in %2$d minutes', 'trello-social-auto-publisher' ), $attempt, $delay ), '' );
+            tts_log_event( $post_id, 'scheduler', 'retry', sprintf( __( 'Retry #%1$d scheduled in %2$d minutes', 'fp-publisher' ), $attempt, $delay ), '' );
             return;
         }
 
@@ -365,12 +365,12 @@ class TTS_Scheduler {
             }
         }
 
-        tts_log_event( $post_id, 'scheduler', 'complete', __( 'Publish process completed', 'trello-social-auto-publisher' ), $log );
+        tts_log_event( $post_id, 'scheduler', 'complete', __( 'Publish process completed', 'fp-publisher' ), $log );
 
         $log_url = admin_url( 'admin.php?page=tts-log&post_id=' . $post_id );
-        $message = sprintf( __( 'Publishing completed for post %1$s. Log: %2$s', 'trello-social-auto-publisher' ), get_the_title( $post_id ), $log_url );
+        $message = sprintf( __( 'Publishing completed for post %1$s. Log: %2$s', 'fp-publisher' ), get_the_title( $post_id ), $log_url );
         $notifier->notify_slack( $message );
-        $notifier->notify_email( __( 'Social publishing completed', 'trello-social-auto-publisher' ), $message );
+        $notifier->notify_email( __( 'Social publishing completed', 'fp-publisher' ), $message );
     }
 
     /**

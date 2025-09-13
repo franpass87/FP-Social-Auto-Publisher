@@ -2,7 +2,7 @@
 /**
  * Facebook Story publisher.
  *
- * @package TrelloSocialAutoPublisher\Publishers
+ * @package FPPublisher\Publishers
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -24,7 +24,7 @@ class TTS_Publisher_Facebook_Story {
      */
     public function publish_story( $post_id, $credentials, $media_url ) {
         if ( empty( $credentials ) || empty( $media_url ) ) {
-            $error = __( 'Missing credentials or media for Facebook Story', 'trello-social-auto-publisher' );
+            $error = __( 'Missing credentials or media for Facebook Story', 'fp-publisher' );
             tts_log_event( $post_id, 'facebook_story', 'error', $error, '' );
             tts_notify_publication( $post_id, 'error', 'facebook_story' );
             return new \WP_Error( 'facebook_story_missing_data', $error );
@@ -38,7 +38,7 @@ class TTS_Publisher_Facebook_Story {
             $page_id = get_post_meta( $post_id, '_tts_fb_page_id', true );
         }
         if ( empty( $page_id ) || empty( $token ) ) {
-            $error = __( 'Invalid Facebook credentials', 'trello-social-auto-publisher' );
+            $error = __( 'Invalid Facebook credentials', 'fp-publisher' );
             tts_log_event( $post_id, 'facebook_story', 'error', $error, '' );
             tts_notify_publication( $post_id, 'error', 'facebook_story' );
             return new \WP_Error( 'facebook_story_bad_credentials', $error );
@@ -67,14 +67,14 @@ class TTS_Publisher_Facebook_Story {
         $data = json_decode( wp_remote_retrieve_body( $result ), true );
         $code = wp_remote_retrieve_response_code( $result );
         if ( 200 !== $code || empty( $data['id'] ) ) {
-            $error = isset( $data['error']['message'] ) ? $data['error']['message'] : __( 'Unknown error', 'trello-social-auto-publisher' );
+            $error = isset( $data['error']['message'] ) ? $data['error']['message'] : __( 'Unknown error', 'fp-publisher' );
             tts_log_event( $post_id, 'facebook_story', 'error', $error, $data );
             tts_notify_publication( $post_id, 'error', 'facebook_story' );
             return new \WP_Error( 'facebook_story_error', $error, $data );
         }
 
         $response = array(
-            'message' => __( 'Published Facebook Story', 'trello-social-auto-publisher' ),
+            'message' => __( 'Published Facebook Story', 'fp-publisher' ),
             'id'      => $data['id'],
         );
         tts_log_event( $post_id, 'facebook_story', 'success', $response['message'], '' );

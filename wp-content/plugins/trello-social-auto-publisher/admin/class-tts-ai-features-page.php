@@ -2,7 +2,7 @@
 /**
  * AI & Advanced Features Page
  *
- * @package TrelloSocialAutoPublisher
+ * @package FPPublisher
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -27,9 +27,9 @@ class TTS_AI_Features_Page {
      */
     public function register_page() {
         add_submenu_page(
-            'tts-main',
-            __( 'AI & Advanced Features', 'trello-social-auto-publisher' ),
-            __( 'AI & Advanced Features', 'trello-social-auto-publisher' ),
+            'fp-publisher',
+            __( 'AI & Advanced Features', 'fp-publisher' ),
+            __( 'AI & Advanced Features', 'fp-publisher' ),
             'manage_options',
             'tts-ai-features',
             array( $this, 'render_page' )
@@ -42,7 +42,7 @@ class TTS_AI_Features_Page {
      * @param string $hook Current admin page hook.
      */
     public function enqueue_assets( $hook ) {
-        if ( 'social-auto-publisher_page_tts-ai-features' !== $hook ) {
+        if ( 'fp-publisher_page_tts-ai-features' !== $hook ) {
             return;
         }
 
@@ -77,7 +77,7 @@ class TTS_AI_Features_Page {
     public function render_page() {
         ?>
         <div class="wrap tts-ai-features-page">
-            <h1><?php esc_html_e( 'AI & Advanced Features', 'trello-social-auto-publisher' ); ?></h1>
+            <h1><?php esc_html_e( 'AI & Advanced Features', 'fp-publisher' ); ?></h1>
             
             <div class="tts-features-grid">
                 
@@ -85,57 +85,57 @@ class TTS_AI_Features_Page {
                 <div class="tts-feature-card">
                     <div class="tts-feature-header">
                         <span class="tts-feature-icon">🤖</span>
-                        <h2><?php esc_html_e( 'AI Content Enhancement', 'trello-social-auto-publisher' ); ?></h2>
+                        <h2><?php esc_html_e( 'AI Content Enhancement', 'fp-publisher' ); ?></h2>
                     </div>
                     <div class="tts-feature-content">
-                        <p><?php esc_html_e( 'Leverage AI to optimize your content for maximum engagement across all social platforms.', 'trello-social-auto-publisher' ); ?></p>
+                        <p><?php esc_html_e( 'Leverage AI to optimize your content for maximum engagement across all social platforms.', 'fp-publisher' ); ?></p>
                         
                         <div class="tts-ai-tools">
                             <div class="tts-tool">
-                                <h4><?php esc_html_e( 'AI Hashtag Generator', 'trello-social-auto-publisher' ); ?></h4>
-                                <textarea id="hashtag-content" placeholder="<?php esc_attr_e( 'Enter your content here...', 'trello-social-auto-publisher' ); ?>"></textarea>
+                                <h4><?php esc_html_e( 'AI Hashtag Generator', 'fp-publisher' ); ?></h4>
+                                <textarea id="hashtag-content" placeholder="<?php esc_attr_e( 'Enter your content here...', 'fp-publisher' ); ?>"></textarea>
                                 <select id="hashtag-platform">
-                                    <option value="general"><?php esc_html_e( 'General', 'trello-social-auto-publisher' ); ?></option>
-                                    <option value="instagram"><?php esc_html_e( 'Instagram', 'trello-social-auto-publisher' ); ?></option>
-                                    <option value="facebook"><?php esc_html_e( 'Facebook', 'trello-social-auto-publisher' ); ?></option>
-                                    <option value="twitter"><?php esc_html_e( 'Twitter', 'trello-social-auto-publisher' ); ?></option>
-                                    <option value="linkedin"><?php esc_html_e( 'LinkedIn', 'trello-social-auto-publisher' ); ?></option>
-                                    <option value="tiktok"><?php esc_html_e( 'TikTok', 'trello-social-auto-publisher' ); ?></option>
+                                    <option value="general"><?php esc_html_e( 'General', 'fp-publisher' ); ?></option>
+                                    <option value="instagram"><?php esc_html_e( 'Instagram', 'fp-publisher' ); ?></option>
+                                    <option value="facebook"><?php esc_html_e( 'Facebook', 'fp-publisher' ); ?></option>
+                                    <option value="twitter"><?php esc_html_e( 'Twitter', 'fp-publisher' ); ?></option>
+                                    <option value="linkedin"><?php esc_html_e( 'LinkedIn', 'fp-publisher' ); ?></option>
+                                    <option value="tiktok"><?php esc_html_e( 'TikTok', 'fp-publisher' ); ?></option>
                                 </select>
                                 <button type="button" class="button button-primary" id="generate-hashtags">
-                                    <?php esc_html_e( 'Generate Hashtags', 'trello-social-auto-publisher' ); ?>
+                                    <?php esc_html_e( 'Generate Hashtags', 'fp-publisher' ); ?>
                                 </button>
                                 <div id="hashtag-results" class="tts-results"></div>
                             </div>
                             
                             <div class="tts-tool">
-                                <h4><?php esc_html_e( 'Content Performance Predictor', 'trello-social-auto-publisher' ); ?></h4>
-                                <textarea id="predict-content" placeholder="<?php esc_attr_e( 'Enter content to analyze...', 'trello-social-auto-publisher' ); ?>"></textarea>
+                                <h4><?php esc_html_e( 'Content Performance Predictor', 'fp-publisher' ); ?></h4>
+                                <textarea id="predict-content" placeholder="<?php esc_attr_e( 'Enter content to analyze...', 'fp-publisher' ); ?>"></textarea>
                                 <select id="predict-platform">
-                                    <option value="general"><?php esc_html_e( 'General', 'trello-social-auto-publisher' ); ?></option>
-                                    <option value="instagram"><?php esc_html_e( 'Instagram', 'trello-social-auto-publisher' ); ?></option>
-                                    <option value="facebook"><?php esc_html_e( 'Facebook', 'trello-social-auto-publisher' ); ?></option>
-                                    <option value="twitter"><?php esc_html_e( 'Twitter', 'trello-social-auto-publisher' ); ?></option>
-                                    <option value="linkedin"><?php esc_html_e( 'LinkedIn', 'trello-social-auto-publisher' ); ?></option>
+                                    <option value="general"><?php esc_html_e( 'General', 'fp-publisher' ); ?></option>
+                                    <option value="instagram"><?php esc_html_e( 'Instagram', 'fp-publisher' ); ?></option>
+                                    <option value="facebook"><?php esc_html_e( 'Facebook', 'fp-publisher' ); ?></option>
+                                    <option value="twitter"><?php esc_html_e( 'Twitter', 'fp-publisher' ); ?></option>
+                                    <option value="linkedin"><?php esc_html_e( 'LinkedIn', 'fp-publisher' ); ?></option>
                                 </select>
                                 <button type="button" class="button button-primary" id="predict-performance">
-                                    <?php esc_html_e( 'Predict Performance', 'trello-social-auto-publisher' ); ?>
+                                    <?php esc_html_e( 'Predict Performance', 'fp-publisher' ); ?>
                                 </button>
                                 <div id="prediction-results" class="tts-results"></div>
                             </div>
                             
                             <div class="tts-tool">
-                                <h4><?php esc_html_e( 'Content Suggestions', 'trello-social-auto-publisher' ); ?></h4>
-                                <input type="text" id="suggestion-topic" placeholder="<?php esc_attr_e( 'Enter topic or keyword...', 'trello-social-auto-publisher' ); ?>">
+                                <h4><?php esc_html_e( 'Content Suggestions', 'fp-publisher' ); ?></h4>
+                                <input type="text" id="suggestion-topic" placeholder="<?php esc_attr_e( 'Enter topic or keyword...', 'fp-publisher' ); ?>">
                                 <select id="suggestion-platform">
-                                    <option value="instagram"><?php esc_html_e( 'Instagram', 'trello-social-auto-publisher' ); ?></option>
-                                    <option value="facebook"><?php esc_html_e( 'Facebook', 'trello-social-auto-publisher' ); ?></option>
-                                    <option value="twitter"><?php esc_html_e( 'Twitter', 'trello-social-auto-publisher' ); ?></option>
-                                    <option value="linkedin"><?php esc_html_e( 'LinkedIn', 'trello-social-auto-publisher' ); ?></option>
-                                    <option value="tiktok"><?php esc_html_e( 'TikTok', 'trello-social-auto-publisher' ); ?></option>
+                                    <option value="instagram"><?php esc_html_e( 'Instagram', 'fp-publisher' ); ?></option>
+                                    <option value="facebook"><?php esc_html_e( 'Facebook', 'fp-publisher' ); ?></option>
+                                    <option value="twitter"><?php esc_html_e( 'Twitter', 'fp-publisher' ); ?></option>
+                                    <option value="linkedin"><?php esc_html_e( 'LinkedIn', 'fp-publisher' ); ?></option>
+                                    <option value="tiktok"><?php esc_html_e( 'TikTok', 'fp-publisher' ); ?></option>
                                 </select>
                                 <button type="button" class="button button-primary" id="get-suggestions">
-                                    <?php esc_html_e( 'Get Suggestions', 'trello-social-auto-publisher' ); ?>
+                                    <?php esc_html_e( 'Get Suggestions', 'fp-publisher' ); ?>
                                 </button>
                                 <div id="suggestion-results" class="tts-results"></div>
                             </div>
@@ -147,31 +147,31 @@ class TTS_AI_Features_Page {
                 <div class="tts-feature-card">
                     <div class="tts-feature-header">
                         <span class="tts-feature-icon">📊</span>
-                        <h2><?php esc_html_e( 'Competitor Analysis', 'trello-social-auto-publisher' ); ?></h2>
+                        <h2><?php esc_html_e( 'Competitor Analysis', 'fp-publisher' ); ?></h2>
                     </div>
                     <div class="tts-feature-content">
-                        <p><?php esc_html_e( 'Track and analyze your competitors\' social media performance to stay ahead.', 'trello-social-auto-publisher' ); ?></p>
+                        <p><?php esc_html_e( 'Track and analyze your competitors\' social media performance to stay ahead.', 'fp-publisher' ); ?></p>
                         
                         <div class="tts-competitor-tools">
                             <div class="tts-add-competitor">
-                                <h4><?php esc_html_e( 'Add Competitor', 'trello-social-auto-publisher' ); ?></h4>
-                                <input type="text" id="competitor-name" placeholder="<?php esc_attr_e( 'Competitor name', 'trello-social-auto-publisher' ); ?>">
+                                <h4><?php esc_html_e( 'Add Competitor', 'fp-publisher' ); ?></h4>
+                                <input type="text" id="competitor-name" placeholder="<?php esc_attr_e( 'Competitor name', 'fp-publisher' ); ?>">
                                 <select id="competitor-platform">
-                                    <option value="instagram"><?php esc_html_e( 'Instagram', 'trello-social-auto-publisher' ); ?></option>
-                                    <option value="facebook"><?php esc_html_e( 'Facebook', 'trello-social-auto-publisher' ); ?></option>
-                                    <option value="twitter"><?php esc_html_e( 'Twitter', 'trello-social-auto-publisher' ); ?></option>
-                                    <option value="linkedin"><?php esc_html_e( 'LinkedIn', 'trello-social-auto-publisher' ); ?></option>
-                                    <option value="tiktok"><?php esc_html_e( 'TikTok', 'trello-social-auto-publisher' ); ?></option>
+                                    <option value="instagram"><?php esc_html_e( 'Instagram', 'fp-publisher' ); ?></option>
+                                    <option value="facebook"><?php esc_html_e( 'Facebook', 'fp-publisher' ); ?></option>
+                                    <option value="twitter"><?php esc_html_e( 'Twitter', 'fp-publisher' ); ?></option>
+                                    <option value="linkedin"><?php esc_html_e( 'LinkedIn', 'fp-publisher' ); ?></option>
+                                    <option value="tiktok"><?php esc_html_e( 'TikTok', 'fp-publisher' ); ?></option>
                                 </select>
-                                <input type="text" id="competitor-handle" placeholder="<?php esc_attr_e( '@username or handle', 'trello-social-auto-publisher' ); ?>">
+                                <input type="text" id="competitor-handle" placeholder="<?php esc_attr_e( '@username or handle', 'fp-publisher' ); ?>">
                                 <button type="button" class="button button-primary" id="add-competitor">
-                                    <?php esc_html_e( 'Add Competitor', 'trello-social-auto-publisher' ); ?>
+                                    <?php esc_html_e( 'Add Competitor', 'fp-publisher' ); ?>
                                 </button>
                             </div>
                             
                             <div class="tts-competitor-actions">
                                 <button type="button" class="button" id="generate-competitor-report">
-                                    <?php esc_html_e( 'Generate Report', 'trello-social-auto-publisher' ); ?>
+                                    <?php esc_html_e( 'Generate Report', 'fp-publisher' ); ?>
                                 </button>
                             </div>
                             
@@ -184,29 +184,29 @@ class TTS_AI_Features_Page {
                 <div class="tts-feature-card">
                     <div class="tts-feature-header">
                         <span class="tts-feature-icon">🔄</span>
-                        <h2><?php esc_html_e( 'Workflow & Collaboration', 'trello-social-auto-publisher' ); ?></h2>
+                        <h2><?php esc_html_e( 'Workflow & Collaboration', 'fp-publisher' ); ?></h2>
                     </div>
                     <div class="tts-feature-content">
-                        <p><?php esc_html_e( 'Streamline team collaboration with approval workflows and task management.', 'trello-social-auto-publisher' ); ?></p>
+                        <p><?php esc_html_e( 'Streamline team collaboration with approval workflows and task management.', 'fp-publisher' ); ?></p>
                         
                         <div class="tts-workflow-demo">
                             <div class="tts-workflow-stats">
                                 <div class="stat-item">
                                     <span class="stat-number" id="pending-approvals">0</span>
-                                    <span class="stat-label"><?php esc_html_e( 'Pending Approvals', 'trello-social-auto-publisher' ); ?></span>
+                                    <span class="stat-label"><?php esc_html_e( 'Pending Approvals', 'fp-publisher' ); ?></span>
                                 </div>
                                 <div class="stat-item">
                                     <span class="stat-number" id="approved-content">0</span>
-                                    <span class="stat-label"><?php esc_html_e( 'Approved Content', 'trello-social-auto-publisher' ); ?></span>
+                                    <span class="stat-label"><?php esc_html_e( 'Approved Content', 'fp-publisher' ); ?></span>
                                 </div>
                                 <div class="stat-item">
                                     <span class="stat-number" id="team-members">0</span>
-                                    <span class="stat-label"><?php esc_html_e( 'Team Members', 'trello-social-auto-publisher' ); ?></span>
+                                    <span class="stat-label"><?php esc_html_e( 'Team Members', 'fp-publisher' ); ?></span>
                                 </div>
                             </div>
                             
                             <button type="button" class="button button-primary" id="get-team-dashboard">
-                                <?php esc_html_e( 'View Team Dashboard', 'trello-social-auto-publisher' ); ?>
+                                <?php esc_html_e( 'View Team Dashboard', 'fp-publisher' ); ?>
                             </button>
                             
                             <div id="workflow-results" class="tts-results"></div>
@@ -218,15 +218,15 @@ class TTS_AI_Features_Page {
                 <div class="tts-feature-card">
                     <div class="tts-feature-header">
                         <span class="tts-feature-icon">🎨</span>
-                        <h2><?php esc_html_e( 'Advanced Media Management', 'trello-social-auto-publisher' ); ?></h2>
+                        <h2><?php esc_html_e( 'Advanced Media Management', 'fp-publisher' ); ?></h2>
                     </div>
                     <div class="tts-feature-content">
-                        <p><?php esc_html_e( 'Optimize, resize, and enhance your media for each social platform automatically.', 'trello-social-auto-publisher' ); ?></p>
+                        <p><?php esc_html_e( 'Optimize, resize, and enhance your media for each social platform automatically.', 'fp-publisher' ); ?></p>
                         
                         <div class="tts-media-tools">
                             <div class="tts-media-optimizer">
-                                <h4><?php esc_html_e( 'Platform Optimizer', 'trello-social-auto-publisher' ); ?></h4>
-                                <p><?php esc_html_e( 'Automatically resize images for optimal performance on each platform:', 'trello-social-auto-publisher' ); ?></p>
+                                <h4><?php esc_html_e( 'Platform Optimizer', 'fp-publisher' ); ?></h4>
+                                <p><?php esc_html_e( 'Automatically resize images for optimal performance on each platform:', 'fp-publisher' ); ?></p>
                                 <ul class="tts-platform-sizes">
                                     <li><strong>Instagram:</strong> Square (1080x1080), Portrait (1080x1350), Story (1080x1920)</li>
                                     <li><strong>Facebook:</strong> Shared Image (1200x630), Cover Photo (1640x859)</li>
@@ -236,7 +236,7 @@ class TTS_AI_Features_Page {
                                 </ul>
                                 
                                 <button type="button" class="button button-primary" id="analyze-media-performance">
-                                    <?php esc_html_e( 'Analyze Media Performance', 'trello-social-auto-publisher' ); ?>
+                                    <?php esc_html_e( 'Analyze Media Performance', 'fp-publisher' ); ?>
                                 </button>
                             </div>
                             
@@ -249,14 +249,14 @@ class TTS_AI_Features_Page {
                 <div class="tts-feature-card">
                     <div class="tts-feature-header">
                         <span class="tts-feature-icon">🔗</span>
-                        <h2><?php esc_html_e( 'Integration Hub', 'trello-social-auto-publisher' ); ?></h2>
+                        <h2><?php esc_html_e( 'Integration Hub', 'fp-publisher' ); ?></h2>
                     </div>
                     <div class="tts-feature-content">
-                        <p><?php esc_html_e( 'Connect with your favorite tools and platforms for seamless workflow automation.', 'trello-social-auto-publisher' ); ?></p>
+                        <p><?php esc_html_e( 'Connect with your favorite tools and platforms for seamless workflow automation.', 'fp-publisher' ); ?></p>
                         
                         <div class="tts-integrations-grid">
                             <div class="integration-category">
-                                <h4><?php esc_html_e( 'CRM', 'trello-social-auto-publisher' ); ?></h4>
+                                <h4><?php esc_html_e( 'CRM', 'fp-publisher' ); ?></h4>
                                 <ul>
                                     <li>HubSpot</li>
                                     <li>Salesforce</li>
@@ -265,7 +265,7 @@ class TTS_AI_Features_Page {
                             </div>
                             
                             <div class="integration-category">
-                                <h4><?php esc_html_e( 'E-commerce', 'trello-social-auto-publisher' ); ?></h4>
+                                <h4><?php esc_html_e( 'E-commerce', 'fp-publisher' ); ?></h4>
                                 <ul>
                                     <li>WooCommerce</li>
                                     <li>Shopify</li>
@@ -274,7 +274,7 @@ class TTS_AI_Features_Page {
                             </div>
                             
                             <div class="integration-category">
-                                <h4><?php esc_html_e( 'Email Marketing', 'trello-social-auto-publisher' ); ?></h4>
+                                <h4><?php esc_html_e( 'Email Marketing', 'fp-publisher' ); ?></h4>
                                 <ul>
                                     <li>Mailchimp</li>
                                     <li>ConvertKit</li>
@@ -283,7 +283,7 @@ class TTS_AI_Features_Page {
                             </div>
                             
                             <div class="integration-category">
-                                <h4><?php esc_html_e( 'Design Tools', 'trello-social-auto-publisher' ); ?></h4>
+                                <h4><?php esc_html_e( 'Design Tools', 'fp-publisher' ); ?></h4>
                                 <ul>
                                     <li>Canva</li>
                                     <li>Figma</li>
@@ -293,7 +293,7 @@ class TTS_AI_Features_Page {
                         </div>
                         
                         <button type="button" class="button button-primary" id="view-integrations">
-                            <?php esc_html_e( 'View Available Integrations', 'trello-social-auto-publisher' ); ?>
+                            <?php esc_html_e( 'View Available Integrations', 'fp-publisher' ); ?>
                         </button>
                         
                         <div id="integration-results" class="tts-results"></div>
@@ -305,7 +305,7 @@ class TTS_AI_Features_Page {
             <!-- Loading overlay -->
             <div id="tts-loading-overlay" class="tts-loading-overlay" style="display: none;">
                 <div class="tts-spinner"></div>
-                <p><?php esc_html_e( 'Processing...', 'trello-social-auto-publisher' ); ?></p>
+                <p><?php esc_html_e( 'Processing...', 'fp-publisher' ); ?></p>
             </div>
             
         </div>
@@ -542,7 +542,7 @@ class TTS_AI_Features_Page {
                 const platform = $('#hashtag-platform').val();
                 
                 if (!content.trim()) {
-                    alert('<?php esc_js( __( 'Please enter some content first.', 'trello-social-auto-publisher' ) ); ?>');
+                    alert('<?php esc_js( __( 'Please enter some content first.', 'fp-publisher' ) ); ?>');
                     return;
                 }
                 
@@ -560,7 +560,7 @@ class TTS_AI_Features_Page {
                     success: function(response) {
                         hideLoading();
                         if (response.success) {
-                            let html = '<h5><?php esc_js( __( 'Generated Hashtags:', 'trello-social-auto-publisher' ) ); ?></h5>';
+                            let html = '<h5><?php esc_js( __( 'Generated Hashtags:', 'fp-publisher' ) ); ?></h5>';
                             response.data.hashtags.forEach(function(hashtag) {
                                 html += '<span class="hashtag-tag">' + hashtag + '</span>';
                             });
@@ -571,7 +571,7 @@ class TTS_AI_Features_Page {
                     },
                     error: function() {
                         hideLoading();
-                        $('#hashtag-results').html('<p style="color: red;"><?php esc_js( __( 'Error generating hashtags.', 'trello-social-auto-publisher' ) ); ?></p>');
+                        $('#hashtag-results').html('<p style="color: red;"><?php esc_js( __( 'Error generating hashtags.', 'fp-publisher' ) ); ?></p>');
                     }
                 });
             });
@@ -582,7 +582,7 @@ class TTS_AI_Features_Page {
                 const platform = $('#predict-platform').val();
                 
                 if (!content.trim()) {
-                    alert('<?php esc_js( __( 'Please enter some content first.', 'trello-social-auto-publisher' ) ); ?>');
+                    alert('<?php esc_js( __( 'Please enter some content first.', 'fp-publisher' ) ); ?>');
                     return;
                 }
                 
@@ -601,12 +601,12 @@ class TTS_AI_Features_Page {
                         hideLoading();
                         if (response.success) {
                             const pred = response.data.prediction;
-                            let html = '<h5><?php esc_js( __( 'Performance Prediction:', 'trello-social-auto-publisher' ) ); ?></h5>';
+                            let html = '<h5><?php esc_js( __( 'Performance Prediction:', 'fp-publisher' ) ); ?></h5>';
                             html += '<div class="performance-meter"><div class="performance-fill" style="width: ' + pred.confidence + '%"></div></div>';
-                            html += '<p><strong><?php esc_js( __( 'Confidence:', 'trello-social-auto-publisher' ) ); ?></strong> ' + pred.confidence + '%</p>';
-                            html += '<p><strong><?php esc_js( __( 'Engagement Rate:', 'trello-social-auto-publisher' ) ); ?></strong> ' + pred.engagement_rate + '%</p>';
-                            html += '<p><strong><?php esc_js( __( 'Predicted Likes:', 'trello-social-auto-publisher' ) ); ?></strong> ' + pred.predicted_likes + '</p>';
-                            html += '<p><strong><?php esc_js( __( 'Recommendation:', 'trello-social-auto-publisher' ) ); ?></strong> ' + pred.recommendation + '</p>';
+                            html += '<p><strong><?php esc_js( __( 'Confidence:', 'fp-publisher' ) ); ?></strong> ' + pred.confidence + '%</p>';
+                            html += '<p><strong><?php esc_js( __( 'Engagement Rate:', 'fp-publisher' ) ); ?></strong> ' + pred.engagement_rate + '%</p>';
+                            html += '<p><strong><?php esc_js( __( 'Predicted Likes:', 'fp-publisher' ) ); ?></strong> ' + pred.predicted_likes + '</p>';
+                            html += '<p><strong><?php esc_js( __( 'Recommendation:', 'fp-publisher' ) ); ?></strong> ' + pred.recommendation + '</p>';
                             $('#prediction-results').html(html);
                         } else {
                             $('#prediction-results').html('<p style="color: red;">' + response.data.message + '</p>');
@@ -614,7 +614,7 @@ class TTS_AI_Features_Page {
                     },
                     error: function() {
                         hideLoading();
-                        $('#prediction-results').html('<p style="color: red;"><?php esc_js( __( 'Error predicting performance.', 'trello-social-auto-publisher' ) ); ?></p>');
+                        $('#prediction-results').html('<p style="color: red;"><?php esc_js( __( 'Error predicting performance.', 'fp-publisher' ) ); ?></p>');
                     }
                 });
             });
@@ -638,11 +638,11 @@ class TTS_AI_Features_Page {
                     success: function(response) {
                         hideLoading();
                         if (response.success) {
-                            let html = '<h5><?php esc_js( __( 'Content Suggestions:', 'trello-social-auto-publisher' ) ); ?></h5>';
+                            let html = '<h5><?php esc_js( __( 'Content Suggestions:', 'fp-publisher' ) ); ?></h5>';
                             response.data.suggestions.forEach(function(suggestion) {
                                 html += '<div class="suggestion-item">';
                                 html += '<div class="suggestion-title">' + suggestion.title + '</div>';
-                                html += '<div class="suggestion-meta"><?php esc_js( __( 'Platform:', 'trello-social-auto-publisher' ) ); ?> ' + suggestion.platform + ' | <?php esc_js( __( 'Est. Performance:', 'trello-social-auto-publisher' ) ); ?> ' + suggestion.estimated_performance + '%</div>';
+                                html += '<div class="suggestion-meta"><?php esc_js( __( 'Platform:', 'fp-publisher' ) ); ?> ' + suggestion.platform + ' | <?php esc_js( __( 'Est. Performance:', 'fp-publisher' ) ); ?> ' + suggestion.estimated_performance + '%</div>';
                                 html += '</div>';
                             });
                             $('#suggestion-results').html(html);
@@ -652,7 +652,7 @@ class TTS_AI_Features_Page {
                     },
                     error: function() {
                         hideLoading();
-                        $('#suggestion-results').html('<p style="color: red;"><?php esc_js( __( 'Error getting suggestions.', 'trello-social-auto-publisher' ) ); ?></p>');
+                        $('#suggestion-results').html('<p style="color: red;"><?php esc_js( __( 'Error getting suggestions.', 'fp-publisher' ) ); ?></p>');
                     }
                 });
             });
@@ -664,7 +664,7 @@ class TTS_AI_Features_Page {
                 const handle = $('#competitor-handle').val();
                 
                 if (!name || !handle) {
-                    alert('<?php esc_js( __( 'Please fill in all fields.', 'trello-social-auto-publisher' ) ); ?>');
+                    alert('<?php esc_js( __( 'Please fill in all fields.', 'fp-publisher' ) ); ?>');
                     return;
                 }
                 
@@ -691,7 +691,7 @@ class TTS_AI_Features_Page {
                     },
                     error: function() {
                         hideLoading();
-                        $('#competitor-results').html('<p style="color: red;"><?php esc_js( __( 'Error adding competitor.', 'trello-social-auto-publisher' ) ); ?></p>');
+                        $('#competitor-results').html('<p style="color: red;"><?php esc_js( __( 'Error adding competitor.', 'fp-publisher' ) ); ?></p>');
                     }
                 });
             });
@@ -711,12 +711,12 @@ class TTS_AI_Features_Page {
                         hideLoading();
                         if (response.success) {
                             const report = response.data.report;
-                            let html = '<h5><?php esc_js( __( 'Competitor Analysis Report:', 'trello-social-auto-publisher' ) ); ?></h5>';
-                            html += '<p><strong><?php esc_js( __( 'Total Competitors:', 'trello-social-auto-publisher' ) ); ?></strong> ' + report.summary.total_competitors + '</p>';
-                            html += '<p><strong><?php esc_js( __( 'Average Engagement:', 'trello-social-auto-publisher' ) ); ?></strong> ' + report.summary.avg_engagement_rate + '%</p>';
+                            let html = '<h5><?php esc_js( __( 'Competitor Analysis Report:', 'fp-publisher' ) ); ?></h5>';
+                            html += '<p><strong><?php esc_js( __( 'Total Competitors:', 'fp-publisher' ) ); ?></strong> ' + report.summary.total_competitors + '</p>';
+                            html += '<p><strong><?php esc_js( __( 'Average Engagement:', 'fp-publisher' ) ); ?></strong> ' + report.summary.avg_engagement_rate + '%</p>';
                             
                             if (report.recommendations && report.recommendations.length > 0) {
-                                html += '<h6><?php esc_js( __( 'Recommendations:', 'trello-social-auto-publisher' ) ); ?></h6>';
+                                html += '<h6><?php esc_js( __( 'Recommendations:', 'fp-publisher' ) ); ?></h6>';
                                 report.recommendations.forEach(function(rec) {
                                     html += '<div style="margin: 8px 0;"><strong>' + rec.category + ':</strong> ' + rec.recommendation + '</div>';
                                 });
@@ -729,7 +729,7 @@ class TTS_AI_Features_Page {
                     },
                     error: function() {
                         hideLoading();
-                        $('#competitor-results').html('<p style="color: red;"><?php esc_js( __( 'Error generating report.', 'trello-social-auto-publisher' ) ); ?></p>');
+                        $('#competitor-results').html('<p style="color: red;"><?php esc_js( __( 'Error generating report.', 'fp-publisher' ) ); ?></p>');
                     }
                 });
             });
@@ -755,11 +755,11 @@ class TTS_AI_Features_Page {
                             $('#approved-content').text(stats.approved || 0);
                             $('#team-members').text(dashboard.team_performance ? dashboard.team_performance.length : 0);
                             
-                            let html = '<h5><?php esc_js( __( 'Team Dashboard:', 'trello-social-auto-publisher' ) ); ?></h5>';
-                            html += '<p><strong><?php esc_js( __( 'Pending Approvals:', 'trello-social-auto-publisher' ) ); ?></strong> ' + (stats.pending_approval || 0) + '</p>';
-                            html += '<p><strong><?php esc_js( __( 'Approved Content:', 'trello-social-auto-publisher' ) ); ?></strong> ' + (stats.approved || 0) + '</p>';
-                            html += '<p><strong><?php esc_js( __( 'Rejected Content:', 'trello-social-auto-publisher' ) ); ?></strong> ' + (stats.rejected || 0) + '</p>';
-                            html += '<p><strong><?php esc_js( __( 'Overdue Items:', 'trello-social-auto-publisher' ) ); ?></strong> ' + (stats.overdue || 0) + '</p>';
+                            let html = '<h5><?php esc_js( __( 'Team Dashboard:', 'fp-publisher' ) ); ?></h5>';
+                            html += '<p><strong><?php esc_js( __( 'Pending Approvals:', 'fp-publisher' ) ); ?></strong> ' + (stats.pending_approval || 0) + '</p>';
+                            html += '<p><strong><?php esc_js( __( 'Approved Content:', 'fp-publisher' ) ); ?></strong> ' + (stats.approved || 0) + '</p>';
+                            html += '<p><strong><?php esc_js( __( 'Rejected Content:', 'fp-publisher' ) ); ?></strong> ' + (stats.rejected || 0) + '</p>';
+                            html += '<p><strong><?php esc_js( __( 'Overdue Items:', 'fp-publisher' ) ); ?></strong> ' + (stats.overdue || 0) + '</p>';
                             
                             $('#workflow-results').html(html);
                         } else {
@@ -768,7 +768,7 @@ class TTS_AI_Features_Page {
                     },
                     error: function() {
                         hideLoading();
-                        $('#workflow-results').html('<p style="color: red;"><?php esc_js( __( 'Error loading dashboard.', 'trello-social-auto-publisher' ) ); ?></p>');
+                        $('#workflow-results').html('<p style="color: red;"><?php esc_js( __( 'Error loading dashboard.', 'fp-publisher' ) ); ?></p>');
                     }
                 });
             });
@@ -788,11 +788,11 @@ class TTS_AI_Features_Page {
                         hideLoading();
                         if (response.success) {
                             const analysis = response.data.analysis;
-                            let html = '<h5><?php esc_js( __( 'Media Performance Analysis:', 'trello-social-auto-publisher' ) ); ?></h5>';
-                            html += '<p><strong><?php esc_js( __( 'Posts Analyzed:', 'trello-social-auto-publisher' ) ); ?></strong> ' + analysis.total_posts_analyzed + '</p>';
+                            let html = '<h5><?php esc_js( __( 'Media Performance Analysis:', 'fp-publisher' ) ); ?></h5>';
+                            html += '<p><strong><?php esc_js( __( 'Posts Analyzed:', 'fp-publisher' ) ); ?></strong> ' + analysis.total_posts_analyzed + '</p>';
                             
                             if (analysis.recommendations && analysis.recommendations.length > 0) {
-                                html += '<h6><?php esc_js( __( 'Optimization Recommendations:', 'trello-social-auto-publisher' ) ); ?></h6>';
+                                html += '<h6><?php esc_js( __( 'Optimization Recommendations:', 'fp-publisher' ) ); ?></h6>';
                                 analysis.recommendations.forEach(function(rec) {
                                     html += '<div style="margin: 8px 0;"><strong>' + rec.category + ':</strong> ' + rec.recommendation + ' <span style="color: #666;">(Impact: ' + rec.impact + ', Effort: ' + rec.effort + ')</span></div>';
                                 });
@@ -805,7 +805,7 @@ class TTS_AI_Features_Page {
                     },
                     error: function() {
                         hideLoading();
-                        $('#media-results').html('<p style="color: red;"><?php esc_js( __( 'Error analyzing media.', 'trello-social-auto-publisher' ) ); ?></p>');
+                        $('#media-results').html('<p style="color: red;"><?php esc_js( __( 'Error analyzing media.', 'fp-publisher' ) ); ?></p>');
                     }
                 });
             });
@@ -827,23 +827,23 @@ class TTS_AI_Features_Page {
                             const integrations = response.data.integrations;
                             const connected = response.data.connected;
                             
-                            let html = '<h5><?php esc_js( __( 'Available Integrations:', 'trello-social-auto-publisher' ) ); ?></h5>';
+                            let html = '<h5><?php esc_js( __( 'Available Integrations:', 'fp-publisher' ) ); ?></h5>';
                             
                             if (connected && connected.length > 0) {
-                                html += '<h6><?php esc_js( __( 'Connected:', 'trello-social-auto-publisher' ) ); ?></h6>';
+                                html += '<h6><?php esc_js( __( 'Connected:', 'fp-publisher' ) ); ?></h6>';
                                 connected.forEach(function(conn) {
                                     html += '<div style="color: green; margin: 5px 0;">✓ ' + conn.integration_name + ' (' + conn.integration_type + ')</div>';
                                 });
                             }
                             
-                            html += '<h6><?php esc_js( __( 'Total Available Integrations:', 'trello-social-auto-publisher' ) ); ?></h6>';
+                            html += '<h6><?php esc_js( __( 'Total Available Integrations:', 'fp-publisher' ) ); ?></h6>';
                             
                             let totalCount = 0;
                             Object.keys(integrations).forEach(function(category) {
                                 totalCount += Object.keys(integrations[category]).length;
                             });
                             
-                            html += '<p><?php esc_js( __( 'We support', 'trello-social-auto-publisher' ) ); ?> <strong>' + totalCount + '</strong> <?php esc_js( __( 'different integrations across CRM, E-commerce, Email Marketing, Design Tools, Analytics, and Productivity platforms.', 'trello-social-auto-publisher' ) ); ?></p>';
+                            html += '<p><?php esc_js( __( 'We support', 'fp-publisher' ) ); ?> <strong>' + totalCount + '</strong> <?php esc_js( __( 'different integrations across CRM, E-commerce, Email Marketing, Design Tools, Analytics, and Productivity platforms.', 'fp-publisher' ) ); ?></p>';
                             
                             $('#integration-results').html(html);
                         } else {
@@ -852,7 +852,7 @@ class TTS_AI_Features_Page {
                     },
                     error: function() {
                         hideLoading();
-                        $('#integration-results').html('<p style="color: red;"><?php esc_js( __( 'Error loading integrations.', 'trello-social-auto-publisher' ) ); ?></p>');
+                        $('#integration-results').html('<p style="color: red;"><?php esc_js( __( 'Error loading integrations.', 'fp-publisher' ) ); ?></p>');
                     }
                 });
             });

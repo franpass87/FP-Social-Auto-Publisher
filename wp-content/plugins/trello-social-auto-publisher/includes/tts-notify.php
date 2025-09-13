@@ -2,7 +2,7 @@
 /**
  * Notification utilities for Trello Social Auto Publisher.
  *
- * @package TrelloSocialAutoPublisher
+ * @package FPPublisher
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -22,7 +22,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 function tts_notify_publication( $post_id, $status, $channel ) {
     $title   = get_the_title( $post_id );
     $message = sprintf(
-        __( 'Post "%s" on %s: %s', 'trello-social-auto-publisher' ),
+        __( 'Post "%s" on %s: %s', 'fp-publisher' ),
         $title,
         $channel,
         $status
@@ -42,7 +42,7 @@ function tts_notify_publication( $post_id, $status, $channel ) {
     }
 
     $subject = sprintf(
-        __( '[Social Publish] %s - %s', 'trello-social-auto-publisher' ),
+        __( '[Social Publish] %s - %s', 'fp-publisher' ),
         $channel,
         $status
     );

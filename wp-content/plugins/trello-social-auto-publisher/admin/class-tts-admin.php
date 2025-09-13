@@ -2,7 +2,7 @@
 /**
  * Admin functionality for Trello Social Auto Publisher.
  *
- * @package TrelloSocialAutoPublisher
+ * @package FPPublisher
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -54,10 +54,10 @@ class TTS_Admin {
     public function register_menu() {
         // Main menu page
         add_menu_page(
-            __( 'Social Auto Publisher', 'trello-social-auto-publisher' ),
-            __( 'Social Auto Publisher', 'trello-social-auto-publisher' ),
+            __( 'FP Publisher', 'fp-publisher' ),
+            __( 'FP Publisher', 'fp-publisher' ),
             'manage_options',
-            'social-auto-publisher',
+            'fp-publisher',
             array( $this, 'render_dashboard_page' ),
             'dashicons-share-alt',
             25
@@ -65,19 +65,19 @@ class TTS_Admin {
 
         // Dashboard as first submenu (same as main page)
         add_submenu_page(
-            'social-auto-publisher',
-            __( 'Dashboard', 'trello-social-auto-publisher' ),
-            __( 'Dashboard', 'trello-social-auto-publisher' ),
+            'fp-publisher',
+            __( 'Dashboard', 'fp-publisher' ),
+            __( 'Dashboard', 'fp-publisher' ),
             'manage_options',
-            'social-auto-publisher',
+            'fp-publisher',
             array( $this, 'render_dashboard_page' )
         );
 
         // Clients submenu
         add_submenu_page(
-            'social-auto-publisher',
-            __( 'Clienti', 'trello-social-auto-publisher' ),
-            __( 'Clienti', 'trello-social-auto-publisher' ),
+            'fp-publisher',
+            __( 'Clienti', 'fp-publisher' ),
+            __( 'Clienti', 'fp-publisher' ),
             'manage_options',
             'tts-clienti',
             array( $this, 'render_clients_page' )
@@ -85,9 +85,9 @@ class TTS_Admin {
 
         // Client Wizard submenu
         add_submenu_page(
-            'social-auto-publisher',
-            __( 'Client Wizard', 'trello-social-auto-publisher' ),
-            __( 'Client Wizard', 'trello-social-auto-publisher' ),
+            'fp-publisher',
+            __( 'Client Wizard', 'fp-publisher' ),
+            __( 'Client Wizard', 'fp-publisher' ),
             'manage_options',
             'tts-client-wizard',
             array( $this, 'tts_render_client_wizard' )
@@ -95,9 +95,9 @@ class TTS_Admin {
 
         // Social Posts submenu
         add_submenu_page(
-            'social-auto-publisher',
-            __( 'Social Post', 'trello-social-auto-publisher' ),
-            __( 'Social Post', 'trello-social-auto-publisher' ),
+            'fp-publisher',
+            __( 'Social Post', 'fp-publisher' ),
+            __( 'Social Post', 'fp-publisher' ),
             'manage_options',
             'tts-social-posts',
             array( $this, 'render_social_posts_page' )
@@ -105,9 +105,9 @@ class TTS_Admin {
 
         // Settings submenu
         add_submenu_page(
-            'social-auto-publisher',
-            __( 'Settings', 'trello-social-auto-publisher' ),
-            __( 'Settings', 'trello-social-auto-publisher' ),
+            'fp-publisher',
+            __( 'Settings', 'fp-publisher' ),
+            __( 'Settings', 'fp-publisher' ),
             'manage_options',
             'tts-settings',
             array( $this, 'render_settings_page' )
@@ -115,9 +115,9 @@ class TTS_Admin {
 
         // Social Connections submenu
         add_submenu_page(
-            'social-auto-publisher',
-            __( 'Social Connections', 'trello-social-auto-publisher' ),
-            __( 'Social Connections', 'trello-social-auto-publisher' ),
+            'fp-publisher',
+            __( 'Social Connections', 'fp-publisher' ),
+            __( 'Social Connections', 'fp-publisher' ),
             'manage_options',
             'tts-social-connections',
             array( $this, 'render_social_connections_page' )
@@ -125,9 +125,9 @@ class TTS_Admin {
 
         // Help submenu
         add_submenu_page(
-            'social-auto-publisher',
-            __( 'Help & Setup', 'trello-social-auto-publisher' ),
-            __( 'Help & Setup', 'trello-social-auto-publisher' ),
+            'fp-publisher',
+            __( 'Help & Setup', 'fp-publisher' ),
+            __( 'Help & Setup', 'fp-publisher' ),
             'manage_options',
             'tts-help',
             array( $this, 'render_help_page' )
@@ -141,7 +141,7 @@ class TTS_Admin {
      */
     public function enqueue_dashboard_assets( $hook ) {
         // Check if we're on any TTS admin page
-        if ( strpos( $hook, 'tts-' ) === false && $hook !== 'toplevel_page_social-auto-publisher' ) {
+        if ( strpos( $hook, 'tts-' ) === false && $hook !== 'toplevel_page_fp-publisher' ) {
             return;
         }
 
@@ -150,16 +150,16 @@ class TTS_Admin {
 
         // Page-specific assets
         switch ( $hook ) {
-            case 'toplevel_page_social-auto-publisher':
+            case 'toplevel_page_fp-publisher':
                 $this->enqueue_dashboard_specific_assets();
                 break;
-            case 'social-auto-publisher_page_tts-social-connections':
+            case 'fp-publisher_page_tts-social-connections':
                 $this->enqueue_social_connections_assets();
                 break;
-            case 'social-auto-publisher_page_tts-client-wizard':
+            case 'fp-publisher_page_tts-client-wizard':
                 $this->enqueue_wizard_assets();
                 break;
-            case 'social-auto-publisher_page_tts-analytics':
+            case 'fp-publisher_page_tts-analytics':
                 $this->enqueue_analytics_assets();
                 break;
         }
@@ -272,11 +272,11 @@ class TTS_Admin {
                 'restNonce' => wp_create_nonce( 'wp_rest' ),
                 'currentPage' => isset( $_GET['page'] ) ? sanitize_text_field( $_GET['page'] ) : '',
                 'strings' => array(
-                    'confirmDelete' => __( 'Are you sure you want to delete this item?', 'trello-social-auto-publisher' ),
-                    'bulkDelete' => __( 'Are you sure you want to delete the selected items?', 'trello-social-auto-publisher' ),
-                    'loading' => __( 'Loading...', 'trello-social-auto-publisher' ),
-                    'error' => __( 'An error occurred', 'trello-social-auto-publisher' ),
-                    'success' => __( 'Operation completed successfully', 'trello-social-auto-publisher' ),
+                    'confirmDelete' => __( 'Are you sure you want to delete this item?', 'fp-publisher' ),
+                    'bulkDelete' => __( 'Are you sure you want to delete the selected items?', 'fp-publisher' ),
+                    'loading' => __( 'Loading...', 'fp-publisher' ),
+                    'error' => __( 'An error occurred', 'fp-publisher' ),
+                    'success' => __( 'Operation completed successfully', 'fp-publisher' ),
                 )
             )
         );
@@ -288,7 +288,7 @@ class TTS_Admin {
      * @param string $hook Current admin page hook.
      */
     public function enqueue_wizard_assets( $hook ) {
-        if ( 'social-auto-publisher_page_tts-client-wizard' !== $hook ) {
+        if ( 'fp-publisher_page_tts-client-wizard' !== $hook ) {
             return;
         }
 
@@ -307,10 +307,10 @@ class TTS_Admin {
                 'ajaxUrl' => admin_url( 'admin-ajax.php' ),
                 'nonce'   => wp_create_nonce( 'tts_wizard' ),
                 'strings' => array(
-                    'validating' => __( 'Validating...', 'trello-social-auto-publisher' ),
-                    'connecting' => __( 'Connecting...', 'trello-social-auto-publisher' ),
-                    'success' => __( 'Success!', 'trello-social-auto-publisher' ),
-                    'error' => __( 'Error occurred', 'trello-social-auto-publisher' ),
+                    'validating' => __( 'Validating...', 'fp-publisher' ),
+                    'connecting' => __( 'Connecting...', 'fp-publisher' ),
+                    'success' => __( 'Success!', 'fp-publisher' ),
+                    'error' => __( 'Error occurred', 'fp-publisher' ),
                 )
             )
         );
@@ -346,7 +346,7 @@ class TTS_Admin {
     public function register_scheduled_posts_widget() {
         wp_add_dashboard_widget(
             'tts_scheduled_posts',
-            __( 'Social Post programmati', 'trello-social-auto-publisher' ),
+            __( 'Social Post programmati', 'fp-publisher' ),
             array( $this, 'render_scheduled_posts_widget' )
         );
     }
@@ -375,7 +375,7 @@ class TTS_Admin {
         );
 
         if ( empty( $posts ) ) {
-            echo '<p>' . esc_html__( 'Nessun post programmato.', 'trello-social-auto-publisher' ) . '</p>';
+            echo '<p>' . esc_html__( 'Nessun post programmato.', 'fp-publisher' ) . '</p>';
             return;
         }
 
@@ -425,7 +425,7 @@ class TTS_Admin {
 
         // Check user capabilities
         if ( ! current_user_can( 'manage_options' ) ) {
-            wp_send_json_error( __( 'You do not have permission to perform this action.', 'trello-social-auto-publisher' ) );
+            wp_send_json_error( __( 'You do not have permission to perform this action.', 'fp-publisher' ) );
         }
 
         $board = isset( $_POST['board'] ) ? sanitize_text_field( $_POST['board'] ) : '';
@@ -434,18 +434,18 @@ class TTS_Admin {
 
         // Enhanced validation with specific error messages
         if ( empty( $board ) ) {
-            wp_send_json_error( __( 'Board ID is required.', 'trello-social-auto-publisher' ) );
+            wp_send_json_error( __( 'Board ID is required.', 'fp-publisher' ) );
         }
         if ( empty( $key ) ) {
-            wp_send_json_error( __( 'Trello API key is required.', 'trello-social-auto-publisher' ) );
+            wp_send_json_error( __( 'Trello API key is required.', 'fp-publisher' ) );
         }
         if ( empty( $token ) ) {
-            wp_send_json_error( __( 'Trello token is required.', 'trello-social-auto-publisher' ) );
+            wp_send_json_error( __( 'Trello token is required.', 'fp-publisher' ) );
         }
 
         // Validate board ID format (should be 24 character hex string)
         if ( ! preg_match( '/^[a-f0-9]{24}$/i', $board ) ) {
-            wp_send_json_error( __( 'Invalid board ID format.', 'trello-social-auto-publisher' ) );
+            wp_send_json_error( __( 'Invalid board ID format.', 'fp-publisher' ) );
         }
 
         $response = wp_remote_get(
@@ -457,7 +457,7 @@ class TTS_Admin {
             error_log( 'TTS AJAX Error: ' . $response->get_error_message() );
             wp_send_json_error( 
                 sprintf( 
-                    __( 'Failed to connect to Trello API: %s', 'trello-social-auto-publisher' ), 
+                    __( 'Failed to connect to Trello API: %s', 'fp-publisher' ), 
                     $response->get_error_message() 
                 ) 
             );
@@ -468,7 +468,7 @@ class TTS_Admin {
             error_log( "TTS AJAX Error: HTTP $http_code from Trello API" );
             wp_send_json_error( 
                 sprintf( 
-                    __( 'Trello API returned error code %d. Please check your credentials.', 'trello-social-auto-publisher' ), 
+                    __( 'Trello API returned error code %d. Please check your credentials.', 'fp-publisher' ), 
                     $http_code 
                 ) 
             );
@@ -479,7 +479,7 @@ class TTS_Admin {
         
         if ( json_last_error() !== JSON_ERROR_NONE ) {
             error_log( 'TTS AJAX Error: Invalid JSON response from Trello API' );
-            wp_send_json_error( __( 'Invalid response from Trello API.', 'trello-social-auto-publisher' ) );
+            wp_send_json_error( __( 'Invalid response from Trello API.', 'fp-publisher' ) );
         }
 
         wp_send_json_success( $data );
@@ -493,7 +493,7 @@ class TTS_Admin {
 
         // Check user capabilities
         if ( ! current_user_can( 'edit_posts' ) ) {
-            wp_send_json_error( __( 'You do not have permission to view posts.', 'trello-social-auto-publisher' ) );
+            wp_send_json_error( __( 'You do not have permission to view posts.', 'fp-publisher' ) );
         }
 
         try {
@@ -519,7 +519,7 @@ class TTS_Admin {
             if ( empty( $posts ) ) {
                 wp_send_json_success( array(
                     'posts' => array(),
-                    'message' => __( 'No posts found.', 'trello-social-auto-publisher' ),
+                    'message' => __( 'No posts found.', 'fp-publisher' ),
                     'timestamp' => current_time( 'timestamp' )
                 ) );
             }
@@ -547,7 +547,7 @@ class TTS_Admin {
                         '%d post refreshed successfully', 
                         '%d posts refreshed successfully', 
                         count( $formatted_posts ), 
-                        'trello-social-auto-publisher' 
+                        'fp-publisher' 
                     ), 
                     count( $formatted_posts ) 
                 ),
@@ -556,7 +556,7 @@ class TTS_Admin {
 
         } catch ( Exception $e ) {
             error_log( 'TTS Refresh Posts Error: ' . $e->getMessage() );
-            wp_send_json_error( __( 'An error occurred while refreshing posts. Please try again.', 'trello-social-auto-publisher' ) );
+            wp_send_json_error( __( 'An error occurred while refreshing posts. Please try again.', 'fp-publisher' ) );
         }
     }
 
@@ -568,38 +568,38 @@ class TTS_Admin {
 
         // Rate limiting check
         if (!$this->check_rate_limit('delete_post', 20, 60)) {
-            wp_send_json_error(__('Too many delete requests. Please wait a moment and try again.', 'trello-social-auto-publisher'));
+            wp_send_json_error(__('Too many delete requests. Please wait a moment and try again.', 'fp-publisher'));
         }
 
         if (!current_user_can('delete_posts')) {
-            wp_send_json_error(__('You do not have permission to delete posts.', 'trello-social-auto-publisher'));
+            wp_send_json_error(__('You do not have permission to delete posts.', 'fp-publisher'));
         }
 
         $post_id = isset($_POST['postId']) ? intval($_POST['postId']) : 0;
         
         if (!$post_id || $post_id <= 0) {
-            wp_send_json_error(__('Invalid post ID.', 'trello-social-auto-publisher'));
+            wp_send_json_error(__('Invalid post ID.', 'fp-publisher'));
         }
 
         $post = get_post($post_id);
         if (!$post || $post->post_type !== 'tts_social_post') {
-            wp_send_json_error(__('Post not found.', 'trello-social-auto-publisher'));
+            wp_send_json_error(__('Post not found.', 'fp-publisher'));
         }
 
         // Check specific delete permission for this post
         if (!current_user_can('delete_post', $post_id)) {
-            wp_send_json_error(__('You do not have permission to delete this specific post.', 'trello-social-auto-publisher'));
+            wp_send_json_error(__('You do not have permission to delete this specific post.', 'fp-publisher'));
         }
 
         $result = wp_delete_post($post_id, true);
         
         if ($result) {
             wp_send_json_success(array(
-                'message' => __('Post deleted successfully.', 'trello-social-auto-publisher'),
+                'message' => __('Post deleted successfully.', 'fp-publisher'),
                 'refresh' => true
             ));
         } else {
-            wp_send_json_error(__('Failed to delete post.', 'trello-social-auto-publisher'));
+            wp_send_json_error(__('Failed to delete post.', 'fp-publisher'));
         }
     }
 
@@ -611,11 +611,11 @@ class TTS_Admin {
 
         // Rate limiting check
         if (!$this->check_rate_limit('bulk_action', 10, 60)) {
-            wp_send_json_error(__('Too many requests. Please wait a moment and try again.', 'trello-social-auto-publisher'));
+            wp_send_json_error(__('Too many requests. Please wait a moment and try again.', 'fp-publisher'));
         }
 
         if (!current_user_can('edit_posts')) {
-            wp_send_json_error(__('You do not have permission to perform this action.', 'trello-social-auto-publisher'));
+            wp_send_json_error(__('You do not have permission to perform this action.', 'fp-publisher'));
         }
 
         $action = isset($_POST['bulkAction']) ? sanitize_text_field($_POST['bulkAction']) : '';
@@ -623,18 +623,18 @@ class TTS_Admin {
 
         // Input validation
         if (!$action || empty($post_ids)) {
-            wp_send_json_error(__('Invalid action or no posts selected.', 'trello-social-auto-publisher'));
+            wp_send_json_error(__('Invalid action or no posts selected.', 'fp-publisher'));
         }
 
         // Validate action is allowed
         $allowed_actions = array('delete', 'approve', 'revoke');
         if (!in_array($action, $allowed_actions, true)) {
-            wp_send_json_error(__('Invalid action specified.', 'trello-social-auto-publisher'));
+            wp_send_json_error(__('Invalid action specified.', 'fp-publisher'));
         }
 
         // Limit number of posts that can be processed at once
         if (count($post_ids) > 100) {
-            wp_send_json_error(__('Too many posts selected. Please select 100 or fewer posts.', 'trello-social-auto-publisher'));
+            wp_send_json_error(__('Too many posts selected. Please select 100 or fewer posts.', 'fp-publisher'));
         }
 
         $processed = 0;
@@ -643,13 +643,13 @@ class TTS_Admin {
         foreach ($post_ids as $post_id) {
             // Additional validation for each post ID
             if ($post_id <= 0) {
-                $errors[] = __('Invalid post ID provided.', 'trello-social-auto-publisher');
+                $errors[] = __('Invalid post ID provided.', 'fp-publisher');
                 continue;
             }
 
             $post = get_post($post_id);
             if (!$post || $post->post_type !== 'tts_social_post') {
-                $errors[] = sprintf(__('Post ID %d not found.', 'trello-social-auto-publisher'), $post_id);
+                $errors[] = sprintf(__('Post ID %d not found.', 'fp-publisher'), $post_id);
                 continue;
             }
 
@@ -659,10 +659,10 @@ class TTS_Admin {
                         if (wp_delete_post($post_id, true)) {
                             $processed++;
                         } else {
-                            $errors[] = sprintf(__('Failed to delete post ID %d.', 'trello-social-auto-publisher'), $post_id);
+                            $errors[] = sprintf(__('Failed to delete post ID %d.', 'fp-publisher'), $post_id);
                         }
                     } else {
-                        $errors[] = sprintf(__('You do not have permission to delete post ID %d.', 'trello-social-auto-publisher'), $post_id);
+                        $errors[] = sprintf(__('You do not have permission to delete post ID %d.', 'fp-publisher'), $post_id);
                     }
                     break;
 
@@ -673,7 +673,7 @@ class TTS_Admin {
                         do_action('tts_post_approved', $post_id);
                         $processed++;
                     } else {
-                        $errors[] = sprintf(__('You do not have permission to approve post ID %d.', 'trello-social-auto-publisher'), $post_id);
+                        $errors[] = sprintf(__('You do not have permission to approve post ID %d.', 'fp-publisher'), $post_id);
                     }
                     break;
 
@@ -683,7 +683,7 @@ class TTS_Admin {
                         do_action('save_post_tts_social_post', $post_id, $post, true);
                         $processed++;
                     } else {
-                        $errors[] = sprintf(__('You do not have permission to revoke approval for post ID %d.', 'trello-social-auto-publisher'), $post_id);
+                        $errors[] = sprintf(__('You do not have permission to revoke approval for post ID %d.', 'fp-publisher'), $post_id);
                     }
                     break;
             }
@@ -695,13 +695,13 @@ class TTS_Admin {
                     '%d post processed successfully.',
                     '%d posts processed successfully.',
                     $processed,
-                    'trello-social-auto-publisher'
+                    'fp-publisher'
                 ),
                 $processed
             );
 
             if (!empty($errors)) {
-                $message .= ' ' . sprintf(__('However, %d errors occurred.', 'trello-social-auto-publisher'), count($errors));
+                $message .= ' ' . sprintf(__('However, %d errors occurred.', 'fp-publisher'), count($errors));
             }
 
             wp_send_json_success(array(
@@ -711,7 +711,7 @@ class TTS_Admin {
                 'refresh' => true
             ));
         } else {
-            wp_send_json_error(__('No posts were processed.', 'trello-social-auto-publisher') . ' ' . implode(' ', $errors));
+            wp_send_json_error(__('No posts were processed.', 'fp-publisher') . ' ' . implode(' ', $errors));
         }
     }
 
@@ -720,7 +720,7 @@ class TTS_Admin {
      */
     public function render_dashboard_page() {
         echo '<div class="wrap">';
-        echo '<h1>' . esc_html__( 'Social Auto Publisher Dashboard', 'trello-social-auto-publisher' ) . '</h1>';
+        echo '<h1>' . esc_html__( 'Social Auto Publisher Dashboard', 'fp-publisher' ) . '</h1>';
         
         // Add notification area
         echo '<div id="tts-notification-area" style="margin: 15px 0;"></div>';
@@ -785,7 +785,7 @@ class TTS_Admin {
      */
     private function render_monitoring_dashboard() {
         echo '<div class="tts-monitoring-section">';
-        echo '<h2>' . esc_html__( 'System Monitoring', 'trello-social-auto-publisher' ) . '</h2>';
+        echo '<h2>' . esc_html__( 'System Monitoring', 'fp-publisher' ) . '</h2>';
         
         echo '<div class="tts-monitoring-grid">';
         
@@ -813,9 +813,9 @@ class TTS_Admin {
         
         echo '<div class="tts-monitoring-card tts-health-score-card">';
         echo '<div class="tts-card-header">';
-        echo '<h3>' . esc_html__( 'System Health', 'trello-social-auto-publisher' ) . '</h3>';
-        echo '<button class="tts-btn small" data-ajax-action="tts_refresh_health" data-loading-text="' . esc_attr__( 'Checking...', 'trello-social-auto-publisher' ) . '">';
-        echo esc_html__( 'Refresh', 'trello-social-auto-publisher' );
+        echo '<h3>' . esc_html__( 'System Health', 'fp-publisher' ) . '</h3>';
+        echo '<button class="tts-btn small" data-ajax-action="tts_refresh_health" data-loading-text="' . esc_attr__( 'Checking...', 'fp-publisher' ) . '">';
+        echo esc_html__( 'Refresh', 'fp-publisher' );
         echo '</button>';
         echo '</div>';
         
@@ -846,7 +846,7 @@ class TTS_Admin {
         
         echo '<div class="tts-monitoring-card">';
         echo '<div class="tts-card-header">';
-        echo '<h3>' . esc_html__( 'Performance Metrics', 'trello-social-auto-publisher' ) . '</h3>';
+        echo '<h3>' . esc_html__( 'Performance Metrics', 'fp-publisher' ) . '</h3>';
         echo '</div>';
         
         echo '<div class="tts-metrics-display">';
@@ -905,7 +905,7 @@ class TTS_Admin {
         
         echo '<div class="tts-monitoring-card">';
         echo '<div class="tts-card-header">';
-        echo '<h3>' . esc_html__( 'API Connections', 'trello-social-auto-publisher' ) . '</h3>';
+        echo '<h3>' . esc_html__( 'API Connections', 'fp-publisher' ) . '</h3>';
         echo '</div>';
         
         echo '<div class="tts-api-status-display">';
@@ -929,7 +929,7 @@ class TTS_Admin {
                 echo '</div>';
             }
         } else {
-            echo '<p class="tts-no-data">' . esc_html__( 'No API connection data available', 'trello-social-auto-publisher' ) . '</p>';
+            echo '<p class="tts-no-data">' . esc_html__( 'No API connection data available', 'fp-publisher' ) . '</p>';
         }
         
         echo '</div>';
@@ -953,7 +953,7 @@ class TTS_Admin {
         
         echo '<div class="tts-monitoring-card tts-activity-timeline">';
         echo '<div class="tts-card-header">';
-        echo '<h3>' . esc_html__( 'Recent Activity', 'trello-social-auto-publisher' ) . '</h3>';
+        echo '<h3>' . esc_html__( 'Recent Activity', 'fp-publisher' ) . '</h3>';
         echo '</div>';
         
         echo '<div class="tts-timeline-container">';
@@ -973,7 +973,7 @@ class TTS_Admin {
                 echo '</div>';
             }
         } else {
-            echo '<p class="tts-no-data">' . esc_html__( 'No recent activity', 'trello-social-auto-publisher' ) . '</p>';
+            echo '<p class="tts-no-data">' . esc_html__( 'No recent activity', 'fp-publisher' ) . '</p>';
         }
         
         echo '</div>';
@@ -985,42 +985,42 @@ class TTS_Admin {
      */
     private function render_advanced_tools_section() {
         echo '<div class="tts-advanced-tools-section">';
-        echo '<h2>' . esc_html__( 'Advanced Tools', 'trello-social-auto-publisher' ) . '</h2>';
+        echo '<h2>' . esc_html__( 'Advanced Tools', 'fp-publisher' ) . '</h2>';
         
         echo '<div class="tts-tools-grid">';
         
         // Export/Import Tools
         echo '<div class="tts-tool-card">';
-        echo '<h3>📦 ' . esc_html__( 'Export & Import', 'trello-social-auto-publisher' ) . '</h3>';
-        echo '<p>' . esc_html__( 'Backup your settings and data or migrate from another installation.', 'trello-social-auto-publisher' ) . '</p>';
+        echo '<h3>📦 ' . esc_html__( 'Export & Import', 'fp-publisher' ) . '</h3>';
+        echo '<p>' . esc_html__( 'Backup your settings and data or migrate from another installation.', 'fp-publisher' ) . '</p>';
         echo '<div class="tts-tool-actions">';
         echo '<button class="tts-btn primary" data-ajax-action="tts_show_export_modal">';
-        echo esc_html__( 'Export Data', 'trello-social-auto-publisher' );
+        echo esc_html__( 'Export Data', 'fp-publisher' );
         echo '</button>';
         echo '<button class="tts-btn secondary" data-ajax-action="tts_show_import_modal">';
-        echo esc_html__( 'Import Data', 'trello-social-auto-publisher' );
+        echo esc_html__( 'Import Data', 'fp-publisher' );
         echo '</button>';
         echo '</div>';
         echo '</div>';
         
         // System Maintenance
         echo '<div class="tts-tool-card">';
-        echo '<h3>🔧 ' . esc_html__( 'System Maintenance', 'trello-social-auto-publisher' ) . '</h3>';
-        echo '<p>' . esc_html__( 'Optimize database, clear cache, and perform system cleanup.', 'trello-social-auto-publisher' ) . '</p>';
+        echo '<h3>🔧 ' . esc_html__( 'System Maintenance', 'fp-publisher' ) . '</h3>';
+        echo '<p>' . esc_html__( 'Optimize database, clear cache, and perform system cleanup.', 'fp-publisher' ) . '</p>';
         echo '<div class="tts-tool-actions">';
-        echo '<button class="tts-btn warning" data-ajax-action="tts_system_maintenance" data-confirm="' . esc_attr__( 'This will perform system maintenance. Continue?', 'trello-social-auto-publisher' ) . '">';
-        echo esc_html__( 'Run Maintenance', 'trello-social-auto-publisher' );
+        echo '<button class="tts-btn warning" data-ajax-action="tts_system_maintenance" data-confirm="' . esc_attr__( 'This will perform system maintenance. Continue?', 'fp-publisher' ) . '">';
+        echo esc_html__( 'Run Maintenance', 'fp-publisher' );
         echo '</button>';
         echo '</div>';
         echo '</div>';
         
         // System Report
         echo '<div class="tts-tool-card">';
-        echo '<h3>📊 ' . esc_html__( 'System Report', 'trello-social-auto-publisher' ) . '</h3>';
-        echo '<p>' . esc_html__( 'Generate comprehensive system report for troubleshooting.', 'trello-social-auto-publisher' ) . '</p>';
+        echo '<h3>📊 ' . esc_html__( 'System Report', 'fp-publisher' ) . '</h3>';
+        echo '<p>' . esc_html__( 'Generate comprehensive system report for troubleshooting.', 'fp-publisher' ) . '</p>';
         echo '<div class="tts-tool-actions">';
         echo '<button class="tts-btn info" data-ajax-action="tts_generate_report">';
-        echo esc_html__( 'Generate Report', 'trello-social-auto-publisher' );
+        echo esc_html__( 'Generate Report', 'fp-publisher' );
         echo '</button>';
         echo '</div>';
         echo '</div>';
@@ -1058,7 +1058,7 @@ class TTS_Admin {
         
         // Total Posts Card
         echo '<div class="tts-stat-card tts-tooltip">';
-        echo '<h3>' . esc_html__('Total Posts', 'trello-social-auto-publisher') . '</h3>';
+        echo '<h3>' . esc_html__('Total Posts', 'fp-publisher') . '</h3>';
         echo '<span class="tts-stat-number">' . intval($total_posts->publish + $total_posts->draft + $total_posts->private) . '</span>';
         echo '<div class="tts-stat-trend">All time posts created</div>';
         echo '<span class="tts-tooltiptext">Total number of social media posts created in the system</span>';
@@ -1066,7 +1066,7 @@ class TTS_Admin {
         
         // Active Clients Card
         echo '<div class="tts-stat-card tts-tooltip">';
-        echo '<h3>' . esc_html__('Active Clients', 'trello-social-auto-publisher') . '</h3>';
+        echo '<h3>' . esc_html__('Active Clients', 'fp-publisher') . '</h3>';
         echo '<span class="tts-stat-number">' . intval($total_clients->publish) . '</span>';
         echo '<div class="tts-stat-trend">Currently configured</div>';
         echo '<span class="tts-tooltiptext">Number of clients with active social media configurations</span>';
@@ -1074,7 +1074,7 @@ class TTS_Admin {
         
         // Scheduled Posts Card
         echo '<div class="tts-stat-card tts-tooltip">';
-        echo '<h3>' . esc_html__('Scheduled Posts', 'trello-social-auto-publisher') . '</h3>';
+        echo '<h3>' . esc_html__('Scheduled Posts', 'fp-publisher') . '</h3>';
         echo '<span class="tts-stat-number">' . intval($scheduled_posts) . '</span>';
         echo '<div class="tts-stat-trend">Awaiting publication</div>';
         echo '<span class="tts-tooltiptext">Posts scheduled for future publication</span>';
@@ -1086,7 +1086,7 @@ class TTS_Admin {
         $trend_icon = $trend_percentage > 0 ? '↗' : ($trend_percentage < 0 ? '↘' : '→');
         
         echo '<div class="tts-stat-card tts-tooltip">';
-        echo '<h3>' . esc_html__('Published Today', 'trello-social-auto-publisher') . '</h3>';
+        echo '<h3>' . esc_html__('Published Today', 'fp-publisher') . '</h3>';
         echo '<span class="tts-stat-number">' . $today_count . '</span>';
         if ($published_yesterday > 0) {
             echo '<div class="tts-stat-trend ' . esc_attr($trend_class) . '">';
@@ -1105,7 +1105,7 @@ class TTS_Admin {
         
         // Failed Posts Today
         echo '<div class="tts-stat-card tts-tooltip">';
-        echo '<h3>' . esc_html__('Failed Today', 'trello-social-auto-publisher') . '</h3>';
+        echo '<h3>' . esc_html__('Failed Today', 'fp-publisher') . '</h3>';
         echo '<span class="tts-stat-number" style="color: #d63638;">' . $failed_today . '</span>';
         echo '<div class="tts-stat-trend">Requires attention</div>';
         echo '<span class="tts-tooltiptext">Posts that failed to publish today and need attention</span>';
@@ -1113,7 +1113,7 @@ class TTS_Admin {
 
         // Success Rate (already calculated in optimized method)
         echo '<div class="tts-stat-card tts-tooltip">';
-        echo '<h3>' . esc_html__('Success Rate', 'trello-social-auto-publisher') . '</h3>';
+        echo '<h3>' . esc_html__('Success Rate', 'fp-publisher') . '</h3>';
         echo '<span class="tts-stat-number" style="color: ' . ($success_rate >= 95 ? '#00a32a' : ($success_rate >= 80 ? '#f56e28' : '#d63638')) . ';">' . $success_rate . '%</span>';
         echo '<div class="tts-stat-trend">Today\'s performance</div>';
         echo '<span class="tts-tooltiptext">Percentage of successful publications today</span>';
@@ -1121,7 +1121,7 @@ class TTS_Admin {
 
         // Next Scheduled (already fetched in optimized method)
         echo '<div class="tts-stat-card tts-tooltip">';
-        echo '<h3>' . esc_html__('Next Post', 'trello-social-auto-publisher') . '</h3>';
+        echo '<h3>' . esc_html__('Next Post', 'fp-publisher') . '</h3>';
         if ($next_scheduled) {
             $time_diff = human_time_diff(current_time('timestamp'), strtotime($next_scheduled->publish_at));
             echo '<span class="tts-stat-number" style="font-size: 20px;">in ' . $time_diff . '</span>';
@@ -1135,7 +1135,7 @@ class TTS_Admin {
 
         // Weekly Average (already calculated in optimized method)
         echo '<div class="tts-stat-card tts-tooltip">';
-        echo '<h3>' . esc_html__('Daily Average', 'trello-social-auto-publisher') . '</h3>';
+        echo '<h3>' . esc_html__('Daily Average', 'fp-publisher') . '</h3>';
         echo '<span class="tts-stat-number">' . $weekly_average . '</span>';
         echo '<div class="tts-stat-trend">Posts per day (7-day avg)</div>';
         echo '<span class="tts-tooltiptext">Average number of posts published per day over the last week</span>';
@@ -1145,7 +1145,7 @@ class TTS_Admin {
         if ( isset( $stats['performance_metrics'] ) ) {
             $perf = $stats['performance_metrics'];
             echo '<div class="tts-stat-card tts-performance-card tts-tooltip">';
-            echo '<h3>' . esc_html__('Performance', 'trello-social-auto-publisher') . '</h3>';
+            echo '<h3>' . esc_html__('Performance', 'fp-publisher') . '</h3>';
             echo '<div class="tts-perf-metrics">';
             echo '<div class="tts-perf-item">DB: ' . $perf['database_response_ms'] . 'ms</div>';
             echo '<div class="tts-perf-item">Memory: ' . $perf['memory_usage_mb'] . 'MB</div>';
@@ -1164,10 +1164,10 @@ class TTS_Admin {
     private function render_recent_posts_section() {
         echo '<div class="tts-dashboard-section">';
         echo '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">';
-        echo '<h2 style="margin: 0;">' . esc_html__('Recent Social Posts', 'trello-social-auto-publisher') . '</h2>';
+        echo '<h2 style="margin: 0;">' . esc_html__('Recent Social Posts', 'fp-publisher') . '</h2>';
         echo '<div>';
-        echo '<button class="tts-btn small" data-ajax-action="tts_refresh_posts" data-loading-text="' . esc_attr__('Refreshing...', 'trello-social-auto-publisher') . '">';
-        echo esc_html__('Refresh', 'trello-social-auto-publisher');
+        echo '<button class="tts-btn small" data-ajax-action="tts_refresh_posts" data-loading-text="' . esc_attr__('Refreshing...', 'fp-publisher') . '">';
+        echo esc_html__('Refresh', 'fp-publisher');
         echo '</button>';
         echo '</div>';
         echo '</div>';
@@ -1185,11 +1185,11 @@ class TTS_Admin {
             echo '<table class="widefat tts-enhanced-table">';
             echo '<thead><tr>';
             echo '<th style="width: 20px;"><input type="checkbox" class="tts-bulk-select-all"></th>';
-            echo '<th>' . esc_html__('Title', 'trello-social-auto-publisher') . '</th>';
-            echo '<th>' . esc_html__('Channel', 'trello-social-auto-publisher') . '</th>';
-            echo '<th>' . esc_html__('Status', 'trello-social-auto-publisher') . '</th>';
-            echo '<th>' . esc_html__('Date', 'trello-social-auto-publisher') . '</th>';
-            echo '<th>' . esc_html__('Actions', 'trello-social-auto-publisher') . '</th>';
+            echo '<th>' . esc_html__('Title', 'fp-publisher') . '</th>';
+            echo '<th>' . esc_html__('Channel', 'fp-publisher') . '</th>';
+            echo '<th>' . esc_html__('Status', 'fp-publisher') . '</th>';
+            echo '<th>' . esc_html__('Date', 'fp-publisher') . '</th>';
+            echo '<th>' . esc_html__('Actions', 'fp-publisher') . '</th>';
             echo '</tr></thead><tbody>';
             
             foreach ($recent_posts as $post) {
@@ -1199,18 +1199,18 @@ class TTS_Admin {
                 
                 // Determine status class and text
                 $status_class = $status === 'published' ? 'success' : ($status === 'failed' ? 'error' : 'warning');
-                $status_text = $status ?: __('Scheduled', 'trello-social-auto-publisher');
+                $status_text = $status ?: __('Scheduled', 'fp-publisher');
                 
                 echo '<tr class="tts-list-item">';
                 echo '<td><input type="checkbox" class="tts-bulk-select-item" value="' . esc_attr($post->ID) . '"></td>';
                 echo '<td>';
                 echo '<a href="' . esc_url(get_edit_post_link($post->ID)) . '" class="tts-tooltip">';
                 echo '<strong>' . esc_html($post->post_title) . '</strong>';
-                echo '<span class="tts-tooltiptext">' . esc_html__('Click to edit this post', 'trello-social-auto-publisher') . '</span>';
+                echo '<span class="tts-tooltiptext">' . esc_html__('Click to edit this post', 'fp-publisher') . '</span>';
                 echo '</a>';
                 echo '<div class="row-actions">';
-                echo '<span class="edit"><a href="' . esc_url(get_edit_post_link($post->ID)) . '">' . esc_html__('Edit', 'trello-social-auto-publisher') . '</a> | </span>';
-                echo '<span class="delete"><a href="#" data-confirm="' . esc_attr__('Are you sure you want to delete this post?', 'trello-social-auto-publisher') . '" data-dangerous data-ajax-action="tts_delete_post" data-post-id="' . esc_attr($post->ID) . '">' . esc_html__('Delete', 'trello-social-auto-publisher') . '</a></span>';
+                echo '<span class="edit"><a href="' . esc_url(get_edit_post_link($post->ID)) . '">' . esc_html__('Edit', 'fp-publisher') . '</a> | </span>';
+                echo '<span class="delete"><a href="#" data-confirm="' . esc_attr__('Are you sure you want to delete this post?', 'fp-publisher') . '" data-dangerous data-ajax-action="tts_delete_post" data-post-id="' . esc_attr($post->ID) . '">' . esc_html__('Delete', 'fp-publisher') . '</a></span>';
                 echo '</div>';
                 echo '</td>';
                 echo '<td>';
@@ -1219,7 +1219,7 @@ class TTS_Admin {
                         echo '<span class="tts-status-badge info" style="margin-right: 5px;">' . esc_html($ch) . '</span>';
                     }
                 } else {
-                    echo '<span class="tts-status-badge info">' . esc_html($channel ?: __('No channel', 'trello-social-auto-publisher')) . '</span>';
+                    echo '<span class="tts-status-badge info">' . esc_html($channel ?: __('No channel', 'fp-publisher')) . '</span>';
                 }
                 echo '</td>';
                 echo '<td><span class="tts-status-badge ' . $status_class . '">' . esc_html($status_text) . '</span></td>';
@@ -1232,7 +1232,7 @@ class TTS_Admin {
                 echo '</td>';
                 echo '<td>';
                 echo '<a href="' . esc_url(admin_url('admin.php?page=tts-social-posts&action=log&post=' . $post->ID)) . '" class="tts-btn small secondary">';
-                echo esc_html__('View Log', 'trello-social-auto-publisher');
+                echo esc_html__('View Log', 'fp-publisher');
                 echo '</a>';
                 echo '</td>';
                 echo '</tr>';
@@ -1242,16 +1242,16 @@ class TTS_Admin {
             
             // Bulk actions
             echo '<div class="tts-bulk-actions">';
-            echo '<h4>' . esc_html__('Bulk Actions', 'trello-social-auto-publisher') . '</h4>';
+            echo '<h4>' . esc_html__('Bulk Actions', 'fp-publisher') . '</h4>';
             echo '<div style="display: flex; gap: 10px; align-items: center;">';
             echo '<select class="tts-bulk-action-select">';
-            echo '<option value="">' . esc_html__('Choose an action...', 'trello-social-auto-publisher') . '</option>';
-            echo '<option value="delete">' . esc_html__('Delete', 'trello-social-auto-publisher') . '</option>';
-            echo '<option value="approve">' . esc_html__('Approve', 'trello-social-auto-publisher') . '</option>';
-            echo '<option value="revoke">' . esc_html__('Revoke', 'trello-social-auto-publisher') . '</option>';
+            echo '<option value="">' . esc_html__('Choose an action...', 'fp-publisher') . '</option>';
+            echo '<option value="delete">' . esc_html__('Delete', 'fp-publisher') . '</option>';
+            echo '<option value="approve">' . esc_html__('Approve', 'fp-publisher') . '</option>';
+            echo '<option value="revoke">' . esc_html__('Revoke', 'fp-publisher') . '</option>';
             echo '</select>';
-            echo '<button class="tts-btn" data-ajax-action="tts_bulk_action" data-confirm="' . esc_attr__('Are you sure you want to perform this action on the selected posts?', 'trello-social-auto-publisher') . '">';
-            echo esc_html__('Apply', 'trello-social-auto-publisher');
+            echo '<button class="tts-btn" data-ajax-action="tts_bulk_action" data-confirm="' . esc_attr__('Are you sure you want to perform this action on the selected posts?', 'fp-publisher') . '">';
+            echo esc_html__('Apply', 'fp-publisher');
             echo '</button>';
             echo '</div>';
             echo '</div>';
@@ -1259,10 +1259,10 @@ class TTS_Admin {
         } else {
             echo '<div style="text-align: center; padding: 40px; color: #666;">';
             echo '<span style="font-size: 48px; margin-bottom: 10px; display: block;">📝</span>';
-            echo '<p style="margin: 0; font-size: 16px;">' . esc_html__('No social posts found.', 'trello-social-auto-publisher') . '</p>';
-            echo '<p style="margin: 5px 0 0 0; font-size: 14px;">' . esc_html__('Create your first social media post to get started!', 'trello-social-auto-publisher') . '</p>';
+            echo '<p style="margin: 0; font-size: 16px;">' . esc_html__('No social posts found.', 'fp-publisher') . '</p>';
+            echo '<p style="margin: 5px 0 0 0; font-size: 14px;">' . esc_html__('Create your first social media post to get started!', 'fp-publisher') . '</p>';
             echo '<a href="' . esc_url(admin_url('admin.php?page=tts-client-wizard')) . '" class="tts-btn" style="margin-top: 15px;">';
-            echo esc_html__('Add New Client', 'trello-social-auto-publisher');
+            echo esc_html__('Add New Client', 'fp-publisher');
             echo '</a>';
             echo '</div>';
         }
@@ -1274,48 +1274,48 @@ class TTS_Admin {
      */
     private function render_quick_actions_section() {
         echo '<div class="tts-dashboard-section">';
-        echo '<h2>' . esc_html__('Quick Actions', 'trello-social-auto-publisher') . '</h2>';
+        echo '<h2>' . esc_html__('Quick Actions', 'fp-publisher') . '</h2>';
         echo '<div class="tts-quick-actions">';
         
         $actions = array(
             array(
-                'title' => __('Add New Client', 'trello-social-auto-publisher'),
-                'description' => __('Set up a new social media client', 'trello-social-auto-publisher'),
+                'title' => __('Add New Client', 'fp-publisher'),
+                'description' => __('Set up a new social media client', 'fp-publisher'),
                 'url' => admin_url('admin.php?page=tts-client-wizard'),
                 'icon' => 'dashicons-plus',
                 'color' => '#135e96'
             ),
             array(
-                'title' => __('View Calendar', 'trello-social-auto-publisher'),
-                'description' => __('See scheduled posts in calendar view', 'trello-social-auto-publisher'),
+                'title' => __('View Calendar', 'fp-publisher'),
+                'description' => __('See scheduled posts in calendar view', 'fp-publisher'),
                 'url' => admin_url('admin.php?page=tts-calendar'),
                 'icon' => 'dashicons-calendar',
                 'color' => '#f56e28'
             ),
             array(
-                'title' => __('Check Health Status', 'trello-social-auto-publisher'),
-                'description' => __('Monitor system health and tokens', 'trello-social-auto-publisher'),
+                'title' => __('Check Health Status', 'fp-publisher'),
+                'description' => __('Monitor system health and tokens', 'fp-publisher'),
                 'url' => admin_url('admin.php?page=tts-health'),
                 'icon' => 'dashicons-heart',
                 'color' => '#00a32a'
             ),
             array(
-                'title' => __('View Analytics', 'trello-social-auto-publisher'),
-                'description' => __('Analyze performance and engagement', 'trello-social-auto-publisher'),
+                'title' => __('View Analytics', 'fp-publisher'),
+                'description' => __('Analyze performance and engagement', 'fp-publisher'),
                 'url' => admin_url('admin.php?page=tts-analytics'),
                 'icon' => 'dashicons-chart-area',
                 'color' => '#7c3aed'
             ),
             array(
-                'title' => __('Manage Posts', 'trello-social-auto-publisher'),
-                'description' => __('View and manage all social posts', 'trello-social-auto-publisher'),
+                'title' => __('Manage Posts', 'fp-publisher'),
+                'description' => __('View and manage all social posts', 'fp-publisher'),
                 'url' => admin_url('admin.php?page=tts-social-posts'),
                 'icon' => 'dashicons-admin-post',
                 'color' => '#2563eb'
             ),
             array(
-                'title' => __('View Logs', 'trello-social-auto-publisher'),
-                'description' => __('Check system logs and debugging info', 'trello-social-auto-publisher'),
+                'title' => __('View Logs', 'fp-publisher'),
+                'description' => __('Check system logs and debugging info', 'fp-publisher'),
                 'url' => admin_url('admin.php?page=tts-log'),
                 'icon' => 'dashicons-list-view',
                 'color' => '#64748b'
@@ -1344,7 +1344,7 @@ class TTS_Admin {
      */
     private function render_system_status_widget() {
         echo '<div class="tts-dashboard-section">';
-        echo '<h2>' . esc_html__('System Status', 'trello-social-auto-publisher') . '</h2>';
+        echo '<h2>' . esc_html__('System Status', 'fp-publisher') . '</h2>';
         
         // Check various system components
         $status_checks = array();
@@ -1399,7 +1399,7 @@ class TTS_Admin {
         echo '<div style="text-align: center; margin-bottom: 15px;">';
         $health_color = $health_percentage >= 80 ? '#00a32a' : ($health_percentage >= 60 ? '#f56e28' : '#d63638');
         echo '<div style="font-size: 24px; color: ' . $health_color . '; font-weight: bold;">';
-        echo $health_percentage . '% ' . esc_html__('Healthy', 'trello-social-auto-publisher');
+        echo $health_percentage . '% ' . esc_html__('Healthy', 'fp-publisher');
         echo '</div>';
         echo '</div>';
         
@@ -1431,7 +1431,7 @@ class TTS_Admin {
             )
         );
         echo '<div class="wrap">';
-        echo '<h1>' . esc_html__( 'Clienti', 'trello-social-auto-publisher' ) . '</h1>';
+        echo '<h1>' . esc_html__( 'Clienti', 'fp-publisher' ) . '</h1>';
         if ( ! empty( $clients ) ) {
             echo '<ul>';
             foreach ( $clients as $client ) {
@@ -1440,7 +1440,7 @@ class TTS_Admin {
             }
             echo '</ul>';
         } else {
-            echo '<p>' . esc_html__( 'Nessun cliente trovato.', 'trello-social-auto-publisher' ) . '</p>';
+            echo '<p>' . esc_html__( 'Nessun cliente trovato.', 'fp-publisher' ) . '</p>';
         }
         echo '</div>';
     }
@@ -1456,22 +1456,22 @@ class TTS_Admin {
         // Security: Verify nonce for form submissions
         if ( isset( $_POST['step'] ) && $_POST['step'] > 1 ) {
             if ( ! wp_verify_nonce( $_POST['tts_wizard_nonce'], 'tts_client_wizard' ) ) {
-                wp_die( esc_html__( 'Security verification failed. Please try again.', 'trello-social-auto-publisher' ) );
+                wp_die( esc_html__( 'Security verification failed. Please try again.', 'fp-publisher' ) );
             }
         }
 
         $step = isset( $_REQUEST['step'] ) ? absint( $_REQUEST['step'] ) : 1;
 
         echo '<div class="wrap tts-client-wizard">';
-        echo '<h1>' . esc_html__( 'Client Wizard', 'trello-social-auto-publisher' ) . '</h1>';
+        echo '<h1>' . esc_html__( 'Client Wizard', 'fp-publisher' ) . '</h1>';
 
         // Add helpful notice about social media setup
         if ( 2 === $step ) {
             echo '<div class="notice notice-info">';
-            echo '<h3>' . esc_html__( 'Social Media Setup Required', 'trello-social-auto-publisher' ) . '</h3>';
-            echo '<p>' . esc_html__( 'To connect social media accounts, you must first configure OAuth apps for each platform. Click "Configure App" for platforms that are not set up.', 'trello-social-auto-publisher' ) . '</p>';
-            echo '<p><a href="' . esc_url( admin_url( 'admin.php?page=tts-social-connections' ) ) . '" class="button">' . esc_html__( 'Manage Social Connections', 'trello-social-auto-publisher' ) . '</a> ';
-            echo '<a href="' . esc_url( admin_url( 'admin.php?page=social-auto-publisher' ) ) . '" target="_blank">' . esc_html__( 'View Setup Guide', 'trello-social-auto-publisher' ) . '</a></p>';
+            echo '<h3>' . esc_html__( 'Social Media Setup Required', 'fp-publisher' ) . '</h3>';
+            echo '<p>' . esc_html__( 'To connect social media accounts, you must first configure OAuth apps for each platform. Click "Configure App" for platforms that are not set up.', 'fp-publisher' ) . '</p>';
+            echo '<p><a href="' . esc_url( admin_url( 'admin.php?page=tts-social-connections' ) ) . '" class="button">' . esc_html__( 'Manage Social Connections', 'fp-publisher' ) . '</a> ';
+            echo '<a href="' . esc_url( admin_url( 'admin.php?page=fp-publisher' ) ) . '" target="_blank">' . esc_html__( 'View Setup Guide', 'fp-publisher' ) . '</a></p>';
             echo '</div>';
         }
 
@@ -1489,9 +1489,9 @@ class TTS_Admin {
             echo '<form method="post" class="tts-wizard-step tts-step-1">';
             wp_nonce_field( 'tts_client_wizard', 'tts_wizard_nonce' );
             echo '<input type="hidden" name="step" value="2" />';
-            echo '<p><label>' . esc_html__( 'Trello API Key', 'trello-social-auto-publisher' ) . '<br />';
+            echo '<p><label>' . esc_html__( 'Trello API Key', 'fp-publisher' ) . '<br />';
             echo '<input type="text" name="trello_key" value="' . esc_attr( $trello_key ) . '" required /></label></p>';
-            echo '<p><label>' . esc_html__( 'Trello Token', 'trello-social-auto-publisher' ) . '<br />';
+            echo '<p><label>' . esc_html__( 'Trello Token', 'fp-publisher' ) . '<br />';
             echo '<input type="text" name="trello_token" value="' . esc_attr( $trello_token ) . '" required /></label></p>';
 
             $boards = array();
@@ -1506,7 +1506,7 @@ class TTS_Admin {
             }
 
             if ( ! empty( $boards ) ) {
-                echo '<p><label>' . esc_html__( 'Trello Board', 'trello-social-auto-publisher' ) . '<br />';
+                echo '<p><label>' . esc_html__( 'Trello Board', 'fp-publisher' ) . '<br />';
                 echo '<select name="trello_board">';
                 foreach ( $boards as $b ) {
                     printf( '<option value="%s" %s>%s</option>', esc_attr( $b['id'] ), selected( $board, $b['id'], false ), esc_html( $b['name'] ) );
@@ -1514,7 +1514,7 @@ class TTS_Admin {
                 echo '</select></label></p>';
             }
 
-            echo '<p><button type="submit" class="button button-primary">' . esc_html__( 'Next', 'trello-social-auto-publisher' ) . '</button></p>';
+            echo '<p><button type="submit" class="button button-primary">' . esc_html__( 'Next', 'fp-publisher' ) . '</button></p>';
             echo '</form>';
         } elseif ( 2 === $step ) {
             echo '<form method="post" class="tts-wizard-step tts-step-2">';
@@ -1525,10 +1525,10 @@ class TTS_Admin {
             echo '<input type="hidden" name="trello_board" value="' . esc_attr( $board ) . '" />';
 
             $opts = array(
-                'facebook'  => __( 'Facebook', 'trello-social-auto-publisher' ),
-                'instagram' => __( 'Instagram', 'trello-social-auto-publisher' ),
-                'youtube'   => __( 'YouTube', 'trello-social-auto-publisher' ),
-                'tiktok'    => __( 'TikTok', 'trello-social-auto-publisher' ),
+                'facebook'  => __( 'Facebook', 'fp-publisher' ),
+                'instagram' => __( 'Instagram', 'fp-publisher' ),
+                'youtube'   => __( 'YouTube', 'fp-publisher' ),
+                'tiktok'    => __( 'TikTok', 'fp-publisher' ),
             );
 
             foreach ( $opts as $slug => $label ) {
@@ -1567,19 +1567,19 @@ class TTS_Admin {
                 echo '<p><label><input type="checkbox" name="channels[]" value="' . esc_attr( $slug ) . '" ' . checked( in_array( $slug, $channels, true ) || $connected, true, false ) . ' /> <strong>' . esc_html( $label ) . '</strong></label>';
                 
                 if ( ! $app_configured ) {
-                    echo '<br><span style="color: #d63638;">⚠️ ' . esc_html__( 'App not configured', 'trello-social-auto-publisher' ) . '</span>';
-                    echo '<br><a href="' . esc_url( admin_url( 'admin.php?page=tts-social-connections' ) ) . '" class="button">' . esc_html__( 'Configure App', 'trello-social-auto-publisher' ) . '</a>';
+                    echo '<br><span style="color: #d63638;">⚠️ ' . esc_html__( 'App not configured', 'fp-publisher' ) . '</span>';
+                    echo '<br><a href="' . esc_url( admin_url( 'admin.php?page=tts-social-connections' ) ) . '" class="button">' . esc_html__( 'Configure App', 'fp-publisher' ) . '</a>';
                 } elseif ( $connected ) {
-                    echo '<br><span style="color: #00a32a;">✅ ' . esc_html__( 'Connected', 'trello-social-auto-publisher' ) . '</span>';
+                    echo '<br><span style="color: #00a32a;">✅ ' . esc_html__( 'Connected', 'fp-publisher' ) . '</span>';
                 } else {
                     $url = add_query_arg( array( 'action' => 'tts_oauth_' . $slug, 'step' => 2 ), admin_url( 'admin-post.php' ) );
-                    echo '<br><span style="color: #f56e28;">🟡 ' . esc_html__( 'Ready to connect', 'trello-social-auto-publisher' ) . '</span>';
-                    echo '<br><a href="' . esc_url( $url ) . '" class="button button-primary">' . esc_html__( 'Connect Account', 'trello-social-auto-publisher' ) . '</a>';
+                    echo '<br><span style="color: #f56e28;">🟡 ' . esc_html__( 'Ready to connect', 'fp-publisher' ) . '</span>';
+                    echo '<br><a href="' . esc_url( $url ) . '" class="button button-primary">' . esc_html__( 'Connect Account', 'fp-publisher' ) . '</a>';
                 }
                 echo '</div>';
             }
 
-            echo '<p><button type="submit" class="button button-primary">' . esc_html__( 'Next', 'trello-social-auto-publisher' ) . '</button></p>';
+            echo '<p><button type="submit" class="button button-primary">' . esc_html__( 'Next', 'fp-publisher' ) . '</button></p>';
             echo '</form>';
         } elseif ( 3 === $step ) {
             echo '<form method="post" class="tts-wizard-step tts-step-3">';
@@ -1591,7 +1591,7 @@ class TTS_Admin {
                 echo '<input type="hidden" name="channels[]" value="' . esc_attr( $ch ) . '" />';
             }
             echo '<div id="tts-lists" data-board="' . esc_attr( $board ) . '" data-key="' . esc_attr( $trello_key ) . '" data-token="' . esc_attr( $trello_token ) . '"></div>';
-            echo '<p><button type="submit" class="button button-primary">' . esc_html__( 'Next', 'trello-social-auto-publisher' ) . '</button></p>';
+            echo '<p><button type="submit" class="button button-primary">' . esc_html__( 'Next', 'fp-publisher' ) . '</button></p>';
             echo '</form>';
         } else {
             if ( isset( $_POST['finalize'] ) ) {
@@ -1638,7 +1638,7 @@ class TTS_Admin {
                     delete_transient( 'tts_oauth_youtube_token' );
                     delete_transient( 'tts_oauth_tiktok_token' );
 
-                    echo '<p>' . esc_html__( 'Client created.', 'trello-social-auto-publisher' ) . '</p>';
+                    echo '<p>' . esc_html__( 'Client created.', 'fp-publisher' ) . '</p>';
                 }
                 echo '</div>';
                 return;
@@ -1659,10 +1659,10 @@ class TTS_Admin {
                 }
             }
 
-            echo '<h2>' . esc_html__( 'Summary', 'trello-social-auto-publisher' ) . '</h2>';
-            echo '<p>' . esc_html__( 'Trello Board:', 'trello-social-auto-publisher' ) . ' ' . esc_html( $board ) . '</p>';
-            echo '<p>' . esc_html__( 'Channels:', 'trello-social-auto-publisher' ) . ' ' . esc_html( implode( ', ', $channels ) ) . '</p>';
-            echo '<p><button type="submit" class="button button-primary">' . esc_html__( 'Create Client', 'trello-social-auto-publisher' ) . '</button></p>';
+            echo '<h2>' . esc_html__( 'Summary', 'fp-publisher' ) . '</h2>';
+            echo '<p>' . esc_html__( 'Trello Board:', 'fp-publisher' ) . ' ' . esc_html( $board ) . '</p>';
+            echo '<p>' . esc_html__( 'Channels:', 'fp-publisher' ) . ' ' . esc_html( implode( ', ', $channels ) ) . '</p>';
+            echo '<p><button type="submit" class="button button-primary">' . esc_html__( 'Create Client', 'fp-publisher' ) . '</button></p>';
             echo '</form>';
         }
 
@@ -1687,7 +1687,7 @@ class TTS_Admin {
             )
         );
         echo '<select name="tts_client">';
-        echo '<option value="">' . esc_html__( 'All Clients', 'trello-social-auto-publisher' ) . '</option>';
+        echo '<option value="">' . esc_html__( 'All Clients', 'fp-publisher' ) . '</option>';
         foreach ( $clients as $client ) {
             printf(
                 '<option value="%1$d" %3$s>%2$s</option>',
@@ -1738,9 +1738,9 @@ class TTS_Admin {
 
         $selected = isset( $_GET['tts_approved'] ) ? sanitize_text_field( $_GET['tts_approved'] ) : '';
         echo '<select name="tts_approved">';
-        echo '<option value="">' . esc_html__( 'Stato approvazione', 'trello-social-auto-publisher' ) . '</option>';
-        echo '<option value="1" ' . selected( $selected, '1', false ) . '>' . esc_html__( 'Approvato', 'trello-social-auto-publisher' ) . '</option>';
-        echo '<option value="0" ' . selected( $selected, '0', false ) . '>' . esc_html__( 'Non approvato', 'trello-social-auto-publisher' ) . '</option>';
+        echo '<option value="">' . esc_html__( 'Stato approvazione', 'fp-publisher' ) . '</option>';
+        echo '<option value="1" ' . selected( $selected, '1', false ) . '>' . esc_html__( 'Approvato', 'fp-publisher' ) . '</option>';
+        echo '<option value="0" ' . selected( $selected, '0', false ) . '>' . esc_html__( 'Non approvato', 'fp-publisher' ) . '</option>';
         echo '</select>';
     }
 
@@ -1776,7 +1776,7 @@ class TTS_Admin {
      * @return array
      */
     public function add_approved_column( $columns ) {
-        $columns['tts_approved'] = __( 'Approvato', 'trello-social-auto-publisher' );
+        $columns['tts_approved'] = __( 'Approvato', 'fp-publisher' );
         return $columns;
     }
 
@@ -1789,7 +1789,7 @@ class TTS_Admin {
     public function render_approved_column( $column, $post_id ) {
         if ( 'tts_approved' === $column ) {
             $approved = (bool) get_post_meta( $post_id, '_tts_approved', true );
-            echo $approved ? esc_html__( 'Si', 'trello-social-auto-publisher' ) : esc_html__( 'No', 'trello-social-auto-publisher' );
+            echo $approved ? esc_html__( 'Si', 'fp-publisher' ) : esc_html__( 'No', 'fp-publisher' );
         }
     }
 
@@ -1801,8 +1801,8 @@ class TTS_Admin {
      * @return array
      */
     public function register_bulk_actions( $actions ) {
-        $actions['tts_approve'] = __( 'Approva', 'trello-social-auto-publisher' );
-        $actions['tts_revoke']  = __( 'Revoca', 'trello-social-auto-publisher' );
+        $actions['tts_approve'] = __( 'Approva', 'fp-publisher' );
+        $actions['tts_revoke']  = __( 'Revoca', 'fp-publisher' );
         return $actions;
     }
 
@@ -1839,19 +1839,19 @@ class TTS_Admin {
         // Handle publish now action.
         if ( isset( $_GET['action'], $_GET['post'] ) && 'publish' === $_GET['action'] ) {
             if ( ! current_user_can( 'publish_posts' ) ) {
-                wp_die( esc_html__( 'Sorry, you are not allowed to publish this post.', 'trello-social-auto-publisher' ) );
+                wp_die( esc_html__( 'Sorry, you are not allowed to publish this post.', 'fp-publisher' ) );
             }
 
             check_admin_referer( 'tts_publish_social_post_' . absint( $_GET['post'] ) );
             do_action( 'tts_publish_social_post', array( 'post_id' => absint( $_GET['post'] ) ) );
-            echo '<div class="notice notice-success"><p>' . esc_html__( 'Post published.', 'trello-social-auto-publisher' ) . '</p></div>';
+            echo '<div class="notice notice-success"><p>' . esc_html__( 'Post published.', 'fp-publisher' ) . '</p></div>';
         }
 
         // Handle log view.
         if ( isset( $_GET['action'], $_GET['post'] ) && 'log' === $_GET['action'] ) {
             $log = get_post_meta( absint( $_GET['post'] ), '_tts_publish_log', true );
             echo '<div class="wrap">';
-            echo '<h1>' . esc_html__( 'Log', 'trello-social-auto-publisher' ) . '</h1>';
+            echo '<h1>' . esc_html__( 'Log', 'fp-publisher' ) . '</h1>';
             if ( ! empty( $log ) ) {
                 echo '<div class="tts-log-display">';
                 if ( is_array( $log ) || is_object( $log ) ) {
@@ -1861,7 +1861,7 @@ class TTS_Admin {
                 }
                 echo '</div>';
             } else {
-                echo '<p>' . esc_html__( 'No log entries found.', 'trello-social-auto-publisher' ) . '</p>';
+                echo '<p>' . esc_html__( 'No log entries found.', 'fp-publisher' ) . '</p>';
             }
             echo '</div>';
             return;
@@ -1871,7 +1871,7 @@ class TTS_Admin {
         $table->prepare_items();
 
         echo '<div class="wrap">';
-        echo '<h1>' . esc_html__( 'Social Post', 'trello-social-auto-publisher' ) . '</h1>';
+        echo '<h1>' . esc_html__( 'Social Post', 'fp-publisher' ) . '</h1>';
         $table->display();
         echo '</div>';
     }
@@ -1893,10 +1893,10 @@ class TTS_Social_Posts_Table extends WP_List_Table {
      */
     public function get_columns() {
         return array(
-            'title'        => __( 'Titolo', 'trello-social-auto-publisher' ),
-            'channel'      => __( 'Canale', 'trello-social-auto-publisher' ),
-            'publish_date' => __( 'Data Pubblicazione', 'trello-social-auto-publisher' ),
-            'status'       => __( 'Stato', 'trello-social-auto-publisher' ),
+            'title'        => __( 'Titolo', 'fp-publisher' ),
+            'channel'      => __( 'Canale', 'fp-publisher' ),
+            'publish_date' => __( 'Data Pubblicazione', 'fp-publisher' ),
+            'status'       => __( 'Stato', 'fp-publisher' ),
         );
     }
 
@@ -1923,7 +1923,7 @@ class TTS_Social_Posts_Table extends WP_List_Table {
                 'title'       => $post->post_title,
                 'channel'     => is_array( $channel ) ? implode( ', ', $channel ) : $channel,
                 'publish_date'=> $publish ? date_i18n( 'Y-m-d H:i', strtotime( $publish ) ) : '',
-                'status'      => $status ? $status : __( 'scheduled', 'trello-social-auto-publisher' ),
+                'status'      => $status ? $status : __( 'scheduled', 'fp-publisher' ),
             );
         }
 
@@ -1951,9 +1951,9 @@ class TTS_Social_Posts_Table extends WP_List_Table {
         );
 
         $actions = array(
-            'publish'  => sprintf( '<a href="%s">%s</a>', esc_url( $publish_url ), __( 'Publish Now', 'trello-social-auto-publisher' ) ),
-            'edit'     => sprintf( '<a href="%s">%s</a>', get_edit_post_link( $item['ID'] ), __( 'Edit', 'trello-social-auto-publisher' ) ),
-            'view_log' => sprintf( '<a href="%s">%s</a>', esc_url( add_query_arg( array( 'page' => 'tts-social-posts', 'action' => 'log', 'post' => $item['ID'] ), admin_url( 'admin.php' ) ) ), __( 'View Log', 'trello-social-auto-publisher' ) ),
+            'publish'  => sprintf( '<a href="%s">%s</a>', esc_url( $publish_url ), __( 'Publish Now', 'fp-publisher' ) ),
+            'edit'     => sprintf( '<a href="%s">%s</a>', get_edit_post_link( $item['ID'] ), __( 'Edit', 'fp-publisher' ) ),
+            'view_log' => sprintf( '<a href="%s">%s</a>', esc_url( add_query_arg( array( 'page' => 'tts-social-posts', 'action' => 'log', 'post' => $item['ID'] ), admin_url( 'admin.php' ) ) ), __( 'View Log', 'fp-publisher' ) ),
         );
 
         return sprintf( '<strong>%1$s</strong>%2$s', esc_html( $item['title'] ), $this->row_actions( $actions ) );
@@ -2111,10 +2111,10 @@ class TTS_Social_Posts_Table extends WP_List_Table {
     public function render_settings_page() {
         ?>
         <div class="wrap">
-            <h1><?php esc_html_e( 'Social Auto Publisher Settings', 'trello-social-auto-publisher' ); ?></h1>
+            <h1><?php esc_html_e( 'Social Auto Publisher Settings', 'fp-publisher' ); ?></h1>
             
             <div class="notice notice-info">
-                <p><?php esc_html_e( 'Configure your global plugin settings here. For social media connections, please visit the Social Connections page.', 'trello-social-auto-publisher' ); ?></p>
+                <p><?php esc_html_e( 'Configure your global plugin settings here. For social media connections, please visit the Social Connections page.', 'fp-publisher' ); ?></p>
             </div>
 
             <form action="options.php" method="post">
@@ -2136,25 +2136,25 @@ class TTS_Social_Posts_Table extends WP_List_Table {
         if ( isset( $_POST['action'] ) && $_POST['action'] === 'save_social_apps' ) {
             if ( wp_verify_nonce( $_POST['tts_social_nonce'], 'tts_save_social_apps' ) ) {
                 $this->save_social_app_settings();
-                echo '<div class="notice notice-success"><p>' . esc_html__( 'Social media app settings saved successfully!', 'trello-social-auto-publisher' ) . '</p></div>';
+                echo '<div class="notice notice-success"><p>' . esc_html__( 'Social media app settings saved successfully!', 'fp-publisher' ) . '</p></div>';
             }
         }
 
         $settings = get_option( 'tts_social_apps', array() );
         ?>
         <div class="wrap">
-            <h1><?php esc_html_e( 'Social Media Connections', 'trello-social-auto-publisher' ); ?></h1>
+            <h1><?php esc_html_e( 'Social Media Connections', 'fp-publisher' ); ?></h1>
             
             <div class="notice notice-info">
-                <h3><?php esc_html_e( 'Setup Instructions', 'trello-social-auto-publisher' ); ?></h3>
-                <p><?php esc_html_e( 'To connect your social media accounts, you need to create apps on each platform and configure OAuth credentials:', 'trello-social-auto-publisher' ); ?></p>
+                <h3><?php esc_html_e( 'Setup Instructions', 'fp-publisher' ); ?></h3>
+                <p><?php esc_html_e( 'To connect your social media accounts, you need to create apps on each platform and configure OAuth credentials:', 'fp-publisher' ); ?></p>
                 <ol>
-                    <li><strong>Facebook:</strong> <?php esc_html_e( 'Create an app at', 'trello-social-auto-publisher' ); ?> <a href="https://developers.facebook.com/apps/" target="_blank">Facebook Developers</a></li>
-                    <li><strong>Instagram:</strong> <?php esc_html_e( 'Use Facebook app with Instagram Basic Display product', 'trello-social-auto-publisher' ); ?></li>
-                    <li><strong>YouTube:</strong> <?php esc_html_e( 'Create a project at', 'trello-social-auto-publisher' ); ?> <a href="https://console.developers.google.com/" target="_blank">Google Developers Console</a></li>
-                    <li><strong>TikTok:</strong> <?php esc_html_e( 'Apply for TikTok for Developers at', 'trello-social-auto-publisher' ); ?> <a href="https://developers.tiktok.com/" target="_blank">TikTok Developers</a></li>
+                    <li><strong>Facebook:</strong> <?php esc_html_e( 'Create an app at', 'fp-publisher' ); ?> <a href="https://developers.facebook.com/apps/" target="_blank">Facebook Developers</a></li>
+                    <li><strong>Instagram:</strong> <?php esc_html_e( 'Use Facebook app with Instagram Basic Display product', 'fp-publisher' ); ?></li>
+                    <li><strong>YouTube:</strong> <?php esc_html_e( 'Create a project at', 'fp-publisher' ); ?> <a href="https://console.developers.google.com/" target="_blank">Google Developers Console</a></li>
+                    <li><strong>TikTok:</strong> <?php esc_html_e( 'Apply for TikTok for Developers at', 'fp-publisher' ); ?> <a href="https://developers.tiktok.com/" target="_blank">TikTok Developers</a></li>
                 </ol>
-                <p><strong><?php esc_html_e( 'Redirect URI:', 'trello-social-auto-publisher' ); ?></strong> <code><?php echo esc_url( admin_url( 'admin-post.php' ) ); ?></code></p>
+                <p><strong><?php esc_html_e( 'Redirect URI:', 'fp-publisher' ); ?></strong> <code><?php echo esc_url( admin_url( 'admin-post.php' ) ); ?></code></p>
             </div>
 
             <div class="tts-social-apps-container">
@@ -2214,7 +2214,7 @@ class TTS_Social_Posts_Table extends WP_List_Table {
                             $connection_status = $this->check_platform_connection_status( $platform );
                             ?>
                             <div class="tts-connection-status">
-                                <strong><?php esc_html_e( 'Status:', 'trello-social-auto-publisher' ); ?></strong>
+                                <strong><?php esc_html_e( 'Status:', 'fp-publisher' ); ?></strong>
                                 <span class="tts-status-<?php echo esc_attr( $connection_status['status'] ); ?>">
                                     <?php echo esc_html( $connection_status['message'] ); ?>
                                 </span>
@@ -2223,11 +2223,11 @@ class TTS_Social_Posts_Table extends WP_List_Table {
                                     <div class="tts-platform-actions">
                                         <a href="<?php echo esc_url( $this->get_oauth_url( $platform ) ); ?>" 
                                            class="button button-primary">
-                                            <?php esc_html_e( 'Connect Account', 'trello-social-auto-publisher' ); ?>
+                                            <?php esc_html_e( 'Connect Account', 'fp-publisher' ); ?>
                                         </a>
                                         <button type="button" class="button tts-test-connection" 
                                                 data-platform="<?php echo esc_attr( $platform ); ?>">
-                                            <?php esc_html_e( 'Test Connection', 'trello-social-auto-publisher' ); ?>
+                                            <?php esc_html_e( 'Test Connection', 'fp-publisher' ); ?>
                                         </button>
                                     </div>
                                     <div class="tts-test-result" id="test-result-<?php echo esc_attr( $platform ); ?>" style="display: none;"></div>
@@ -2237,7 +2237,7 @@ class TTS_Social_Posts_Table extends WP_List_Table {
                                     <div class="tts-rate-limit-info" id="rate-limit-<?php echo esc_attr( $platform ); ?>">
                                         <button type="button" class="button tts-check-limits" 
                                                 data-platform="<?php echo esc_attr( $platform ); ?>">
-                                            <?php esc_html_e( 'Check API Limits', 'trello-social-auto-publisher' ); ?>
+                                            <?php esc_html_e( 'Check API Limits', 'fp-publisher' ); ?>
                                         </button>
                                     </div>
                                 <?php endif; ?>
@@ -2247,7 +2247,7 @@ class TTS_Social_Posts_Table extends WP_List_Table {
                     </div>
 
                     <p class="submit">
-                        <input type="submit" class="button-primary" value="<?php esc_attr_e( 'Save App Settings', 'trello-social-auto-publisher' ); ?>" />
+                        <input type="submit" class="button-primary" value="<?php esc_attr_e( 'Save App Settings', 'fp-publisher' ); ?>" />
                     </p>
                 </form>
             </div>
@@ -2260,7 +2260,7 @@ class TTS_Social_Posts_Table extends WP_List_Table {
                     var resultDiv = $('#test-result-' + platform);
                     var button = $(this);
                     
-                    button.prop('disabled', true).text('<?php esc_html_e( 'Testing...', 'trello-social-auto-publisher' ); ?>');
+                    button.prop('disabled', true).text('<?php esc_html_e( 'Testing...', 'fp-publisher' ); ?>');
                     resultDiv.hide();
                     
                     $.post(ajaxurl, {
@@ -2268,7 +2268,7 @@ class TTS_Social_Posts_Table extends WP_List_Table {
                         platform: platform,
                         nonce: '<?php echo wp_create_nonce( 'tts_test_connection' ); ?>'
                     }, function(response) {
-                        button.prop('disabled', false).text('<?php esc_html_e( 'Test Connection', 'trello-social-auto-publisher' ); ?>');
+                        button.prop('disabled', false).text('<?php esc_html_e( 'Test Connection', 'fp-publisher' ); ?>');
                         
                         if (response.success) {
                             resultDiv.removeClass('error').addClass('success')
@@ -2278,7 +2278,7 @@ class TTS_Social_Posts_Table extends WP_List_Table {
                                      .html('❌ ' + (response.data.message || 'Connection test failed')).show();
                         }
                     }).fail(function() {
-                        button.prop('disabled', false).text('<?php esc_html_e( 'Test Connection', 'trello-social-auto-publisher' ); ?>');
+                        button.prop('disabled', false).text('<?php esc_html_e( 'Test Connection', 'fp-publisher' ); ?>');
                         resultDiv.removeClass('success').addClass('error')
                                  .html('❌ Failed to test connection').show();
                     });
@@ -2290,22 +2290,22 @@ class TTS_Social_Posts_Table extends WP_List_Table {
                     var container = $('#rate-limit-' + platform);
                     var button = $(this);
                     
-                    button.prop('disabled', true).text('<?php esc_html_e( 'Checking...', 'trello-social-auto-publisher' ); ?>');
+                    button.prop('disabled', true).text('<?php esc_html_e( 'Checking...', 'fp-publisher' ); ?>');
                     
                     $.post(ajaxurl, {
                         action: 'tts_check_rate_limits',
                         platform: platform,
                         nonce: '<?php echo wp_create_nonce( 'tts_check_rate_limits' ); ?>'
                     }, function(response) {
-                        button.prop('disabled', false).text('<?php esc_html_e( 'Check API Limits', 'trello-social-auto-publisher' ); ?>');
+                        button.prop('disabled', false).text('<?php esc_html_e( 'Check API Limits', 'fp-publisher' ); ?>');
                         
                         if (response.success) {
                             var limits = response.data;
                             var html = '<div class="tts-rate-limit-display">';
-                            html += '<strong><?php esc_html_e( 'API Rate Limits:', 'trello-social-auto-publisher' ); ?></strong><br>';
-                            html += '<?php esc_html_e( 'Used:', 'trello-social-auto-publisher' ); ?> ' + limits.used + ' / ' + limits.limit + '<br>';
-                            html += '<?php esc_html_e( 'Remaining:', 'trello-social-auto-publisher' ); ?> ' + limits.remaining + '<br>';
-                            html += '<?php esc_html_e( 'Reset:', 'trello-social-auto-publisher' ); ?> ' + limits.reset_time;
+                            html += '<strong><?php esc_html_e( 'API Rate Limits:', 'fp-publisher' ); ?></strong><br>';
+                            html += '<?php esc_html_e( 'Used:', 'fp-publisher' ); ?> ' + limits.used + ' / ' + limits.limit + '<br>';
+                            html += '<?php esc_html_e( 'Remaining:', 'fp-publisher' ); ?> ' + limits.remaining + '<br>';
+                            html += '<?php esc_html_e( 'Reset:', 'fp-publisher' ); ?> ' + limits.reset_time;
                             html += '</div>';
                             container.append(html);
                         }
@@ -2445,7 +2445,7 @@ class TTS_Social_Posts_Table extends WP_List_Table {
         if ( ! $configured ) {
             return array(
                 'status' => 'not-configured',
-                'message' => __( 'App credentials not configured', 'trello-social-auto-publisher' )
+                'message' => __( 'App credentials not configured', 'fp-publisher' )
             );
         }
 
@@ -2464,13 +2464,13 @@ class TTS_Social_Posts_Table extends WP_List_Table {
         if ( ! empty( $connected_clients ) ) {
             return array(
                 'status' => 'connected',
-                'message' => sprintf( __( '%d account(s) connected', 'trello-social-auto-publisher' ), count( $connected_clients ) )
+                'message' => sprintf( __( '%d account(s) connected', 'fp-publisher' ), count( $connected_clients ) )
             );
         }
 
         return array(
             'status' => 'configured',
-            'message' => __( 'Ready to connect accounts', 'trello-social-auto-publisher' )
+            'message' => __( 'Ready to connect accounts', 'fp-publisher' )
         );
     }
 
@@ -2549,182 +2549,182 @@ class TTS_Social_Posts_Table extends WP_List_Table {
     public function render_help_page() {
         ?>
         <div class="wrap">
-            <h1><?php esc_html_e( 'Help & Setup Guide', 'trello-social-auto-publisher' ); ?></h1>
+            <h1><?php esc_html_e( 'Help & Setup Guide', 'fp-publisher' ); ?></h1>
             
             <div class="tts-help-container">
                 <div class="tts-help-sidebar">
-                    <h3><?php esc_html_e( 'Quick Links', 'trello-social-auto-publisher' ); ?></h3>
+                    <h3><?php esc_html_e( 'Quick Links', 'fp-publisher' ); ?></h3>
                     <ul>
-                        <li><a href="#overview"><?php esc_html_e( 'Overview', 'trello-social-auto-publisher' ); ?></a></li>
-                        <li><a href="#facebook"><?php esc_html_e( 'Facebook Setup', 'trello-social-auto-publisher' ); ?></a></li>
-                        <li><a href="#instagram"><?php esc_html_e( 'Instagram Setup', 'trello-social-auto-publisher' ); ?></a></li>
-                        <li><a href="#youtube"><?php esc_html_e( 'YouTube Setup', 'trello-social-auto-publisher' ); ?></a></li>
-                        <li><a href="#tiktok"><?php esc_html_e( 'TikTok Setup', 'trello-social-auto-publisher' ); ?></a></li>
-                        <li><a href="#troubleshooting"><?php esc_html_e( 'Troubleshooting', 'trello-social-auto-publisher' ); ?></a></li>
+                        <li><a href="#overview"><?php esc_html_e( 'Overview', 'fp-publisher' ); ?></a></li>
+                        <li><a href="#facebook"><?php esc_html_e( 'Facebook Setup', 'fp-publisher' ); ?></a></li>
+                        <li><a href="#instagram"><?php esc_html_e( 'Instagram Setup', 'fp-publisher' ); ?></a></li>
+                        <li><a href="#youtube"><?php esc_html_e( 'YouTube Setup', 'fp-publisher' ); ?></a></li>
+                        <li><a href="#tiktok"><?php esc_html_e( 'TikTok Setup', 'fp-publisher' ); ?></a></li>
+                        <li><a href="#troubleshooting"><?php esc_html_e( 'Troubleshooting', 'fp-publisher' ); ?></a></li>
                     </ul>
                     
                     <div class="tts-help-actions">
                         <a href="<?php echo esc_url( admin_url( 'admin.php?page=tts-social-connections' ) ); ?>" class="button button-primary">
-                            <?php esc_html_e( 'Configure Social Apps', 'trello-social-auto-publisher' ); ?>
+                            <?php esc_html_e( 'Configure Social Apps', 'fp-publisher' ); ?>
                         </a>
                         <a href="<?php echo esc_url( admin_url( 'admin.php?page=tts-client-wizard' ) ); ?>" class="button">
-                            <?php esc_html_e( 'Create Client', 'trello-social-auto-publisher' ); ?>
+                            <?php esc_html_e( 'Create Client', 'fp-publisher' ); ?>
                         </a>
                     </div>
                 </div>
                 
                 <div class="tts-help-content">
                     <section id="overview">
-                        <h2><?php esc_html_e( '🚀 Getting Started', 'trello-social-auto-publisher' ); ?></h2>
-                        <p><?php esc_html_e( 'To use the Social Auto Publisher, you need to:', 'trello-social-auto-publisher' ); ?></p>
+                        <h2><?php esc_html_e( '🚀 Getting Started', 'fp-publisher' ); ?></h2>
+                        <p><?php esc_html_e( 'To use the Social Auto Publisher, you need to:', 'fp-publisher' ); ?></p>
                         <ol>
-                            <li><strong><?php esc_html_e( 'Create developer apps', 'trello-social-auto-publisher' ); ?></strong> <?php esc_html_e( 'on each social media platform', 'trello-social-auto-publisher' ); ?></li>
-                            <li><strong><?php esc_html_e( 'Configure OAuth credentials', 'trello-social-auto-publisher' ); ?></strong> <?php esc_html_e( 'in Social Connections', 'trello-social-auto-publisher' ); ?></li>
-                            <li><strong><?php esc_html_e( 'Connect your accounts', 'trello-social-auto-publisher' ); ?></strong> <?php esc_html_e( 'using the OAuth flow', 'trello-social-auto-publisher' ); ?></li>
-                            <li><strong><?php esc_html_e( 'Create clients', 'trello-social-auto-publisher' ); ?></strong> <?php esc_html_e( 'and assign social accounts', 'trello-social-auto-publisher' ); ?></li>
+                            <li><strong><?php esc_html_e( 'Create developer apps', 'fp-publisher' ); ?></strong> <?php esc_html_e( 'on each social media platform', 'fp-publisher' ); ?></li>
+                            <li><strong><?php esc_html_e( 'Configure OAuth credentials', 'fp-publisher' ); ?></strong> <?php esc_html_e( 'in Social Connections', 'fp-publisher' ); ?></li>
+                            <li><strong><?php esc_html_e( 'Connect your accounts', 'fp-publisher' ); ?></strong> <?php esc_html_e( 'using the OAuth flow', 'fp-publisher' ); ?></li>
+                            <li><strong><?php esc_html_e( 'Create clients', 'fp-publisher' ); ?></strong> <?php esc_html_e( 'and assign social accounts', 'fp-publisher' ); ?></li>
                         </ol>
                         
                         <div class="tts-notice-warning">
-                            <p><strong><?php esc_html_e( 'Important:', 'trello-social-auto-publisher' ); ?></strong> <?php esc_html_e( 'Each social media platform requires you to create a developer application. This is a one-time setup per platform.', 'trello-social-auto-publisher' ); ?></p>
+                            <p><strong><?php esc_html_e( 'Important:', 'fp-publisher' ); ?></strong> <?php esc_html_e( 'Each social media platform requires you to create a developer application. This is a one-time setup per platform.', 'fp-publisher' ); ?></p>
                         </div>
                     </section>
 
                     <section id="facebook">
-                        <h2><?php esc_html_e( '📘 Facebook Setup', 'trello-social-auto-publisher' ); ?></h2>
-                        <h3><?php esc_html_e( 'Step 1: Create Facebook App', 'trello-social-auto-publisher' ); ?></h3>
+                        <h2><?php esc_html_e( '📘 Facebook Setup', 'fp-publisher' ); ?></h2>
+                        <h3><?php esc_html_e( 'Step 1: Create Facebook App', 'fp-publisher' ); ?></h3>
                         <ol>
-                            <li><?php esc_html_e( 'Visit', 'trello-social-auto-publisher' ); ?> <a href="https://developers.facebook.com/apps/" target="_blank">Facebook Developers</a></li>
-                            <li><?php esc_html_e( 'Click "Create App" → "Business" → "Consumer"', 'trello-social-auto-publisher' ); ?></li>
-                            <li><?php esc_html_e( 'Enter app name and contact email', 'trello-social-auto-publisher' ); ?></li>
-                            <li><?php esc_html_e( 'Add "Facebook Login" product', 'trello-social-auto-publisher' ); ?></li>
+                            <li><?php esc_html_e( 'Visit', 'fp-publisher' ); ?> <a href="https://developers.facebook.com/apps/" target="_blank">Facebook Developers</a></li>
+                            <li><?php esc_html_e( 'Click "Create App" → "Business" → "Consumer"', 'fp-publisher' ); ?></li>
+                            <li><?php esc_html_e( 'Enter app name and contact email', 'fp-publisher' ); ?></li>
+                            <li><?php esc_html_e( 'Add "Facebook Login" product', 'fp-publisher' ); ?></li>
                         </ol>
                         
-                        <h3><?php esc_html_e( 'Step 2: Configure OAuth Settings', 'trello-social-auto-publisher' ); ?></h3>
+                        <h3><?php esc_html_e( 'Step 2: Configure OAuth Settings', 'fp-publisher' ); ?></h3>
                         <ol>
-                            <li><?php esc_html_e( 'Go to Facebook Login → Settings', 'trello-social-auto-publisher' ); ?></li>
-                            <li><?php esc_html_e( 'Add redirect URI:', 'trello-social-auto-publisher' ); ?> <code><?php echo esc_url( admin_url( 'admin-post.php?action=tts_oauth_facebook' ) ); ?></code></li>
-                            <li><?php esc_html_e( 'Enable "Use Strict Mode for Redirect URIs"', 'trello-social-auto-publisher' ); ?></li>
+                            <li><?php esc_html_e( 'Go to Facebook Login → Settings', 'fp-publisher' ); ?></li>
+                            <li><?php esc_html_e( 'Add redirect URI:', 'fp-publisher' ); ?> <code><?php echo esc_url( admin_url( 'admin-post.php?action=tts_oauth_facebook' ) ); ?></code></li>
+                            <li><?php esc_html_e( 'Enable "Use Strict Mode for Redirect URIs"', 'fp-publisher' ); ?></li>
                         </ol>
                         
-                        <h3><?php esc_html_e( 'Step 3: Get Credentials', 'trello-social-auto-publisher' ); ?></h3>
+                        <h3><?php esc_html_e( 'Step 3: Get Credentials', 'fp-publisher' ); ?></h3>
                         <ol>
-                            <li><?php esc_html_e( 'Go to Settings → Basic', 'trello-social-auto-publisher' ); ?></li>
-                            <li><?php esc_html_e( 'Copy App ID and App Secret', 'trello-social-auto-publisher' ); ?></li>
-                            <li><?php esc_html_e( 'Enter these in Social Connections page', 'trello-social-auto-publisher' ); ?></li>
+                            <li><?php esc_html_e( 'Go to Settings → Basic', 'fp-publisher' ); ?></li>
+                            <li><?php esc_html_e( 'Copy App ID and App Secret', 'fp-publisher' ); ?></li>
+                            <li><?php esc_html_e( 'Enter these in Social Connections page', 'fp-publisher' ); ?></li>
                         </ol>
                     </section>
 
                     <section id="instagram">
-                        <h2><?php esc_html_e( '📷 Instagram Setup', 'trello-social-auto-publisher' ); ?></h2>
-                        <p><?php esc_html_e( 'Instagram uses the same Facebook app with additional configuration:', 'trello-social-auto-publisher' ); ?></p>
+                        <h2><?php esc_html_e( '📷 Instagram Setup', 'fp-publisher' ); ?></h2>
+                        <p><?php esc_html_e( 'Instagram uses the same Facebook app with additional configuration:', 'fp-publisher' ); ?></p>
                         <ol>
-                            <li><?php esc_html_e( 'In your Facebook app, add "Instagram Basic Display" product', 'trello-social-auto-publisher' ); ?></li>
-                            <li><?php esc_html_e( 'Configure redirect URI:', 'trello-social-auto-publisher' ); ?> <code><?php echo esc_url( admin_url( 'admin-post.php?action=tts_oauth_instagram' ) ); ?></code></li>
-                            <li><?php esc_html_e( 'Add your Instagram account as a test user', 'trello-social-auto-publisher' ); ?></li>
-                            <li><?php esc_html_e( 'Use the same App ID and App Secret from Facebook', 'trello-social-auto-publisher' ); ?></li>
+                            <li><?php esc_html_e( 'In your Facebook app, add "Instagram Basic Display" product', 'fp-publisher' ); ?></li>
+                            <li><?php esc_html_e( 'Configure redirect URI:', 'fp-publisher' ); ?> <code><?php echo esc_url( admin_url( 'admin-post.php?action=tts_oauth_instagram' ) ); ?></code></li>
+                            <li><?php esc_html_e( 'Add your Instagram account as a test user', 'fp-publisher' ); ?></li>
+                            <li><?php esc_html_e( 'Use the same App ID and App Secret from Facebook', 'fp-publisher' ); ?></li>
                         </ol>
                     </section>
 
                     <section id="youtube">
-                        <h2><?php esc_html_e( '🎥 YouTube Setup', 'trello-social-auto-publisher' ); ?></h2>
-                        <h3><?php esc_html_e( 'Step 1: Create Google Project', 'trello-social-auto-publisher' ); ?></h3>
+                        <h2><?php esc_html_e( '🎥 YouTube Setup', 'fp-publisher' ); ?></h2>
+                        <h3><?php esc_html_e( 'Step 1: Create Google Project', 'fp-publisher' ); ?></h3>
                         <ol>
-                            <li><?php esc_html_e( 'Visit', 'trello-social-auto-publisher' ); ?> <a href="https://console.developers.google.com/" target="_blank">Google Developers Console</a></li>
-                            <li><?php esc_html_e( 'Create a new project or select existing one', 'trello-social-auto-publisher' ); ?></li>
-                            <li><?php esc_html_e( 'Enable "YouTube Data API v3"', 'trello-social-auto-publisher' ); ?></li>
+                            <li><?php esc_html_e( 'Visit', 'fp-publisher' ); ?> <a href="https://console.developers.google.com/" target="_blank">Google Developers Console</a></li>
+                            <li><?php esc_html_e( 'Create a new project or select existing one', 'fp-publisher' ); ?></li>
+                            <li><?php esc_html_e( 'Enable "YouTube Data API v3"', 'fp-publisher' ); ?></li>
                         </ol>
                         
-                        <h3><?php esc_html_e( 'Step 2: Create OAuth Credentials', 'trello-social-auto-publisher' ); ?></h3>
+                        <h3><?php esc_html_e( 'Step 2: Create OAuth Credentials', 'fp-publisher' ); ?></h3>
                         <ol>
-                            <li><?php esc_html_e( 'Go to Credentials → Create Credentials → OAuth 2.0 Client IDs', 'trello-social-auto-publisher' ); ?></li>
-                            <li><?php esc_html_e( 'Choose "Web application"', 'trello-social-auto-publisher' ); ?></li>
-                            <li><?php esc_html_e( 'Add redirect URI:', 'trello-social-auto-publisher' ); ?> <code><?php echo esc_url( admin_url( 'admin-post.php?action=tts_oauth_youtube' ) ); ?></code></li>
+                            <li><?php esc_html_e( 'Go to Credentials → Create Credentials → OAuth 2.0 Client IDs', 'fp-publisher' ); ?></li>
+                            <li><?php esc_html_e( 'Choose "Web application"', 'fp-publisher' ); ?></li>
+                            <li><?php esc_html_e( 'Add redirect URI:', 'fp-publisher' ); ?> <code><?php echo esc_url( admin_url( 'admin-post.php?action=tts_oauth_youtube' ) ); ?></code></li>
                         </ol>
                     </section>
 
                     <section id="tiktok">
-                        <h2><?php esc_html_e( '🎵 TikTok Setup', 'trello-social-auto-publisher' ); ?></h2>
+                        <h2><?php esc_html_e( '🎵 TikTok Setup', 'fp-publisher' ); ?></h2>
                         <div class="tts-notice-warning">
-                            <p><strong><?php esc_html_e( 'Note:', 'trello-social-auto-publisher' ); ?></strong> <?php esc_html_e( 'TikTok requires developer account approval, which can take several days.', 'trello-social-auto-publisher' ); ?></p>
+                            <p><strong><?php esc_html_e( 'Note:', 'fp-publisher' ); ?></strong> <?php esc_html_e( 'TikTok requires developer account approval, which can take several days.', 'fp-publisher' ); ?></p>
                         </div>
                         <ol>
-                            <li><?php esc_html_e( 'Visit', 'trello-social-auto-publisher' ); ?> <a href="https://developers.tiktok.com/" target="_blank">TikTok Developers</a></li>
-                            <li><?php esc_html_e( 'Apply for developer access', 'trello-social-auto-publisher' ); ?></li>
-                            <li><?php esc_html_e( 'Create a new app in the developer portal', 'trello-social-auto-publisher' ); ?></li>
-                            <li><?php esc_html_e( 'Configure redirect URI:', 'trello-social-auto-publisher' ); ?> <code><?php echo esc_url( admin_url( 'admin-post.php?action=tts_oauth_tiktok' ) ); ?></code></li>
+                            <li><?php esc_html_e( 'Visit', 'fp-publisher' ); ?> <a href="https://developers.tiktok.com/" target="_blank">TikTok Developers</a></li>
+                            <li><?php esc_html_e( 'Apply for developer access', 'fp-publisher' ); ?></li>
+                            <li><?php esc_html_e( 'Create a new app in the developer portal', 'fp-publisher' ); ?></li>
+                            <li><?php esc_html_e( 'Configure redirect URI:', 'fp-publisher' ); ?> <code><?php echo esc_url( admin_url( 'admin-post.php?action=tts_oauth_tiktok' ) ); ?></code></li>
                         </ol>
                     </section>
 
                     <section id="troubleshooting">
-                        <h2><?php esc_html_e( '🔧 Troubleshooting Guide', 'trello-social-auto-publisher' ); ?></h2>
+                        <h2><?php esc_html_e( '🔧 Troubleshooting Guide', 'fp-publisher' ); ?></h2>
                         
-                        <h3><?php esc_html_e( 'Common Issues and Solutions', 'trello-social-auto-publisher' ); ?></h3>
+                        <h3><?php esc_html_e( 'Common Issues and Solutions', 'fp-publisher' ); ?></h3>
                         
                         <div class="tts-troubleshoot-item">
-                            <h4><?php esc_html_e( '❌ "OAuth verification failed" Error', 'trello-social-auto-publisher' ); ?></h4>
-                            <p><strong><?php esc_html_e( 'Causes:', 'trello-social-auto-publisher' ); ?></strong></p>
+                            <h4><?php esc_html_e( '❌ "OAuth verification failed" Error', 'fp-publisher' ); ?></h4>
+                            <p><strong><?php esc_html_e( 'Causes:', 'fp-publisher' ); ?></strong></p>
                             <ul>
-                                <li><?php esc_html_e( 'Incorrect redirect URI in app settings', 'trello-social-auto-publisher' ); ?></li>
-                                <li><?php esc_html_e( 'App ID/Secret mismatch', 'trello-social-auto-publisher' ); ?></li>
-                                <li><?php esc_html_e( 'Session issues', 'trello-social-auto-publisher' ); ?></li>
+                                <li><?php esc_html_e( 'Incorrect redirect URI in app settings', 'fp-publisher' ); ?></li>
+                                <li><?php esc_html_e( 'App ID/Secret mismatch', 'fp-publisher' ); ?></li>
+                                <li><?php esc_html_e( 'Session issues', 'fp-publisher' ); ?></li>
                             </ul>
-                            <p><strong><?php esc_html_e( 'Solutions:', 'trello-social-auto-publisher' ); ?></strong></p>
+                            <p><strong><?php esc_html_e( 'Solutions:', 'fp-publisher' ); ?></strong></p>
                             <ol>
-                                <li><?php esc_html_e( 'Verify redirect URI matches exactly:', 'trello-social-auto-publisher' ); ?> <code><?php echo esc_url( admin_url( 'admin-post.php' ) ); ?></code></li>
-                                <li><?php esc_html_e( 'Double-check App ID and App Secret', 'trello-social-auto-publisher' ); ?></li>
-                                <li><?php esc_html_e( 'Clear browser cache and cookies', 'trello-social-auto-publisher' ); ?></li>
-                                <li><?php esc_html_e( 'Try the connection in an incognito/private window', 'trello-social-auto-publisher' ); ?></li>
+                                <li><?php esc_html_e( 'Verify redirect URI matches exactly:', 'fp-publisher' ); ?> <code><?php echo esc_url( admin_url( 'admin-post.php' ) ); ?></code></li>
+                                <li><?php esc_html_e( 'Double-check App ID and App Secret', 'fp-publisher' ); ?></li>
+                                <li><?php esc_html_e( 'Clear browser cache and cookies', 'fp-publisher' ); ?></li>
+                                <li><?php esc_html_e( 'Try the connection in an incognito/private window', 'fp-publisher' ); ?></li>
                             </ol>
                         </div>
                         
                         <div class="tts-troubleshoot-item">
-                            <h4><?php esc_html_e( '🔑 "Failed to obtain access token" Error', 'trello-social-auto-publisher' ); ?></h4>
-                            <p><strong><?php esc_html_e( 'Causes:', 'trello-social-auto-publisher' ); ?></strong></p>
+                            <h4><?php esc_html_e( '🔑 "Failed to obtain access token" Error', 'fp-publisher' ); ?></h4>
+                            <p><strong><?php esc_html_e( 'Causes:', 'fp-publisher' ); ?></strong></p>
                             <ul>
-                                <li><?php esc_html_e( 'Invalid app credentials', 'trello-social-auto-publisher' ); ?></li>
-                                <li><?php esc_html_e( 'App not approved/active', 'trello-social-auto-publisher' ); ?></li>
-                                <li><?php esc_html_e( 'Insufficient permissions granted', 'trello-social-auto-publisher' ); ?></li>
+                                <li><?php esc_html_e( 'Invalid app credentials', 'fp-publisher' ); ?></li>
+                                <li><?php esc_html_e( 'App not approved/active', 'fp-publisher' ); ?></li>
+                                <li><?php esc_html_e( 'Insufficient permissions granted', 'fp-publisher' ); ?></li>
                             </ul>
-                            <p><strong><?php esc_html_e( 'Solutions:', 'trello-social-auto-publisher' ); ?></strong></p>
+                            <p><strong><?php esc_html_e( 'Solutions:', 'fp-publisher' ); ?></strong></p>
                             <ol>
-                                <li><?php esc_html_e( 'Verify app is in "Live" mode (not development)', 'trello-social-auto-publisher' ); ?></li>
-                                <li><?php esc_html_e( 'Check that required permissions are granted during OAuth', 'trello-social-auto-publisher' ); ?></li>
-                                <li><?php esc_html_e( 'Use the "Test Connection" button to validate credentials', 'trello-social-auto-publisher' ); ?></li>
+                                <li><?php esc_html_e( 'Verify app is in "Live" mode (not development)', 'fp-publisher' ); ?></li>
+                                <li><?php esc_html_e( 'Check that required permissions are granted during OAuth', 'fp-publisher' ); ?></li>
+                                <li><?php esc_html_e( 'Use the "Test Connection" button to validate credentials', 'fp-publisher' ); ?></li>
                             </ol>
                         </div>
                         
                         <div class="tts-troubleshoot-item">
-                            <h4><?php esc_html_e( '⚠️ Rate Limiting Issues', 'trello-social-auto-publisher' ); ?></h4>
-                            <p><strong><?php esc_html_e( 'Symptoms:', 'trello-social-auto-publisher' ); ?></strong></p>
+                            <h4><?php esc_html_e( '⚠️ Rate Limiting Issues', 'fp-publisher' ); ?></h4>
+                            <p><strong><?php esc_html_e( 'Symptoms:', 'fp-publisher' ); ?></strong></p>
                             <ul>
-                                <li><?php esc_html_e( 'Posts failing to publish', 'trello-social-auto-publisher' ); ?></li>
-                                <li><?php esc_html_e( '"Rate limit exceeded" errors in logs', 'trello-social-auto-publisher' ); ?></li>
+                                <li><?php esc_html_e( 'Posts failing to publish', 'fp-publisher' ); ?></li>
+                                <li><?php esc_html_e( '"Rate limit exceeded" errors in logs', 'fp-publisher' ); ?></li>
                             </ul>
-                            <p><strong><?php esc_html_e( 'Solutions:', 'trello-social-auto-publisher' ); ?></strong></p>
+                            <p><strong><?php esc_html_e( 'Solutions:', 'fp-publisher' ); ?></strong></p>
                             <ol>
-                                <li><?php esc_html_e( 'Use "Check API Limits" button to monitor usage', 'trello-social-auto-publisher' ); ?></li>
-                                <li><?php esc_html_e( 'Reduce posting frequency in high-volume periods', 'trello-social-auto-publisher' ); ?></li>
-                                <li><?php esc_html_e( 'Consider upgrading to business/developer API tiers', 'trello-social-auto-publisher' ); ?></li>
+                                <li><?php esc_html_e( 'Use "Check API Limits" button to monitor usage', 'fp-publisher' ); ?></li>
+                                <li><?php esc_html_e( 'Reduce posting frequency in high-volume periods', 'fp-publisher' ); ?></li>
+                                <li><?php esc_html_e( 'Consider upgrading to business/developer API tiers', 'fp-publisher' ); ?></li>
                             </ol>
                         </div>
 
                         <div class="tts-troubleshoot-item">
-                            <h4><?php esc_html_e( '🔧 Performance Issues', 'trello-social-auto-publisher' ); ?></h4>
-                            <p><strong><?php esc_html_e( 'Solutions:', 'trello-social-auto-publisher' ); ?></strong></p>
+                            <h4><?php esc_html_e( '🔧 Performance Issues', 'fp-publisher' ); ?></h4>
+                            <p><strong><?php esc_html_e( 'Solutions:', 'fp-publisher' ); ?></strong></p>
                             <ol>
-                                <li><?php esc_html_e( 'Enable WordPress object caching', 'trello-social-auto-publisher' ); ?></li>
-                                <li><?php esc_html_e( 'Limit number of concurrent social posts', 'trello-social-auto-publisher' ); ?></li>
-                                <li><?php esc_html_e( 'Monitor system performance in Dashboard', 'trello-social-auto-publisher' ); ?></li>
+                                <li><?php esc_html_e( 'Enable WordPress object caching', 'fp-publisher' ); ?></li>
+                                <li><?php esc_html_e( 'Limit number of concurrent social posts', 'fp-publisher' ); ?></li>
+                                <li><?php esc_html_e( 'Monitor system performance in Dashboard', 'fp-publisher' ); ?></li>
                             </ol>
                         </div>
                         
-                        <h3><?php esc_html_e( 'Getting Support', 'trello-social-auto-publisher' ); ?></h3>
-                        <p><?php esc_html_e( 'If you continue experiencing issues:', 'trello-social-auto-publisher' ); ?></p>
+                        <h3><?php esc_html_e( 'Getting Support', 'fp-publisher' ); ?></h3>
+                        <p><?php esc_html_e( 'If you continue experiencing issues:', 'fp-publisher' ); ?></p>
                         <ol>
-                            <li><?php esc_html_e( 'Check the plugin logs for detailed error messages', 'trello-social-auto-publisher' ); ?></li>
-                            <li><?php esc_html_e( 'Use the "Test Connection" feature to isolate the problem', 'trello-social-auto-publisher' ); ?></li>
-                            <li><?php esc_html_e( 'Document the exact error message and steps to reproduce', 'trello-social-auto-publisher' ); ?></li>
-                            <li><?php esc_html_e( 'Contact support with your findings', 'trello-social-auto-publisher' ); ?></li>
+                            <li><?php esc_html_e( 'Check the plugin logs for detailed error messages', 'fp-publisher' ); ?></li>
+                            <li><?php esc_html_e( 'Use the "Test Connection" feature to isolate the problem', 'fp-publisher' ); ?></li>
+                            <li><?php esc_html_e( 'Document the exact error message and steps to reproduce', 'fp-publisher' ); ?></li>
+                            <li><?php esc_html_e( 'Contact support with your findings', 'fp-publisher' ); ?></li>
                         </ol>
                     </section>
                 </div>
@@ -2845,7 +2845,7 @@ class TTS_Social_Posts_Table extends WP_List_Table {
         check_ajax_referer( 'tts_test_connection', 'nonce' );
         
         if ( ! current_user_can( 'manage_options' ) ) {
-            wp_die( __( 'You do not have sufficient permissions to access this page.', 'trello-social-auto-publisher' ) );
+            wp_die( __( 'You do not have sufficient permissions to access this page.', 'fp-publisher' ) );
         }
         
         $platform = sanitize_key( $_POST['platform'] );
@@ -2868,7 +2868,7 @@ class TTS_Social_Posts_Table extends WP_List_Table {
         check_ajax_referer( 'tts_check_rate_limits', 'nonce' );
         
         if ( ! current_user_can( 'manage_options' ) ) {
-            wp_die( __( 'You do not have sufficient permissions to access this page.', 'trello-social-auto-publisher' ) );
+            wp_die( __( 'You do not have sufficient permissions to access this page.', 'fp-publisher' ) );
         }
         
         $platform = sanitize_key( $_POST['platform'] );
@@ -2888,7 +2888,7 @@ class TTS_Social_Posts_Table extends WP_List_Table {
         switch ( $platform ) {
             case 'facebook':
                 if ( empty( $settings['app_id'] ) || empty( $settings['app_secret'] ) ) {
-                    return array( 'success' => false, 'message' => __( 'App credentials not configured', 'trello-social-auto-publisher' ) );
+                    return array( 'success' => false, 'message' => __( 'App credentials not configured', 'fp-publisher' ) );
                 }
                 
                 $response = wp_remote_get( 'https://graph.facebook.com/v18.0/oauth/access_token?' . http_build_query( array(
@@ -2898,25 +2898,25 @@ class TTS_Social_Posts_Table extends WP_List_Table {
                 ) ) );
                 
                 if ( is_wp_error( $response ) ) {
-                    return array( 'success' => false, 'message' => __( 'Connection failed: ', 'trello-social-auto-publisher' ) . $response->get_error_message() );
+                    return array( 'success' => false, 'message' => __( 'Connection failed: ', 'fp-publisher' ) . $response->get_error_message() );
                 }
                 
                 $body = json_decode( wp_remote_retrieve_body( $response ), true );
                 if ( isset( $body['access_token'] ) ) {
-                    return array( 'success' => true, 'message' => __( 'Facebook app credentials valid', 'trello-social-auto-publisher' ) );
+                    return array( 'success' => true, 'message' => __( 'Facebook app credentials valid', 'fp-publisher' ) );
                 } else {
-                    return array( 'success' => false, 'message' => __( 'Invalid Facebook app credentials', 'trello-social-auto-publisher' ) );
+                    return array( 'success' => false, 'message' => __( 'Invalid Facebook app credentials', 'fp-publisher' ) );
                 }
                 
             case 'youtube':
                 if ( empty( $settings['client_id'] ) || empty( $settings['client_secret'] ) ) {
-                    return array( 'success' => false, 'message' => __( 'Client credentials not configured', 'trello-social-auto-publisher' ) );
+                    return array( 'success' => false, 'message' => __( 'Client credentials not configured', 'fp-publisher' ) );
                 }
                 
-                return array( 'success' => true, 'message' => __( 'YouTube client credentials format valid', 'trello-social-auto-publisher' ) );
+                return array( 'success' => true, 'message' => __( 'YouTube client credentials format valid', 'fp-publisher' ) );
                 
             default:
-                return array( 'success' => true, 'message' => __( 'Platform configuration appears valid', 'trello-social-auto-publisher' ) );
+                return array( 'success' => true, 'message' => __( 'Platform configuration appears valid', 'fp-publisher' ) );
         }
     }
     
@@ -3092,7 +3092,7 @@ class TTS_Social_Posts_Table extends WP_List_Table {
         }
         
         if ( ! current_user_can( 'manage_options' ) ) {
-            wp_send_json_error( array( 'message' => __( 'Insufficient permissions', 'trello-social-auto-publisher' ) ) );
+            wp_send_json_error( array( 'message' => __( 'Insufficient permissions', 'fp-publisher' ) ) );
         }
         
         $export_options = array(
@@ -3115,7 +3115,7 @@ class TTS_Social_Posts_Table extends WP_List_Table {
             file_put_contents( $file_path, json_encode( $result['data'], JSON_PRETTY_PRINT ) );
             
             wp_send_json_success( array( 
-                'message' => __( 'Export completed successfully', 'trello-social-auto-publisher' ),
+                'message' => __( 'Export completed successfully', 'fp-publisher' ),
                 'download_url' => $upload_dir['url'] . '/' . $filename,
                 'file_size' => $result['file_size']
             ) );
@@ -3133,18 +3133,18 @@ class TTS_Social_Posts_Table extends WP_List_Table {
         }
         
         if ( ! current_user_can( 'manage_options' ) ) {
-            wp_send_json_error( array( 'message' => __( 'Insufficient permissions', 'trello-social-auto-publisher' ) ) );
+            wp_send_json_error( array( 'message' => __( 'Insufficient permissions', 'fp-publisher' ) ) );
         }
         
         if ( ! isset( $_FILES['import_file'] ) ) {
-            wp_send_json_error( array( 'message' => __( 'No file provided', 'trello-social-auto-publisher' ) ) );
+            wp_send_json_error( array( 'message' => __( 'No file provided', 'fp-publisher' ) ) );
         }
         
         $file = $_FILES['import_file'];
         $import_data = json_decode( file_get_contents( $file['tmp_name'] ), true );
         
         if ( json_last_error() !== JSON_ERROR_NONE ) {
-            wp_send_json_error( array( 'message' => __( 'Invalid JSON file', 'trello-social-auto-publisher' ) ) );
+            wp_send_json_error( array( 'message' => __( 'Invalid JSON file', 'fp-publisher' ) ) );
         }
         
         $import_options = array(
@@ -3158,7 +3158,7 @@ class TTS_Social_Posts_Table extends WP_List_Table {
         
         if ( $result['success'] ) {
             wp_send_json_success( array( 
-                'message' => __( 'Import completed successfully', 'trello-social-auto-publisher' ),
+                'message' => __( 'Import completed successfully', 'fp-publisher' ),
                 'log' => $result['log']
             ) );
         } else {
@@ -3175,7 +3175,7 @@ class TTS_Social_Posts_Table extends WP_List_Table {
         }
         
         if ( ! current_user_can( 'manage_options' ) ) {
-            wp_send_json_error( array( 'message' => __( 'Insufficient permissions', 'trello-social-auto-publisher' ) ) );
+            wp_send_json_error( array( 'message' => __( 'Insufficient permissions', 'fp-publisher' ) ) );
         }
         
         $tasks = array(
@@ -3190,11 +3190,11 @@ class TTS_Social_Posts_Table extends WP_List_Table {
         
         if ( $result['success'] ) {
             wp_send_json_success( array( 
-                'message' => __( 'System maintenance completed', 'trello-social-auto-publisher' ),
+                'message' => __( 'System maintenance completed', 'fp-publisher' ),
                 'log' => $result['log']
             ) );
         } else {
-            wp_send_json_error( array( 'message' => __( 'Maintenance failed', 'trello-social-auto-publisher' ) ) );
+            wp_send_json_error( array( 'message' => __( 'Maintenance failed', 'fp-publisher' ) ) );
         }
     }
     
@@ -3207,13 +3207,13 @@ class TTS_Social_Posts_Table extends WP_List_Table {
         }
         
         if ( ! current_user_can( 'manage_options' ) ) {
-            wp_send_json_error( array( 'message' => __( 'Insufficient permissions', 'trello-social-auto-publisher' ) ) );
+            wp_send_json_error( array( 'message' => __( 'Insufficient permissions', 'fp-publisher' ) ) );
         }
         
         $report = TTS_Advanced_Utils::generate_system_report();
         
         wp_send_json_success( array( 
-            'message' => __( 'System report generated', 'trello-social-auto-publisher' ),
+            'message' => __( 'System report generated', 'fp-publisher' ),
             'report' => $report
         ) );
     }
@@ -3274,14 +3274,14 @@ class TTS_Social_Posts_Table extends WP_List_Table {
         }
         
         if ( ! current_user_can( 'manage_options' ) ) {
-            wp_send_json_error( array( 'message' => __( 'Insufficient permissions', 'trello-social-auto-publisher' ) ) );
+            wp_send_json_error( array( 'message' => __( 'Insufficient permissions', 'fp-publisher' ) ) );
         }
         
         // Perform fresh health check
         $health_data = TTS_Monitoring::perform_health_check();
         
         wp_send_json_success( array( 
-            'message' => __( 'Health check completed', 'trello-social-auto-publisher' ),
+            'message' => __( 'Health check completed', 'fp-publisher' ),
             'health_data' => $health_data
         ) );
     }
@@ -3295,46 +3295,46 @@ class TTS_Social_Posts_Table extends WP_List_Table {
         }
         
         if ( ! current_user_can( 'manage_options' ) ) {
-            wp_send_json_error( array( 'message' => __( 'Insufficient permissions', 'trello-social-auto-publisher' ) ) );
+            wp_send_json_error( array( 'message' => __( 'Insufficient permissions', 'fp-publisher' ) ) );
         }
         
         ob_start();
         ?>
         <div class="tts-modal-content">
-            <h2><?php esc_html_e( 'Export Data', 'trello-social-auto-publisher' ); ?></h2>
+            <h2><?php esc_html_e( 'Export Data', 'fp-publisher' ); ?></h2>
             <form id="tts-export-form">
                 <div class="tts-export-options">
                     <label>
                         <input type="checkbox" name="export_settings" checked>
-                        <?php esc_html_e( 'Plugin Settings', 'trello-social-auto-publisher' ); ?>
+                        <?php esc_html_e( 'Plugin Settings', 'fp-publisher' ); ?>
                     </label>
                     <label>
                         <input type="checkbox" name="export_social_apps" checked>
-                        <?php esc_html_e( 'Social Media Configurations', 'trello-social-auto-publisher' ); ?>
+                        <?php esc_html_e( 'Social Media Configurations', 'fp-publisher' ); ?>
                     </label>
                     <label>
                         <input type="checkbox" name="export_clients" checked>
-                        <?php esc_html_e( 'Clients', 'trello-social-auto-publisher' ); ?>
+                        <?php esc_html_e( 'Clients', 'fp-publisher' ); ?>
                     </label>
                     <label>
                         <input type="checkbox" name="export_posts">
-                        <?php esc_html_e( 'Social Posts (last 100)', 'trello-social-auto-publisher' ); ?>
+                        <?php esc_html_e( 'Social Posts (last 100)', 'fp-publisher' ); ?>
                     </label>
                     <label>
                         <input type="checkbox" name="export_logs">
-                        <?php esc_html_e( 'Recent Logs (last 30 days)', 'trello-social-auto-publisher' ); ?>
+                        <?php esc_html_e( 'Recent Logs (last 30 days)', 'fp-publisher' ); ?>
                     </label>
                     <label>
                         <input type="checkbox" name="export_analytics">
-                        <?php esc_html_e( 'Analytics Data', 'trello-social-auto-publisher' ); ?>
+                        <?php esc_html_e( 'Analytics Data', 'fp-publisher' ); ?>
                     </label>
                 </div>
                 <div class="tts-modal-actions">
                     <button type="submit" class="tts-btn primary">
-                        <?php esc_html_e( 'Export', 'trello-social-auto-publisher' ); ?>
+                        <?php esc_html_e( 'Export', 'fp-publisher' ); ?>
                     </button>
                     <button type="button" class="tts-btn secondary tts-modal-close">
-                        <?php esc_html_e( 'Cancel', 'trello-social-auto-publisher' ); ?>
+                        <?php esc_html_e( 'Cancel', 'fp-publisher' ); ?>
                     </button>
                 </div>
             </form>
@@ -3356,47 +3356,47 @@ class TTS_Social_Posts_Table extends WP_List_Table {
         }
         
         if ( ! current_user_can( 'manage_options' ) ) {
-            wp_send_json_error( array( 'message' => __( 'Insufficient permissions', 'trello-social-auto-publisher' ) ) );
+            wp_send_json_error( array( 'message' => __( 'Insufficient permissions', 'fp-publisher' ) ) );
         }
         
         ob_start();
         ?>
         <div class="tts-modal-content">
-            <h2><?php esc_html_e( 'Import Data', 'trello-social-auto-publisher' ); ?></h2>
+            <h2><?php esc_html_e( 'Import Data', 'fp-publisher' ); ?></h2>
             <form id="tts-import-form" enctype="multipart/form-data">
                 <div class="tts-import-file">
                     <label for="import_file">
-                        <?php esc_html_e( 'Select Export File:', 'trello-social-auto-publisher' ); ?>
+                        <?php esc_html_e( 'Select Export File:', 'fp-publisher' ); ?>
                     </label>
                     <input type="file" id="import_file" name="import_file" accept=".json" required>
                 </div>
                 
                 <div class="tts-import-options">
-                    <h4><?php esc_html_e( 'Import Options:', 'trello-social-auto-publisher' ); ?></h4>
+                    <h4><?php esc_html_e( 'Import Options:', 'fp-publisher' ); ?></h4>
                     <label>
                         <input type="checkbox" name="overwrite_settings">
-                        <?php esc_html_e( 'Overwrite existing settings', 'trello-social-auto-publisher' ); ?>
+                        <?php esc_html_e( 'Overwrite existing settings', 'fp-publisher' ); ?>
                     </label>
                     <label>
                         <input type="checkbox" name="overwrite_social_apps">
-                        <?php esc_html_e( 'Overwrite social media configurations', 'trello-social-auto-publisher' ); ?>
+                        <?php esc_html_e( 'Overwrite social media configurations', 'fp-publisher' ); ?>
                     </label>
                     <label>
                         <input type="checkbox" name="import_clients" checked>
-                        <?php esc_html_e( 'Import clients', 'trello-social-auto-publisher' ); ?>
+                        <?php esc_html_e( 'Import clients', 'fp-publisher' ); ?>
                     </label>
                     <label>
                         <input type="checkbox" name="import_posts">
-                        <?php esc_html_e( 'Import social posts (as drafts)', 'trello-social-auto-publisher' ); ?>
+                        <?php esc_html_e( 'Import social posts (as drafts)', 'fp-publisher' ); ?>
                     </label>
                 </div>
                 
                 <div class="tts-modal-actions">
                     <button type="submit" class="tts-btn primary">
-                        <?php esc_html_e( 'Import', 'trello-social-auto-publisher' ); ?>
+                        <?php esc_html_e( 'Import', 'fp-publisher' ); ?>
                     </button>
                     <button type="button" class="tts-btn secondary tts-modal-close">
-                        <?php esc_html_e( 'Cancel', 'trello-social-auto-publisher' ); ?>
+                        <?php esc_html_e( 'Cancel', 'fp-publisher' ); ?>
                     </button>
                 </div>
             </form>
