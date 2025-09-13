@@ -86,12 +86,16 @@ class TTS_Client {
         $tt_hashtags     = get_post_meta( $post->ID, '_tts_default_hashtags_tiktok', true );
         $blog_settings   = get_post_meta( $post->ID, '_tts_blog_settings', true );
         $trello_map      = get_post_meta( $post->ID, '_tts_trello_map', true );
+        $publish_freq    = get_post_meta( $post->ID, '_tts_publishing_frequency', true );
 
         if ( ! is_array( $trello_map ) ) {
             $trello_map = array();
         }
         if ( ! is_array( $board_ids ) ) {
             $board_ids = array();
+        }
+        if ( ! is_array( $publish_freq ) ) {
+            $publish_freq = array();
         }
 
         echo '<p><label for="tts_trello_key">' . esc_html__( 'Trello API Key', 'trello-social-auto-publisher' ) . '</label>';
@@ -201,6 +205,72 @@ class TTS_Client {
             });
         });
         </script>
+        
+        <h3><?php esc_html_e( 'Publishing Frequency Settings', 'trello-social-auto-publisher' ); ?></h3>
+        <p><?php esc_html_e( 'Configure how often content should be published for this client on each channel.', 'trello-social-auto-publisher' ); ?></p>
+        
+        <?php
+        $channels = array(
+            'facebook' => 'Facebook',
+            'instagram' => 'Instagram', 
+            'youtube' => 'YouTube',
+            'tiktok' => 'TikTok',
+            'blog' => 'Blog'
+        );
+        
+        $periods = array(
+            'daily' => __( 'Daily', 'trello-social-auto-publisher' ),
+            'weekly' => __( 'Weekly', 'trello-social-auto-publisher' ),
+            'monthly' => __( 'Monthly', 'trello-social-auto-publisher' )
+        );
+        ?>
+        
+        <div id="tts_publishing_frequency">
+            <?php foreach ( $channels as $channel_key => $channel_name ) : 
+                $frequency = isset( $publish_freq[$channel_key] ) ? $publish_freq[$channel_key] : array('count' => '', 'period' => 'weekly');
+            ?>
+                <p class="tts-frequency-row">
+                    <label><strong><?php echo esc_html( $channel_name ); ?>:</strong></label><br>
+                    <input type="number" 
+                           name="tts_publishing_frequency[<?php echo esc_attr( $channel_key ); ?>][count]" 
+                           value="<?php echo esc_attr( $frequency['count'] ); ?>" 
+                           min="0" 
+                           max="100"
+                           style="width: 60px;" 
+                           placeholder="0" />
+                    <select name="tts_publishing_frequency[<?php echo esc_attr( $channel_key ); ?>][period]">
+                        <?php foreach ( $periods as $period_key => $period_label ) : ?>
+                            <option value="<?php echo esc_attr( $period_key ); ?>" 
+                                    <?php selected( $frequency['period'], $period_key ); ?>>
+                                <?php echo esc_html( $period_label ); ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                    <small style="color: #666; margin-left: 10px;">
+                        <?php esc_html_e( 'Leave count empty or 0 to disable frequency tracking for this channel', 'trello-social-auto-publisher' ); ?>
+                    </small>
+                </p>
+            <?php endforeach; ?>
+        </div>
+        
+        <h4><?php esc_html_e( 'Alert Settings', 'trello-social-auto-publisher' ); ?></h4>
+        <?php
+        $alert_days = get_post_meta( $post->ID, '_tts_alert_days_ahead', true );
+        $alert_days = $alert_days ? $alert_days : 3;
+        ?>
+        <p>
+            <label for="tts_alert_days_ahead"><?php esc_html_e( 'Days ahead to alert for content needs:', 'trello-social-auto-publisher' ); ?></label>
+            <input type="number" 
+                   id="tts_alert_days_ahead" 
+                   name="tts_alert_days_ahead" 
+                   value="<?php echo esc_attr( $alert_days ); ?>" 
+                   min="1" 
+                   max="30" 
+                   style="width: 60px;" />
+            <small style="color: #666; margin-left: 10px;">
+                <?php esc_html_e( 'Send alerts this many days before content is needed', 'trello-social-auto-publisher' ); ?>
+            </small>
+        </p>
         <?php
     }
 
@@ -300,6 +370,38 @@ class TTS_Client {
             }
         } else {
             delete_post_meta( $post_id, '_tts_trello_map' );
+        }
+
+        // Save publishing frequency settings
+        if ( isset( $_POST['tts_publishing_frequency'] ) && is_array( $_POST['tts_publishing_frequency'] ) ) {
+            $frequency_settings = array();
+            foreach ( wp_unslash( $_POST['tts_publishing_frequency'] ) as $channel => $freq_data ) {
+                if ( ! empty( $freq_data['count'] ) && is_numeric( $freq_data['count'] ) && intval( $freq_data['count'] ) > 0 ) {
+                    $frequency_settings[ sanitize_text_field( $channel ) ] = array(
+                        'count' => intval( $freq_data['count'] ),
+                        'period' => sanitize_text_field( $freq_data['period'] )
+                    );
+                }
+            }
+            if ( ! empty( $frequency_settings ) ) {
+                update_post_meta( $post_id, '_tts_publishing_frequency', $frequency_settings );
+            } else {
+                delete_post_meta( $post_id, '_tts_publishing_frequency' );
+            }
+        } else {
+            delete_post_meta( $post_id, '_tts_publishing_frequency' );
+        }
+
+        // Save alert days ahead setting
+        if ( isset( $_POST['tts_alert_days_ahead'] ) && is_numeric( $_POST['tts_alert_days_ahead'] ) ) {
+            $alert_days = intval( $_POST['tts_alert_days_ahead'] );
+            if ( $alert_days > 0 && $alert_days <= 30 ) {
+                update_post_meta( $post_id, '_tts_alert_days_ahead', $alert_days );
+            } else {
+                delete_post_meta( $post_id, '_tts_alert_days_ahead' );
+            }
+        } else {
+            delete_post_meta( $post_id, '_tts_alert_days_ahead' );
         }
     }
 
