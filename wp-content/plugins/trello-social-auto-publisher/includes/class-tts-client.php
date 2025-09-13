@@ -32,10 +32,10 @@ class TTS_Client {
      */
     public function register_post_type() {
         $labels = array(
-            'name'          => __( 'Clients', 'trello-social-auto-publisher' ),
-            'singular_name' => __( 'Client', 'trello-social-auto-publisher' ),
-            'add_new_item'  => __( 'Add New Client', 'trello-social-auto-publisher' ),
-            'edit_item'     => __( 'Edit Client', 'trello-social-auto-publisher' ),
+            'name'          => __( 'Clients', 'fp-publisher' ),
+            'singular_name' => __( 'Client', 'fp-publisher' ),
+            'add_new_item'  => __( 'Add New Client', 'fp-publisher' ),
+            'edit_item'     => __( 'Edit Client', 'fp-publisher' ),
         );
 
         $args = array(

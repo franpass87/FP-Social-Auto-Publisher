@@ -1,14 +1,14 @@
 <?php
 /**
- * Plugin Name: Trello Social Auto Publisher
+ * Plugin Name: FP Publisher
  * Plugin URI:  https://github.com/franpass87/FP-Social-Auto-Publisher
- * Description: Publish social posts triggered by Trello cards.
+ * Description: Comprehensive multi-source content management system for automated social media publishing. Supports Trello, Google Drive, Dropbox, local uploads, and manual content creation with advanced scheduling and OAuth integration.
  * Version:     1.0.0
  * Author:      FP-Social-Auto-Publisher
  * Author URI:  https://github.com/franpass87/FP-Social-Auto-Publisher
- * Text Domain: trello-social-auto-publisher
+ * Text Domain: fp-publisher
  *
- * @package TrelloSocialAutoPublisher
+ * @package FPPublisher
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -24,7 +24,7 @@ add_action( 'plugins_loaded', function () {
     if ( ! function_exists( 'as_schedule_single_action' ) ) {
         add_action( 'admin_notices', function () {
             echo '<div class="error"><p>' .
-                 esc_html__( 'Action Scheduler plugin is required for Trello Social Auto Publisher.', 'trello-social-auto-publisher' ) .
+                 esc_html__( 'Action Scheduler plugin is required for FP Publisher.', 'fp-publisher' ) .
                  '</p></div>';
         } );
         return;
@@ -37,6 +37,7 @@ add_action( 'plugins_loaded', function () {
         'class-tts-backup.php',
         'class-tts-cache-manager.php',
         'class-tts-client.php',
+        'class-tts-content-source.php',
         'class-tts-cpt.php',
         'class-tts-error-recovery.php',
         'class-tts-frequency-monitor.php',
@@ -102,7 +103,7 @@ add_action( 'plugins_loaded', function () {
         require_once TSAP_PLUGIN_DIR . 'admin/class-tts-ai-features-page.php';
 
         add_action( 'admin_enqueue_scripts', function( $hook ) {
-            if ( 'social-auto-publisher_page_tts-calendar' !== $hook ) {
+            if ( 'fp-publisher_page_fp-publisher-calendar' !== $hook ) {
                 return;
             }
 
@@ -128,7 +129,7 @@ add_action( 'plugins_loaded', function () {
         if ( ! isset( $schedules['weekly'] ) ) {
             $schedules['weekly'] = array(
                 'interval' => WEEK_IN_SECONDS,
-                'display'  => __( 'Once Weekly', 'trello-social-auto-publisher' ),
+                'display'  => __( 'Once Weekly', 'fp-publisher' ),
             );
         }
         return $schedules;

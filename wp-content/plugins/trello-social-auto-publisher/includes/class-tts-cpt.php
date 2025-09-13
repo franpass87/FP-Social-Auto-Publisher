@@ -45,7 +45,7 @@ class TTS_CPT {
             'show_ui'            => true,
             'supports'           => array( 'title', 'editor', 'custom-fields', 'thumbnail' ),
             'show_in_rest'       => true,
-            'label'              => __( 'Social Posts', 'trello-social-auto-publisher' ),
+            'label'              => __( 'Social Posts', 'fp-publisher' ),
         );
 
         register_post_type( 'tts_social_post', $args );

@@ -27,11 +27,11 @@ class TTS_Analytics_Page {
      */
     public function register_menu() {
         add_submenu_page(
-            'tts-main',
-            __( 'Analytics', 'trello-social-auto-publisher' ),
-            __( 'Analytics', 'trello-social-auto-publisher' ),
+            'fp-publisher-main',
+            __( 'Analytics', 'fp-publisher' ),
+            __( 'Analytics', 'fp-publisher' ),
             'manage_options',
-            'tts-analytics',
+            'fp-publisher-analytics',
             array( $this, 'render_page' )
         );
     }
