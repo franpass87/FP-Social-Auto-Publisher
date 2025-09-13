@@ -26,11 +26,11 @@ class TTS_Calendar_Page {
      */
     public function register_menu() {
         add_submenu_page(
-            'tts-main',
-            __( 'Calendario', 'trello-social-auto-publisher' ),
-            __( 'Calendario', 'trello-social-auto-publisher' ),
+            'fp-publisher-main',
+            __( 'Calendario', 'fp-publisher' ),
+            __( 'Calendario', 'fp-publisher' ),
             'manage_options',
-            'tts-calendar',
+            'fp-publisher-calendar',
             array( $this, 'render_page' )
         );
     }

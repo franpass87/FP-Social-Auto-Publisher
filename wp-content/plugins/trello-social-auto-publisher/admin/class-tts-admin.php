@@ -54,10 +54,10 @@ class TTS_Admin {
     public function register_menu() {
         // Main menu page
         add_menu_page(
-            __( 'Social Auto Publisher', 'trello-social-auto-publisher' ),
-            __( 'Social Auto Publisher', 'trello-social-auto-publisher' ),
+            __( 'FP Publisher', 'fp-publisher' ),
+            __( 'FP Publisher', 'fp-publisher' ),
             'manage_options',
-            'tts-main',
+            'fp-publisher-main',
             array( $this, 'render_dashboard_page' ),
             'dashicons-share-alt',
             25
@@ -65,71 +65,81 @@ class TTS_Admin {
 
         // Dashboard as first submenu (same as main page)
         add_submenu_page(
-            'tts-main',
-            __( 'Dashboard', 'trello-social-auto-publisher' ),
-            __( 'Dashboard', 'trello-social-auto-publisher' ),
+            'fp-publisher-main',
+            __( 'Dashboard', 'fp-publisher' ),
+            __( 'Dashboard', 'fp-publisher' ),
             'manage_options',
-            'tts-main',
+            'fp-publisher-main',
             array( $this, 'render_dashboard_page' )
+        );
+
+        // Content Management submenu - NEW
+        add_submenu_page(
+            'fp-publisher-main',
+            __( 'Content Management', 'fp-publisher' ),
+            __( 'Content Management', 'fp-publisher' ),
+            'manage_options',
+            'fp-publisher-content',
+            array( $this, 'render_content_management_page' )
         );
 
         // Clients submenu
         add_submenu_page(
-            'tts-main',
-            __( 'Clienti', 'trello-social-auto-publisher' ),
-            __( 'Clienti', 'trello-social-auto-publisher' ),
+            'fp-publisher-main',
+            __( 'Clienti', 'fp-publisher' ),
+            __( 'Clienti', 'fp-publisher' ),
             'manage_options',
-            'tts-clienti',
+            'fp-publisher-clienti',
             array( $this, 'render_clients_page' )
         );
 
         // Client Wizard submenu
         add_submenu_page(
-            'tts-main',
-            __( 'Client Wizard', 'trello-social-auto-publisher' ),
-            __( 'Client Wizard', 'trello-social-auto-publisher' ),
+            'fp-publisher-main',
+            __( 'Client Wizard', 'fp-publisher' ),
+            __( 'Client Wizard', 'fp-publisher' ),
             'manage_options',
-            'tts-client-wizard',
+            'fp-publisher-client-wizard',
             array( $this, 'tts_render_client_wizard' )
         );
 
         // Social Posts submenu
         add_submenu_page(
-            'tts-main',
-            __( 'Social Post', 'trello-social-auto-publisher' ),
-            __( 'Social Post', 'trello-social-auto-publisher' ),
+            'fp-publisher-main',
+            __( 'Social Post', 'fp-publisher' ),
+            __( 'Social Post', 'fp-publisher' ),
             'manage_options',
-            'tts-social-posts',
+            'fp-publisher-social-posts',
             array( $this, 'render_social_posts_page' )
         );
 
         // Settings submenu
         add_submenu_page(
-            'tts-main',
-            __( 'Settings', 'trello-social-auto-publisher' ),
-            __( 'Settings', 'trello-social-auto-publisher' ),
+            'fp-publisher-main',
+            __( 'Settings', 'fp-publisher' ),
+            __( 'Settings', 'fp-publisher' ),
             'manage_options',
-            'tts-settings',
+            'fp-publisher-settings',
             array( $this, 'render_settings_page' )
         );
 
         // Social Connections submenu
         add_submenu_page(
-            'tts-main',
-            __( 'Social Connections', 'trello-social-auto-publisher' ),
-            __( 'Social Connections', 'trello-social-auto-publisher' ),
+            'fp-publisher-main',
+            __( 'Social Connections', 'fp-publisher' ),
+            __( 'Social Connections', 'fp-publisher' ),
             'manage_options',
-            'tts-social-connections',
+            'fp-publisher-social-connections',
             array( $this, 'render_social_connections_page' )
         );
 
         // Help submenu
         add_submenu_page(
-            'tts-main',
-            __( 'Help & Setup', 'trello-social-auto-publisher' ),
-            __( 'Help & Setup', 'trello-social-auto-publisher' ),
+            'fp-publisher-main',
+            __( 'Help & Setup', 'fp-publisher' ),
+            __( 'Help & Setup', 'fp-publisher' ),
             'manage_options',
-            'tts-help',
+            'fp-publisher-help',
             array( $this, 'render_help_page' )
         );
     }
@@ -140,12 +150,12 @@ class TTS_Admin {
      * @param string $hook Current admin page hook.
      */
     public function enqueue_dashboard_assets( $hook ) {
-        // Check if we're on any TTS admin page
-        if ( strpos( $hook, 'tts-' ) === false && $hook !== 'toplevel_page_tts-main' ) {
+        // Check if we're on any FP Publisher admin page
+        if ( strpos( $hook, 'fp-publisher-' ) === false && $hook !== 'toplevel_page_fp-publisher-main' ) {
             return;
         }
 
-        // Core assets - loaded on all TTS pages
+        // Core assets - loaded on all FP Publisher pages
         $this->enqueue_core_assets();
 
         // Page-specific assets
@@ -3407,6 +3417,324 @@ class TTS_Social_Posts_Table extends WP_List_Table {
         wp_send_json_success( array( 
             'modal_html' => $modal_html
         ) );
+    }
+
+    /**
+     * Render Content Management page.
+     */
+    public function render_content_management_page() {
+        echo '<div class="wrap">';
+        echo '<h1>' . esc_html__( 'Content Management', 'fp-publisher' ) . '</h1>';
+        echo '<p>' . esc_html__( 'Manage content from multiple sources: Trello, Google Drive, Dropbox, local uploads, and manual creation.', 'fp-publisher' ) . '</p>';
+        
+        $this->render_content_management_tabs();
+        
+        echo '</div>';
+    }
+
+    /**
+     * Render Content Management tabs interface.
+     */
+    private function render_content_management_tabs() {
+        $sources = TTS_Content_Source::SOURCES;
+        $stats = TTS_Content_Source::get_source_stats();
+        
+        echo '<div class="tts-content-tabs">';
+        echo '<nav class="nav-tab-wrapper">';
+        
+        // Overview tab
+        echo '<a href="#overview" class="nav-tab nav-tab-active" data-tab="overview">' . esc_html__( 'Overview', 'fp-publisher' ) . '</a>';
+        
+        // Source tabs
+        foreach ( $sources as $source_key => $source_name ) {
+            $count = isset( $stats[ $source_key ] ) ? $stats[ $source_key ]['count'] : 0;
+            echo '<a href="#' . esc_attr( $source_key ) . '" class="nav-tab" data-tab="' . esc_attr( $source_key ) . '">';
+            echo esc_html( $source_name );
+            if ( $count > 0 ) {
+                echo ' <span class="count">(' . intval( $count ) . ')</span>';
+            }
+            echo '</a>';
+        }
+        
+        echo '</nav>';
+        
+        // Tab content
+        echo '<div class="tab-content">';
+        
+        // Overview tab content
+        echo '<div id="overview-content" class="tab-panel active">';
+        $this->render_overview_content( $stats );
+        echo '</div>';
+        
+        // Source tab contents
+        foreach ( $sources as $source_key => $source_name ) {
+            echo '<div id="' . esc_attr( $source_key ) . '-content" class="tab-panel">';
+            $this->render_source_content( $source_key, $source_name );
+            echo '</div>';
+        }
+        
+        echo '</div>'; // tab-content
+        echo '</div>'; // tts-content-tabs
+        
+        // Add JavaScript for tab functionality
+        $this->add_content_management_scripts();
+    }
+
+    /**
+     * Render overview content.
+     *
+     * @param array $stats Source statistics.
+     */
+    private function render_overview_content( $stats ) {
+        echo '<div class="tts-overview-grid">';
+        
+        // Statistics cards
+        echo '<div class="tts-stats-grid">';
+        foreach ( TTS_Content_Source::SOURCES as $source_key => $source_name ) {
+            $count = isset( $stats[ $source_key ] ) ? $stats[ $source_key ]['count'] : 0;
+            echo '<div class="tts-stat-card">';
+            echo '<h3>' . esc_html( $source_name ) . '</h3>';
+            echo '<div class="stat-number">' . intval( $count ) . '</div>';
+            echo '<div class="stat-label">' . esc_html__( 'Content Items', 'fp-publisher' ) . '</div>';
+            echo '</div>';
+        }
+        echo '</div>';
+        
+        // Quick actions
+        echo '<div class="tts-quick-actions">';
+        echo '<h3>' . esc_html__( 'Quick Actions', 'fp-publisher' ) . '</h3>';
+        echo '<div class="actions-grid">';
+        
+        echo '<button class="tts-btn primary" data-action="sync-all">';
+        echo '<span class="dashicons dashicons-update"></span>';
+        echo esc_html__( 'Sync All Sources', 'fp-publisher' );
+        echo '</button>';
+        
+        echo '<button class="tts-btn secondary" data-action="create-manual">';
+        echo '<span class="dashicons dashicons-plus"></span>';
+        echo esc_html__( 'Create Manual Content', 'fp-publisher' );
+        echo '</button>';
+        
+        echo '<button class="tts-btn secondary" data-action="upload-file">';
+        echo '<span class="dashicons dashicons-upload"></span>';
+        echo esc_html__( 'Upload Files', 'fp-publisher' );
+        echo '</button>';
+        
+        echo '</div>';
+        echo '</div>';
+        
+        echo '</div>';
+    }
+
+    /**
+     * Render source-specific content.
+     *
+     * @param string $source_key The source key.
+     * @param string $source_name The source name.
+     */
+    private function render_source_content( $source_key, $source_name ) {
+        echo '<div class="tts-source-content">';
+        
+        // Source header with actions
+        echo '<div class="source-header">';
+        echo '<h3>' . esc_html( $source_name ) . ' ' . esc_html__( 'Content', 'fp-publisher' ) . '</h3>';
+        echo '<div class="source-actions">';
+        
+        if ( in_array( $source_key, array( 'trello', 'google_drive', 'dropbox' ), true ) ) {
+            echo '<button class="tts-btn primary" data-action="sync" data-source="' . esc_attr( $source_key ) . '">';
+            echo '<span class="dashicons dashicons-update"></span>';
+            echo esc_html__( 'Sync Now', 'fp-publisher' );
+            echo '</button>';
+        }
+        
+        if ( in_array( $source_key, array( 'local_upload', 'manual' ), true ) ) {
+            echo '<button class="tts-btn primary" data-action="add-content" data-source="' . esc_attr( $source_key ) . '">';
+            echo '<span class="dashicons dashicons-plus"></span>';
+            echo esc_html__( 'Add Content', 'fp-publisher' );
+            echo '</button>';
+        }
+        
+        echo '</div>';
+        echo '</div>';
+        
+        // Content list
+        echo '<div class="source-content-list" id="content-list-' . esc_attr( $source_key ) . '">';
+        $this->render_source_content_list( $source_key );
+        echo '</div>';
+        
+        echo '</div>';
+    }
+
+    /**
+     * Render content list for a specific source.
+     *
+     * @param string $source_key The source key.
+     */
+    private function render_source_content_list( $source_key ) {
+        $query = TTS_Content_Source::get_posts_by_source( $source_key, array( 'posts_per_page' => 20 ) );
+        
+        if ( $query->have_posts() ) {
+            echo '<table class="wp-list-table widefat fixed striped">';
+            echo '<thead>';
+            echo '<tr>';
+            echo '<th>' . esc_html__( 'Title', 'fp-publisher' ) . '</th>';
+            echo '<th>' . esc_html__( 'Source Reference', 'fp-publisher' ) . '</th>';
+            echo '<th>' . esc_html__( 'Status', 'fp-publisher' ) . '</th>';
+            echo '<th>' . esc_html__( 'Date', 'fp-publisher' ) . '</th>';
+            echo '<th>' . esc_html__( 'Actions', 'fp-publisher' ) . '</th>';
+            echo '</tr>';
+            echo '</thead>';
+            echo '<tbody>';
+            
+            while ( $query->have_posts() ) {
+                $query->the_post();
+                $post_id = get_the_ID();
+                $source_ref = get_post_meta( $post_id, '_tts_source_reference', true );
+                
+                echo '<tr>';
+                echo '<td><strong>' . esc_html( get_the_title() ) . '</strong></td>';
+                echo '<td>' . esc_html( $source_ref ) . '</td>';
+                echo '<td>' . esc_html( get_post_status() ) . '</td>';
+                echo '<td>' . esc_html( get_the_date() ) . '</td>';
+                echo '<td>';
+                echo '<a href="' . esc_url( get_edit_post_link( $post_id ) ) . '" class="button button-small">' . esc_html__( 'Edit', 'fp-publisher' ) . '</a>';
+                echo '</td>';
+                echo '</tr>';
+            }
+            
+            echo '</tbody>';
+            echo '</table>';
+            
+            wp_reset_postdata();
+        } else {
+            echo '<div class="tts-empty-state">';
+            echo '<p>' . esc_html__( 'No content found for this source.', 'fp-publisher' ) . '</p>';
+            if ( in_array( $source_key, array( 'trello', 'google_drive', 'dropbox' ), true ) ) {
+                echo '<p><em>' . esc_html__( 'Try syncing to import content from this source.', 'fp-publisher' ) . '</em></p>';
+            }
+            echo '</div>';
+        }
+    }
+
+    /**
+     * Add Content Management scripts and styles.
+     */
+    private function add_content_management_scripts() {
+        ?>
+        <style>
+        .tts-content-tabs { margin-top: 20px; }
+        .tab-panel { display: none; padding: 20px 0; }
+        .tab-panel.active { display: block; }
+        .tts-overview-grid { display: grid; gap: 20px; }
+        .tts-stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px; }
+        .tts-stat-card { background: #fff; border: 1px solid #c3c4c7; border-radius: 4px; padding: 20px; text-align: center; }
+        .tts-stat-card h3 { margin: 0 0 10px; font-size: 14px; color: #50575e; }
+        .stat-number { font-size: 32px; font-weight: bold; color: #1d2327; margin-bottom: 5px; }
+        .stat-label { font-size: 12px; color: #646970; }
+        .tts-quick-actions h3 { margin: 0 0 15px; }
+        .actions-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+        .tts-btn { display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; text-decoration: none; font-size: 14px; }
+        .tts-btn.primary { background: #2271b1; color: #fff; }
+        .tts-btn.secondary { background: #f0f0f1; color: #50575e; border: 1px solid #c3c4c7; }
+        .tts-btn:hover.primary { background: #135e96; }
+        .tts-btn:hover.secondary { background: #e8e8e9; }
+        .source-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .source-header h3 { margin: 0; }
+        .tts-empty-state { text-align: center; padding: 40px; color: #646970; }
+        .nav-tab .count { background: #72aee6; color: #fff; border-radius: 9px; padding: 2px 6px; font-size: 11px; margin-left: 4px; }
+        </style>
+        
+        <script>
+        jQuery(document).ready(function($) {
+            // Tab switching
+            $('.nav-tab').on('click', function(e) {
+                e.preventDefault();
+                var tab = $(this).data('tab');
+                
+                // Update tab appearance
+                $('.nav-tab').removeClass('nav-tab-active');
+                $(this).addClass('nav-tab-active');
+                
+                // Show corresponding content
+                $('.tab-panel').removeClass('active');
+                $('#' + tab + '-content').addClass('active');
+            });
+            
+            // Quick actions
+            $('[data-action]').on('click', function() {
+                var action = $(this).data('action');
+                var source = $(this).data('source');
+                
+                switch(action) {
+                    case 'sync':
+                    case 'sync-all':
+                        handleSync(source);
+                        break;
+                    case 'add-content':
+                        handleAddContent(source);
+                        break;
+                    case 'create-manual':
+                        handleCreateManual();
+                        break;
+                    case 'upload-file':
+                        handleUploadFile();
+                        break;
+                }
+            });
+            
+            function handleSync(source) {
+                var $btn = $('[data-action="sync"][data-source="' + source + '"]');
+                $btn.prop('disabled', true).find('.dashicons').addClass('fa-spin');
+                
+                $.post(ajaxurl, {
+                    action: 'tts_sync_content_sources',
+                    source: source,
+                    nonce: '<?php echo wp_create_nonce( "tts_admin_nonce" ); ?>'
+                }, function(response) {
+                    if (response.success) {
+                        alert(response.data.message);
+                        location.reload();
+                    } else {
+                        alert('Error: ' + response.data);
+                    }
+                }).always(function() {
+                    $btn.prop('disabled', false).find('.dashicons').removeClass('fa-spin');
+                });
+            }
+            
+            function handleAddContent(source) {
+                var title = prompt('<?php echo esc_js( __( "Enter content title:", "fp-publisher" ) ); ?>');
+                if (!title) return;
+                
+                var content = prompt('<?php echo esc_js( __( "Enter content:", "fp-publisher" ) ); ?>');
+                if (!content) return;
+                
+                $.post(ajaxurl, {
+                    action: 'tts_add_content_source',
+                    source: source,
+                    title: title,
+                    content: content,
+                    nonce: '<?php echo wp_create_nonce( "tts_admin_nonce" ); ?>'
+                }, function(response) {
+                    if (response.success) {
+                        alert(response.data.message);
+                        location.reload();
+                    } else {
+                        alert('Error: ' + response.data);
+                    }
+                });
+            }
+            
+            function handleCreateManual() {
+                window.location.href = '<?php echo admin_url( "post-new.php?post_type=tts_social_post&content_source=manual" ); ?>';
+            }
+            
+            function handleUploadFile() {
+                window.location.href = '<?php echo admin_url( "post-new.php?post_type=tts_social_post&content_source=local_upload" ); ?>';
+            }
+        });
+        </script>
+        <?php
     }
 }
 

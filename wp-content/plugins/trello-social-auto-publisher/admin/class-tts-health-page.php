@@ -45,11 +45,11 @@ class TTS_Health_Page {
      */
     public function register_menu() {
         add_submenu_page(
-            'tts-main',
-            __( 'Stato', 'trello-social-auto-publisher' ),
-            __( 'Stato', 'trello-social-auto-publisher' ),
+            'fp-publisher-main',
+            __( 'Stato', 'fp-publisher' ),
+            __( 'Stato', 'fp-publisher' ),
             'manage_tts_posts',
-            'tts-health',
+            'fp-publisher-health',
             array( $this, 'render_page' )
         );
     }

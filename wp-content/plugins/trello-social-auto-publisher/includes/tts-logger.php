@@ -25,12 +25,15 @@ function tts_create_logs_table() {
         status varchar(20) NOT NULL,
         message text NOT NULL,
         response longtext NULL,
+        content_source varchar(50) NULL,
+        source_reference varchar(255) NULL,
         created_at datetime NOT NULL,
         PRIMARY KEY  (id),
         KEY post_id (post_id),
         KEY channel_status (channel, status),
         KEY created_at (created_at),
-        KEY status_created (status, created_at)
+        KEY status_created (status, created_at),
+        KEY content_source (content_source)
     ) {$charset_collate};";
 
     require_once ABSPATH . 'wp-admin/includes/upgrade.php';
@@ -49,18 +52,24 @@ function tts_create_logs_table() {
 function tts_log_event( $post_id, $channel, $status, $message, $response ) {
     global $wpdb;
 
+    // Get content source information
+    $content_source = get_post_meta( $post_id, '_tts_content_source', true );
+    $source_reference = get_post_meta( $post_id, '_tts_source_reference', true );
+
     $table = $wpdb->prefix . 'tts_logs';
     $wpdb->insert(
         $table,
         array(
-            'post_id'   => $post_id,
-            'channel'   => $channel,
-            'status'    => $status,
-            'message'   => $message,
-            'response'  => is_scalar( $response ) ? $response : wp_json_encode( $response ),
-            'created_at'=> current_time( 'mysql' ),
+            'post_id'          => $post_id,
+            'channel'          => $channel,
+            'status'           => $status,
+            'message'          => $message,
+            'response'         => is_scalar( $response ) ? $response : wp_json_encode( $response ),
+            'content_source'   => $content_source,
+            'source_reference' => $source_reference,
+            'created_at'       => current_time( 'mysql' ),
         ),
-        array( '%d', '%s', '%s', '%s', '%s', '%s' )
+        array( '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%s' )
     );
 }
 
