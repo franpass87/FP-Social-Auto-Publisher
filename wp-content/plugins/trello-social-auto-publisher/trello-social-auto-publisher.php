@@ -39,6 +39,7 @@ add_action( 'plugins_loaded', function () {
         'class-tts-client.php',
         'class-tts-cpt.php',
         'class-tts-error-recovery.php',
+        'class-tts-frequency-monitor.php',
         'class-tts-image-processor.php',
         'class-tts-link-checker.php',
         'class-tts-media-importer.php',
@@ -90,6 +91,8 @@ add_action( 'plugins_loaded', function () {
         require_once TSAP_PLUGIN_DIR . 'admin/class-tts-calendar-page.php';
         require_once TSAP_PLUGIN_DIR . 'admin/class-tts-analytics-page.php';
         require_once TSAP_PLUGIN_DIR . 'admin/class-tts-health-page.php';
+        require_once TSAP_PLUGIN_DIR . 'admin/class-tts-frequency-status-page.php';
+        require_once TSAP_PLUGIN_DIR . 'admin/class-tts-frequency-dashboard-widget.php';
 
         new TTS_Admin();
         new TTS_Calendar_Page();
