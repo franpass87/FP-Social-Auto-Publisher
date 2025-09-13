@@ -22,6 +22,7 @@ class TTS_Frequency_Status_Page {
         add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_assets' ) );
         add_action( 'wp_ajax_tts_refresh_frequency_status', array( $this, 'ajax_refresh_status' ) );
         add_action( 'wp_ajax_tts_check_all_frequencies', array( $this, 'ajax_check_all_frequencies' ) );
+        add_action( 'wp_ajax_tts_test_alert_system', array( $this, 'ajax_test_alert_system' ) );
     }
 
     /**
@@ -103,6 +104,9 @@ class TTS_Frequency_Status_Page {
                     </button>
                     <button type="button" id="tts-check-now" class="button button-primary">
                         <?php esc_html_e( 'Check All Clients Now', 'trello-social-auto-publisher' ); ?>
+                    </button>
+                    <button type="button" id="tts-test-alerts" class="button button-secondary">
+                        <?php esc_html_e( 'Test Alert System', 'trello-social-auto-publisher' ); ?>
                     </button>
                 </div>
             </div>
@@ -261,6 +265,33 @@ class TTS_Frequency_Status_Page {
         $monitor->check_all_clients();
 
         wp_send_json_success( array( 'message' => __( 'Frequency check completed', 'trello-social-auto-publisher' ) ) );
+    }
+
+    /**
+     * AJAX handler to test the alert system.
+     */
+    public function ajax_test_alert_system() {
+        check_ajax_referer( 'tts_frequency_status', 'nonce' );
+
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_die( __( 'Insufficient permissions', 'trello-social-auto-publisher' ) );
+        }
+
+        $notifier = new TTS_Notifier();
+        
+        // Send test notifications
+        $test_message = __( 'TEST ALERT: Publishing frequency monitoring system is working correctly. This is a test message.', 'trello-social-auto-publisher' );
+        
+        $notifier->notify_slack( $test_message );
+        $notifier->notify_email( 
+            __( 'Test Alert - Publishing Frequency System', 'trello-social-auto-publisher' ), 
+            $test_message 
+        );
+
+        // Log the test
+        tts_log_event( 0, 'frequency_monitor', 'test', $test_message, array() );
+
+        wp_send_json_success( array( 'message' => __( 'Test alerts sent successfully', 'trello-social-auto-publisher' ) ) );
     }
 }
 

@@ -92,6 +92,7 @@ add_action( 'plugins_loaded', function () {
         require_once TSAP_PLUGIN_DIR . 'admin/class-tts-analytics-page.php';
         require_once TSAP_PLUGIN_DIR . 'admin/class-tts-health-page.php';
         require_once TSAP_PLUGIN_DIR . 'admin/class-tts-frequency-status-page.php';
+        require_once TSAP_PLUGIN_DIR . 'admin/class-tts-frequency-dashboard-widget.php';
 
         new TTS_Admin();
         new TTS_Calendar_Page();

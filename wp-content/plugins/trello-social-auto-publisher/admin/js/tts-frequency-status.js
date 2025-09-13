@@ -16,6 +16,12 @@ jQuery(document).ready(function($) {
         checkAllClients();
     });
 
+    // Test alert system button handler
+    $('#tts-test-alerts').on('click', function(e) {
+        e.preventDefault();
+        testAlertSystem();
+    });
+
     /**
      * Refresh the frequency status display
      */
@@ -84,6 +90,39 @@ jQuery(document).ready(function($) {
             complete: function() {
                 // Reset button state
                 $button.prop('disabled', false).text('Check All Clients Now');
+            }
+        });
+    }
+
+    /**
+     * Test the alert system
+     */
+    function testAlertSystem() {
+        var $button = $('#tts-test-alerts');
+        
+        // Show loading state
+        $button.prop('disabled', true).text('Testing...');
+
+        $.ajax({
+            url: ttsFrequencyStatus.ajaxUrl,
+            type: 'POST',
+            data: {
+                action: 'tts_test_alert_system',
+                nonce: ttsFrequencyStatus.nonce
+            },
+            success: function(response) {
+                if (response.success) {
+                    showNotice('Test alerts sent successfully. Check your Slack and email for notifications.', 'success');
+                } else {
+                    showNotice('Error sending test alerts', 'error');
+                }
+            },
+            error: function() {
+                showNotice('Error sending test alerts', 'error');
+            },
+            complete: function() {
+                // Reset button state
+                $button.prop('disabled', false).text('Test Alert System');
             }
         });
     }
