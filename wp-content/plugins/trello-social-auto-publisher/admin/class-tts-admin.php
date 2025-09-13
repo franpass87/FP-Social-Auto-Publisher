@@ -57,7 +57,7 @@ class TTS_Admin {
             __( 'Social Auto Publisher', 'trello-social-auto-publisher' ),
             __( 'Social Auto Publisher', 'trello-social-auto-publisher' ),
             'manage_options',
-            'tts-main',
+            'social-auto-publisher',
             array( $this, 'render_dashboard_page' ),
             'dashicons-share-alt',
             25
@@ -65,17 +65,17 @@ class TTS_Admin {
 
         // Dashboard as first submenu (same as main page)
         add_submenu_page(
-            'tts-main',
+            'social-auto-publisher',
             __( 'Dashboard', 'trello-social-auto-publisher' ),
             __( 'Dashboard', 'trello-social-auto-publisher' ),
             'manage_options',
-            'tts-main',
+            'social-auto-publisher',
             array( $this, 'render_dashboard_page' )
         );
 
         // Clients submenu
         add_submenu_page(
-            'tts-main',
+            'social-auto-publisher',
             __( 'Clienti', 'trello-social-auto-publisher' ),
             __( 'Clienti', 'trello-social-auto-publisher' ),
             'manage_options',
@@ -85,7 +85,7 @@ class TTS_Admin {
 
         // Client Wizard submenu
         add_submenu_page(
-            'tts-main',
+            'social-auto-publisher',
             __( 'Client Wizard', 'trello-social-auto-publisher' ),
             __( 'Client Wizard', 'trello-social-auto-publisher' ),
             'manage_options',
@@ -95,7 +95,7 @@ class TTS_Admin {
 
         // Social Posts submenu
         add_submenu_page(
-            'tts-main',
+            'social-auto-publisher',
             __( 'Social Post', 'trello-social-auto-publisher' ),
             __( 'Social Post', 'trello-social-auto-publisher' ),
             'manage_options',
@@ -105,7 +105,7 @@ class TTS_Admin {
 
         // Settings submenu
         add_submenu_page(
-            'tts-main',
+            'social-auto-publisher',
             __( 'Settings', 'trello-social-auto-publisher' ),
             __( 'Settings', 'trello-social-auto-publisher' ),
             'manage_options',
@@ -115,7 +115,7 @@ class TTS_Admin {
 
         // Social Connections submenu
         add_submenu_page(
-            'tts-main',
+            'social-auto-publisher',
             __( 'Social Connections', 'trello-social-auto-publisher' ),
             __( 'Social Connections', 'trello-social-auto-publisher' ),
             'manage_options',
@@ -125,7 +125,7 @@ class TTS_Admin {
 
         // Help submenu
         add_submenu_page(
-            'tts-main',
+            'social-auto-publisher',
             __( 'Help & Setup', 'trello-social-auto-publisher' ),
             __( 'Help & Setup', 'trello-social-auto-publisher' ),
             'manage_options',
@@ -141,7 +141,7 @@ class TTS_Admin {
      */
     public function enqueue_dashboard_assets( $hook ) {
         // Check if we're on any TTS admin page
-        if ( strpos( $hook, 'tts-' ) === false && $hook !== 'toplevel_page_tts-main' ) {
+        if ( strpos( $hook, 'tts-' ) === false && $hook !== 'toplevel_page_social-auto-publisher' ) {
             return;
         }
 
@@ -150,7 +150,7 @@ class TTS_Admin {
 
         // Page-specific assets
         switch ( $hook ) {
-            case 'toplevel_page_tts-main':
+            case 'toplevel_page_social-auto-publisher':
                 $this->enqueue_dashboard_specific_assets();
                 break;
             case 'social-auto-publisher_page_tts-social-connections':
@@ -1471,7 +1471,7 @@ class TTS_Admin {
             echo '<h3>' . esc_html__( 'Social Media Setup Required', 'trello-social-auto-publisher' ) . '</h3>';
             echo '<p>' . esc_html__( 'To connect social media accounts, you must first configure OAuth apps for each platform. Click "Configure App" for platforms that are not set up.', 'trello-social-auto-publisher' ) . '</p>';
             echo '<p><a href="' . esc_url( admin_url( 'admin.php?page=tts-social-connections' ) ) . '" class="button">' . esc_html__( 'Manage Social Connections', 'trello-social-auto-publisher' ) . '</a> ';
-            echo '<a href="' . esc_url( admin_url( 'admin.php?page=tts-main' ) ) . '" target="_blank">' . esc_html__( 'View Setup Guide', 'trello-social-auto-publisher' ) . '</a></p>';
+            echo '<a href="' . esc_url( admin_url( 'admin.php?page=social-auto-publisher' ) ) . '" target="_blank">' . esc_html__( 'View Setup Guide', 'trello-social-auto-publisher' ) . '</a></p>';
             echo '</div>';
         }
 

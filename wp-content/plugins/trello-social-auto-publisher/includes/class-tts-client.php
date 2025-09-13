@@ -94,6 +94,14 @@ class TTS_Client {
             $board_ids = array();
         }
 
+        echo '<h3>' . esc_html__( 'Content Sources', 'trello-social-auto-publisher' ) . '</h3>';
+        echo '<p>' . esc_html__( 'Configure your content sources. Trello is now optional - you can use local uploads, cloud storage, or direct content creation.', 'trello-social-auto-publisher' ) . '</p>';
+        
+        // Trello Section (now optional)
+        echo '<h4>' . esc_html__( 'Trello Integration (Optional)', 'trello-social-auto-publisher' ) . '</h4>';
+        echo '<details>';
+        echo '<summary>' . esc_html__( 'Configure Trello (click to expand)', 'trello-social-auto-publisher' ) . '</summary>';
+        
         echo '<p><label for="tts_trello_key">' . esc_html__( 'Trello API Key', 'trello-social-auto-publisher' ) . '</label>';
         echo '<input type="text" id="tts_trello_key" name="tts_trello_key" value="' . esc_attr( $trello_key ) . '" class="widefat" /></p>';
 
@@ -102,6 +110,28 @@ class TTS_Client {
 
         echo '<p><label for="tts_trello_secret">' . esc_html__( 'Trello API Secret', 'trello-social-auto-publisher' ) . '</label>';
         echo '<input type="text" id="tts_trello_secret" name="tts_trello_secret" value="' . esc_attr( $trello_secret ) . '" class="widefat" /></p>';
+        
+        echo '</details>';
+        
+        // Cloud Storage Section
+        echo '<h4>' . esc_html__( 'Cloud Storage Integration', 'trello-social-auto-publisher' ) . '</h4>';
+        
+        $dropbox_token = get_post_meta( $post->ID, '_tts_dropbox_token', true );
+        $dropbox_folder = get_post_meta( $post->ID, '_tts_dropbox_folder', true );
+        $gdrive_token = get_post_meta( $post->ID, '_tts_google_drive_token', true );
+        $gdrive_folder = get_post_meta( $post->ID, '_tts_google_drive_folder', true );
+        
+        echo '<p><label for="tts_dropbox_token">' . esc_html__( 'Dropbox Access Token', 'trello-social-auto-publisher' ) . '</label>';
+        echo '<input type="text" id="tts_dropbox_token" name="tts_dropbox_token" value="' . esc_attr( $dropbox_token ) . '" class="widefat" /></p>';
+        
+        echo '<p><label for="tts_dropbox_folder">' . esc_html__( 'Dropbox Folder Path', 'trello-social-auto-publisher' ) . '</label>';
+        echo '<input type="text" id="tts_dropbox_folder" name="tts_dropbox_folder" value="' . esc_attr( $dropbox_folder ) . '" class="widefat" placeholder="/Social Content" /></p>';
+        
+        echo '<p><label for="tts_google_drive_token">' . esc_html__( 'Google Drive Access Token', 'trello-social-auto-publisher' ) . '</label>';
+        echo '<input type="text" id="tts_google_drive_token" name="tts_google_drive_token" value="' . esc_attr( $gdrive_token ) . '" class="widefat" /></p>';
+        
+        echo '<p><label for="tts_google_drive_folder">' . esc_html__( 'Google Drive Folder Name', 'trello-social-auto-publisher' ) . '</label>';
+        echo '<input type="text" id="tts_google_drive_folder" name="tts_google_drive_folder" value="' . esc_attr( $gdrive_folder ) . '" class="widefat" placeholder="Social Content" /></p>';
 
         ?>
         <div id="tts_trello_boards">
@@ -230,6 +260,10 @@ class TTS_Client {
             'tts_ig_token'      => '_tts_ig_token',
             'tts_yt_token'      => '_tts_yt_token',
             'tts_tt_token'      => '_tts_tt_token',
+            'tts_dropbox_token' => '_tts_dropbox_token',
+            'tts_dropbox_folder' => '_tts_dropbox_folder',
+            'tts_google_drive_token' => '_tts_google_drive_token',
+            'tts_google_drive_folder' => '_tts_google_drive_folder',
         );
 
         foreach ( $fields as $field => $meta_key ) {
