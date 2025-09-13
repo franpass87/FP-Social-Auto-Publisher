@@ -32,6 +32,10 @@ class TTS_Content_Source {
         add_action( 'wp_ajax_tts_sync_dropbox', array( $this, 'sync_dropbox_content' ) );
         add_action( 'wp_ajax_tts_sync_google_drive', array( $this, 'sync_google_drive_content' ) );
         add_action( 'wp_ajax_tts_create_content', array( $this, 'create_content_post' ) );
+        
+        // Background sync actions
+        add_action( 'tts_sync_dropbox_content', array( $this, 'background_sync_dropbox' ) );
+        add_action( 'tts_sync_google_drive_content', array( $this, 'background_sync_google_drive' ) );
     }
 
     /**
@@ -255,17 +259,22 @@ class TTS_Content_Source {
 
         $client_id = intval( $_POST['client_id'] ?? 0 );
         $dropbox_token = get_post_meta( $client_id, '_tts_dropbox_token', true );
-        $dropbox_folder = get_post_meta( $client_id, '_tts_dropbox_folder', true ) ?: '/Social Content';
 
         if ( empty( $dropbox_token ) ) {
             wp_send_json_error( array( 'message' => __( 'Dropbox not configured', 'trello-social-auto-publisher' ) ) );
         }
 
-        // TODO: Implement Dropbox API integration
-        // For now, return a placeholder response
+        // Schedule background sync
+        as_schedule_single_action(
+            time() + 5,
+            'tts_sync_dropbox_content',
+            array( $client_id ),
+            'tts_content_sync'
+        );
+
         wp_send_json_success( array(
-            'message' => __( 'Dropbox sync functionality will be implemented', 'trello-social-auto-publisher' ),
-            'files_found' => 0,
+            'message' => __( 'Dropbox sync started in background', 'trello-social-auto-publisher' ),
+            'client_id' => $client_id,
         ) );
     }
 
@@ -281,17 +290,22 @@ class TTS_Content_Source {
 
         $client_id = intval( $_POST['client_id'] ?? 0 );
         $gdrive_token = get_post_meta( $client_id, '_tts_google_drive_token', true );
-        $gdrive_folder = get_post_meta( $client_id, '_tts_google_drive_folder', true ) ?: 'Social Content';
 
         if ( empty( $gdrive_token ) ) {
             wp_send_json_error( array( 'message' => __( 'Google Drive not configured', 'trello-social-auto-publisher' ) ) );
         }
 
-        // TODO: Implement Google Drive API integration
-        // For now, return a placeholder response
+        // Schedule background sync
+        as_schedule_single_action(
+            time() + 5,
+            'tts_sync_google_drive_content',
+            array( $client_id ),
+            'tts_content_sync'
+        );
+
         wp_send_json_success( array(
-            'message' => __( 'Google Drive sync functionality will be implemented', 'trello-social-auto-publisher' ),
-            'files_found' => 0,
+            'message' => __( 'Google Drive sync started in background', 'trello-social-auto-publisher' ),
+            'client_id' => $client_id,
         ) );
     }
 
@@ -396,28 +410,56 @@ class TTS_Content_Source {
     }
 
     /**
-     * Sync Dropbox via API (placeholder).
+     * Sync Dropbox via API.
      *
      * @param int $client_id Client ID.
      * @return WP_REST_Response
      */
     private function sync_dropbox_api( $client_id ) {
+        $dropbox_token = get_post_meta( $client_id, '_tts_dropbox_token', true );
+
+        if ( empty( $dropbox_token ) ) {
+            return new WP_Error( 'dropbox_not_configured', __( 'Dropbox not configured for this client', 'trello-social-auto-publisher' ), array( 'status' => 400 ) );
+        }
+
+        // Schedule background sync
+        as_schedule_single_action(
+            time() + 5,
+            'tts_sync_dropbox_content',
+            array( $client_id ),
+            'tts_content_sync'
+        );
+
         return rest_ensure_response( array(
-            'message' => __( 'Dropbox API integration pending', 'trello-social-auto-publisher' ),
-            'files_synced' => 0,
+            'message' => __( 'Dropbox sync started in background', 'trello-social-auto-publisher' ),
+            'client_id' => $client_id,
         ) );
     }
 
     /**
-     * Sync Google Drive via API (placeholder).
+     * Sync Google Drive via API.
      *
      * @param int $client_id Client ID.
      * @return WP_REST_Response
      */
     private function sync_google_drive_api( $client_id ) {
+        $gdrive_token = get_post_meta( $client_id, '_tts_google_drive_token', true );
+
+        if ( empty( $gdrive_token ) ) {
+            return new WP_Error( 'google_drive_not_configured', __( 'Google Drive not configured for this client', 'trello-social-auto-publisher' ), array( 'status' => 400 ) );
+        }
+
+        // Schedule background sync
+        as_schedule_single_action(
+            time() + 5,
+            'tts_sync_google_drive_content',
+            array( $client_id ),
+            'tts_content_sync'
+        );
+
         return rest_ensure_response( array(
-            'message' => __( 'Google Drive API integration pending', 'trello-social-auto-publisher' ),
-            'files_synced' => 0,
+            'message' => __( 'Google Drive sync started in background', 'trello-social-auto-publisher' ),
+            'client_id' => $client_id,
         ) );
     }
 
@@ -441,6 +483,355 @@ class TTS_Content_Source {
             'message' => __( 'Trello sync completed', 'trello-social-auto-publisher' ),
             'cards_synced' => 0,
         ) );
+    }
+
+    /**
+     * Background sync for Dropbox content.
+     *
+     * @param int $client_id Client ID.
+     */
+    public function background_sync_dropbox( $client_id ) {
+        $dropbox_token = get_post_meta( $client_id, '_tts_dropbox_token', true );
+        $dropbox_folder = get_post_meta( $client_id, '_tts_dropbox_folder', true ) ?: '/Social Content';
+        
+        if ( empty( $dropbox_token ) ) {
+            return;
+        }
+        
+        // Get files from Dropbox API
+        $files = $this->fetch_dropbox_files( $dropbox_token, $dropbox_folder );
+        
+        if ( ! empty( $files ) ) {
+            foreach ( $files as $file ) {
+                $this->import_cloud_file( $client_id, $file, self::SOURCE_DROPBOX );
+            }
+            
+            tts_log( sprintf( 
+                'Synced %d files from Dropbox for client %d', 
+                count( $files ), 
+                $client_id 
+            ) );
+        }
+    }
+
+    /**
+     * Background sync for Google Drive content.
+     *
+     * @param int $client_id Client ID.
+     */
+    public function background_sync_google_drive( $client_id ) {
+        $gdrive_token = get_post_meta( $client_id, '_tts_google_drive_token', true );
+        $gdrive_folder = get_post_meta( $client_id, '_tts_google_drive_folder', true ) ?: 'Social Content';
+        
+        if ( empty( $gdrive_token ) ) {
+            return;
+        }
+        
+        // Get files from Google Drive API
+        $files = $this->fetch_google_drive_files( $gdrive_token, $gdrive_folder );
+        
+        if ( ! empty( $files ) ) {
+            foreach ( $files as $file ) {
+                $this->import_cloud_file( $client_id, $file, self::SOURCE_GOOGLE_DRIVE );
+            }
+            
+            tts_log( sprintf( 
+                'Synced %d files from Google Drive for client %d', 
+                count( $files ), 
+                $client_id 
+            ) );
+        }
+    }
+
+    /**
+     * Fetch files from Dropbox API.
+     *
+     * @param string $token  Access token.
+     * @param string $folder Folder path.
+     * @return array Array of file objects.
+     */
+    private function fetch_dropbox_files( $token, $folder ) {
+        $url = 'https://api.dropboxapi.com/2/files/list_folder';
+        
+        $response = wp_remote_post( $url, array(
+            'headers' => array(
+                'Authorization' => 'Bearer ' . $token,
+                'Content-Type' => 'application/json',
+            ),
+            'body' => json_encode( array(
+                'path' => $folder,
+                'recursive' => false,
+                'include_media_info' => true,
+            ) ),
+        ) );
+        
+        if ( is_wp_error( $response ) ) {
+            tts_log( 'Dropbox API error: ' . $response->get_error_message() );
+            return array();
+        }
+        
+        $body = wp_remote_retrieve_body( $response );
+        $data = json_decode( $body, true );
+        
+        if ( ! isset( $data['entries'] ) ) {
+            return array();
+        }
+        
+        $files = array();
+        foreach ( $data['entries'] as $entry ) {
+            if ( $entry['.tag'] === 'file' && $this->is_media_file( $entry['name'] ) ) {
+                $files[] = array(
+                    'id' => $entry['id'],
+                    'name' => $entry['name'],
+                    'path' => $entry['path_display'],
+                    'size' => $entry['size'],
+                    'modified' => $entry['server_modified'],
+                    'download_url' => $this->get_dropbox_download_url( $token, $entry['path_display'] ),
+                );
+            }
+        }
+        
+        return $files;
+    }
+
+    /**
+     * Fetch files from Google Drive API.
+     *
+     * @param string $token  Access token.
+     * @param string $folder Folder name.
+     * @return array Array of file objects.
+     */
+    private function fetch_google_drive_files( $token, $folder ) {
+        // First, find the folder ID
+        $folder_id = $this->get_google_drive_folder_id( $token, $folder );
+        
+        if ( ! $folder_id ) {
+            return array();
+        }
+        
+        $url = 'https://www.googleapis.com/drive/v3/files';
+        $query_params = array(
+            'q' => "'{$folder_id}' in parents and (mimeType contains 'image/' or mimeType contains 'video/')",
+            'fields' => 'files(id,name,mimeType,size,modifiedTime,webContentLink)',
+        );
+        
+        $response = wp_remote_get( add_query_arg( $query_params, $url ), array(
+            'headers' => array(
+                'Authorization' => 'Bearer ' . $token,
+            ),
+        ) );
+        
+        if ( is_wp_error( $response ) ) {
+            tts_log( 'Google Drive API error: ' . $response->get_error_message() );
+            return array();
+        }
+        
+        $body = wp_remote_retrieve_body( $response );
+        $data = json_decode( $body, true );
+        
+        if ( ! isset( $data['files'] ) ) {
+            return array();
+        }
+        
+        $files = array();
+        foreach ( $data['files'] as $file ) {
+            $files[] = array(
+                'id' => $file['id'],
+                'name' => $file['name'],
+                'mime_type' => $file['mimeType'],
+                'size' => isset( $file['size'] ) ? $file['size'] : 0,
+                'modified' => $file['modifiedTime'],
+                'download_url' => $file['webContentLink'],
+            );
+        }
+        
+        return $files;
+    }
+
+    /**
+     * Get Dropbox download URL for a file.
+     *
+     * @param string $token Access token.
+     * @param string $path  File path.
+     * @return string Download URL.
+     */
+    private function get_dropbox_download_url( $token, $path ) {
+        $url = 'https://api.dropboxapi.com/2/files/get_temporary_link';
+        
+        $response = wp_remote_post( $url, array(
+            'headers' => array(
+                'Authorization' => 'Bearer ' . $token,
+                'Content-Type' => 'application/json',
+            ),
+            'body' => json_encode( array( 'path' => $path ) ),
+        ) );
+        
+        if ( is_wp_error( $response ) ) {
+            return '';
+        }
+        
+        $body = wp_remote_retrieve_body( $response );
+        $data = json_decode( $body, true );
+        
+        return isset( $data['link'] ) ? $data['link'] : '';
+    }
+
+    /**
+     * Get Google Drive folder ID by name.
+     *
+     * @param string $token       Access token.
+     * @param string $folder_name Folder name.
+     * @return string|false Folder ID or false if not found.
+     */
+    private function get_google_drive_folder_id( $token, $folder_name ) {
+        $url = 'https://www.googleapis.com/drive/v3/files';
+        $query_params = array(
+            'q' => "name='{$folder_name}' and mimeType='application/vnd.google-apps.folder'",
+            'fields' => 'files(id,name)',
+        );
+        
+        $response = wp_remote_get( add_query_arg( $query_params, $url ), array(
+            'headers' => array(
+                'Authorization' => 'Bearer ' . $token,
+            ),
+        ) );
+        
+        if ( is_wp_error( $response ) ) {
+            return false;
+        }
+        
+        $body = wp_remote_retrieve_body( $response );
+        $data = json_decode( $body, true );
+        
+        if ( isset( $data['files'][0]['id'] ) ) {
+            return $data['files'][0]['id'];
+        }
+        
+        return false;
+    }
+
+    /**
+     * Import a cloud file as content.
+     *
+     * @param int    $client_id Client ID.
+     * @param array  $file      File data.
+     * @param string $source    Source type.
+     */
+    private function import_cloud_file( $client_id, $file, $source ) {
+        // Check if file already imported
+        $existing = get_posts( array(
+            'post_type' => 'tts_social_post',
+            'meta_query' => array(
+                array(
+                    'key' => '_tts_cloud_file_id',
+                    'value' => $file['id'],
+                ),
+                array(
+                    'key' => '_tts_source_type',
+                    'value' => $source,
+                ),
+            ),
+            'fields' => 'ids',
+            'numberposts' => 1,
+        ) );
+        
+        if ( ! empty( $existing ) ) {
+            return; // Already imported
+        }
+        
+        // Download and import the file
+        $local_file = $this->download_cloud_file( $file['download_url'], $file['name'] );
+        
+        if ( ! $local_file ) {
+            return;
+        }
+        
+        // Create attachment
+        $attachment_id = $this->create_attachment_from_upload( $local_file, $file['name'] );
+        
+        // Generate title from filename
+        $title = preg_replace( '/\.[^.]+$/', '', $file['name'] );
+        $title = str_replace( array( '_', '-' ), ' ', $title );
+        $title = ucwords( $title );
+        
+        // Create social post
+        $post_id = $this->create_social_post_from_upload( array(
+            'title' => $title,
+            'content' => sprintf( __( 'Content imported from %s', 'trello-social-auto-publisher' ), ucfirst( str_replace( '_', ' ', $source ) ) ),
+            'attachment_id' => $attachment_id,
+            'client_id' => $client_id,
+            'schedule_date' => '',
+            'social_channels' => array(), // Can be configured later
+            'source_type' => $source,
+        ) );
+        
+        if ( $post_id ) {
+            // Store cloud file metadata
+            update_post_meta( $post_id, '_tts_cloud_file_id', $file['id'] );
+            update_post_meta( $post_id, '_tts_cloud_file_path', $file['path'] ?? $file['name'] );
+            update_post_meta( $post_id, '_tts_cloud_file_modified', $file['modified'] );
+        }
+        
+        // Clean up temporary file
+        if ( file_exists( $local_file['file'] ) ) {
+            unlink( $local_file['file'] );
+        }
+    }
+
+    /**
+     * Download a cloud file to local storage.
+     *
+     * @param string $url      Download URL.
+     * @param string $filename Original filename.
+     * @return array|false Upload result or false on failure.
+     */
+    private function download_cloud_file( $url, $filename ) {
+        if ( empty( $url ) ) {
+            return false;
+        }
+        
+        // Download the file
+        $response = wp_remote_get( $url, array(
+            'timeout' => 300, // 5 minutes for large files
+        ) );
+        
+        if ( is_wp_error( $response ) ) {
+            tts_log( 'Failed to download cloud file: ' . $response->get_error_message() );
+            return false;
+        }
+        
+        $file_content = wp_remote_retrieve_body( $response );
+        
+        if ( empty( $file_content ) ) {
+            return false;
+        }
+        
+        // Save to temporary file
+        $upload_dir = wp_upload_dir();
+        $temp_file = $upload_dir['path'] . '/' . wp_unique_filename( $upload_dir['path'], $filename );
+        
+        if ( false === file_put_contents( $temp_file, $file_content ) ) {
+            return false;
+        }
+        
+        return array(
+            'file' => $temp_file,
+            'url' => $upload_dir['url'] . '/' . basename( $temp_file ),
+            'type' => wp_check_filetype( $temp_file )['type'],
+        );
+    }
+
+    /**
+     * Check if a file is a supported media file.
+     *
+     * @param string $filename Filename.
+     * @return bool True if supported media file.
+     */
+    private function is_media_file( $filename ) {
+        $extension = strtolower( pathinfo( $filename, PATHINFO_EXTENSION ) );
+        $allowed_extensions = array( 'jpg', 'jpeg', 'png', 'gif', 'webp', 'mp4', 'mov', 'avi', 'wmv', 'flv' );
+        
+        return in_array( $extension, $allowed_extensions, true );
     }
 }
 

@@ -68,6 +68,7 @@ class TTS_Content_Management_Page {
         wp_localize_script( 'tts-content-manager', 'ttsContentManager', array(
             'ajaxUrl' => admin_url( 'admin-ajax.php' ),
             'restUrl' => rest_url( 'tts/v1/' ),
+            'restNonce' => wp_create_nonce( 'wp_rest' ),
             'nonces' => array(
                 'upload' => wp_create_nonce( 'tts_upload_nonce' ),
                 'sync' => wp_create_nonce( 'tts_sync_nonce' ),

@@ -273,14 +273,14 @@
                 url: `${ttsContentManager.restUrl}content-source/${source}/sync`,
                 type: 'POST',
                 beforeSend: function(xhr) {
-                    xhr.setRequestHeader('X-WP-Nonce', wp.api.nonce);
+                    xhr.setRequestHeader('X-WP-Nonce', ttsContentManager.restNonce);
                 },
                 data: {
                     client_id: clientId
                 },
                 success: function(response) {
                     ContentManager.showNotice(response.message || ttsContentManager.strings.syncSuccess, 'success');
-                    $status.text(`✓ ${response.files_synced || 0} files synced`);
+                    $status.text(`✓ Sync completed`);
                     ContentManager.refreshContentList();
                 },
                 error: function(xhr) {
@@ -310,7 +310,7 @@
                 data: {
                     action: 'tts_delete_post',
                     post_id: postId,
-                    nonce: wp.api.nonce
+                    nonce: ttsContentManager.restNonce
                 },
                 success: function(response) {
                     if (response.success) {
@@ -340,7 +340,7 @@
                 type: 'POST',
                 data: {
                     action: 'tts_refresh_posts',
-                    nonce: wp.api.nonce
+                    nonce: ttsContentManager.restNonce
                 },
                 success: function(response) {
                     if (response.success) {

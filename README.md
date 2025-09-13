@@ -1,6 +1,31 @@
 # FP-Social-Auto-Publisher
 
-Questo progetto pubblica automaticamente contenuti sui social a partire da Trello.
+Questo progetto pubblica automaticamente contenuti sui social a partire da **multiple sorgenti di contenuto**. 
+
+**🚀 NUOVE FUNZIONALITÀ - VERSIONE AGGIORNATA**
+
+## ✨ Gestione Multi-Sorgente dei Contenuti
+
+Il plugin ora supporta diverse fonti di contenuto, non solo Trello:
+
+### 📁 Sorgenti Supportate
+- **Upload Locale**: Carica file direttamente dal tuo computer con drag & drop
+- **Dropbox**: Sincronizza automaticamente contenuti da cartelle Dropbox
+- **Google Drive**: Importa contenuti da cartelle Google Drive
+- **Trello**: Integrazione Trello (ora opzionale)
+- **Editor Integrato**: Crea contenuti direttamente nell'interfaccia con l'editor WordPress
+
+### 🎯 Interfaccia Interattiva
+- **Nessun reload di pagina**: Tutte le operazioni avvengono via AJAX
+- **Content Manager**: Dashboard dedicata per gestire tutti i contenuti
+- **Preview in tempo reale**: Anteprima dei contenuti prima della pubblicazione
+- **Filtri avanzati**: Cerca e filtra contenuti per cliente, stato, canale social
+- **Programmazione flessibile**: Schedula pubblicazioni per date/orari specifici
+
+### 🔧 Configurazione Semplificata
+- **Trello Opzionale**: Non è più necessario configurare Trello per usare il plugin
+- **Setup Cloud**: Configura facilmente Dropbox e Google Drive
+- **Gestione Token**: Interfaccia semplificata per gestire i token di accesso
 
 ## ✨ Aggiornamenti Recenti
 
@@ -138,4 +163,49 @@ Dal menu **Analytics** è possibile:
 - filtrare i dati per canale e intervallo temporale;
 - visualizzare i risultati in un grafico generato con Chart.js;
 - esportare le metriche correnti in formato CSV.
+
+## 📖 Guida all'Uso delle Nuove Funzionalità
+
+### Come Utilizzare il Content Manager
+
+1. **Accesso**: Vai su "Social Auto Publisher" > "Content Manager" nel menu di WordPress
+2. **Creazione Contenuti**: 
+   - Usa il tab "Create Content" per scrivere contenuti con l'editor WordPress
+   - Seleziona i canali social di destinazione
+   - Programma la pubblicazione (opzionale)
+3. **Upload File**: 
+   - Usa il tab "Upload Files" per caricare immagini/video
+   - Trascina i file nell'area di upload o clicca per selezionare
+   - Compila titolo e descrizione
+4. **Sincronizzazione Cloud**:
+   - Configura Dropbox/Google Drive nelle impostazioni del cliente
+   - Usa il tab "Sync Sources" per importare contenuti automaticamente
+5. **Gestione Contenuti**:
+   - Visualizza tutti i contenuti nel tab "Manage Content"
+   - Filtra per cliente, stato o cerca per parole chiave
+   - Modifica o elimina contenuti esistenti
+
+### Configurazione Cloud Storage
+
+#### Dropbox
+1. Crea un'app su [Dropbox Developers](https://www.dropbox.com/developers/apps)
+2. Genera un Access Token
+3. Inserisci il token nel campo "Dropbox Access Token" del cliente
+4. Specifica la cartella (es. "/Social Content")
+
+#### Google Drive
+1. Crea un progetto su [Google Cloud Console](https://console.cloud.google.com/)
+2. Abilita Google Drive API
+3. Crea credenziali OAuth 2.0
+4. Genera un Access Token
+5. Inserisci il token nel campo "Google Drive Access Token" del cliente
+6. Specifica la cartella (es. "Social Content")
+
+### Best Practices
+
+- **Organizzazione File**: Mantieni i file organizzati nelle cartelle cloud
+- **Nomi File**: Usa nomi descrittivi per i file (diventeranno titoli dei post)
+- **Formati Supportati**: JPG, PNG, GIF, WebP, MP4, MOV, AVI per media
+- **Backup**: Mantieni sempre backup dei contenuti importanti
+- **Test**: Testa sempre le integrazioni prima dell'uso in produzione
 

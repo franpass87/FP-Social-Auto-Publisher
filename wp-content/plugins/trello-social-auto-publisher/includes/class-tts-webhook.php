@@ -25,12 +25,24 @@ class TTS_Webhook {
      * Register REST API routes.
      */
     public function register_routes() {
+        // Legacy Trello webhook (kept for compatibility)
         register_rest_route(
             'tts/v1',
             '/trello-webhook',
             array(
                 'methods'             => array( 'POST', 'GET', 'HEAD' ),
                 'callback'            => array( $this, 'handle_trello_webhook' ),
+                'permission_callback' => '__return_true',
+            )
+        );
+
+        // Generic content webhook for multiple sources
+        register_rest_route(
+            'tts/v1',
+            '/content-webhook/(?P<source>\w+)',
+            array(
+                'methods'             => array( 'POST', 'GET', 'HEAD' ),
+                'callback'            => array( $this, 'handle_content_webhook' ),
                 'permission_callback' => '__return_true',
             )
         );
@@ -47,6 +59,146 @@ class TTS_Webhook {
                 },
             )
         );
+    }
+
+    /**
+     * Handle generic content webhook from multiple sources.
+     *
+     * @param WP_REST_Request $request The request instance.
+     *
+     * @return WP_REST_Response|WP_Error
+     */
+    public function handle_content_webhook( WP_REST_Request $request ) {
+        $source = $request->get_param( 'source' );
+        
+        if ( 'POST' !== $request->get_method() ) {
+            return rest_ensure_response( 'OK' );
+        }
+
+        switch ( $source ) {
+            case 'trello':
+                return $this->handle_trello_webhook( $request );
+            case 'dropbox':
+                return $this->handle_dropbox_webhook( $request );
+            case 'google_drive':
+                return $this->handle_google_drive_webhook( $request );
+            default:
+                return new WP_Error( 
+                    'invalid_source', 
+                    __( 'Invalid content source', 'trello-social-auto-publisher' ), 
+                    array( 'status' => 400 ) 
+                );
+        }
+    }
+
+    /**
+     * Handle Dropbox webhook notifications.
+     *
+     * @param WP_REST_Request $request The request instance.
+     *
+     * @return WP_REST_Response|WP_Error
+     */
+    public function handle_dropbox_webhook( WP_REST_Request $request ) {
+        $data = $request->get_json_params();
+        
+        // Validate Dropbox webhook signature if needed
+        // TODO: Implement signature validation
+        
+        // Process Dropbox file changes
+        if ( isset( $data['list_folder'] ) && isset( $data['list_folder']['accounts'] ) ) {
+            foreach ( $data['list_folder']['accounts'] as $account ) {
+                $this->process_dropbox_changes( $account );
+            }
+        }
+        
+        return rest_ensure_response( array( 'status' => 'processed' ) );
+    }
+
+    /**
+     * Handle Google Drive webhook notifications.
+     *
+     * @param WP_REST_Request $request The request instance.
+     *
+     * @return WP_REST_Response|WP_Error
+     */
+    public function handle_google_drive_webhook( WP_REST_Request $request ) {
+        $headers = $request->get_headers();
+        
+        // Google Drive sends notifications via headers
+        $resource_id = isset( $headers['x_goog_resource_id'] ) ? $headers['x_goog_resource_id'][0] : '';
+        $resource_state = isset( $headers['x_goog_resource_state'] ) ? $headers['x_goog_resource_state'][0] : '';
+        
+        if ( $resource_state === 'update' ) {
+            $this->process_google_drive_changes( $resource_id );
+        }
+        
+        return rest_ensure_response( array( 'status' => 'processed' ) );
+    }
+
+    /**
+     * Process Dropbox file changes.
+     *
+     * @param array $account_data Dropbox account data.
+     */
+    private function process_dropbox_changes( $account_data ) {
+        // Find clients with matching Dropbox configuration
+        $clients = get_posts( array(
+            'post_type' => 'tts_client',
+            'posts_per_page' => -1,
+            'meta_query' => array(
+                array(
+                    'key' => '_tts_dropbox_token',
+                    'value' => '',
+                    'compare' => '!=',
+                ),
+            ),
+        ) );
+
+        foreach ( $clients as $client ) {
+            $dropbox_token = get_post_meta( $client->ID, '_tts_dropbox_token', true );
+            $dropbox_folder = get_post_meta( $client->ID, '_tts_dropbox_folder', true ) ?: '/Social Content';
+            
+            // Schedule a background task to sync Dropbox content for this client
+            as_schedule_single_action(
+                time() + 60, // Delay to avoid rate limits
+                'tts_sync_dropbox_content',
+                array( $client->ID ),
+                'tts_content_sync'
+            );
+        }
+    }
+
+    /**
+     * Process Google Drive file changes.
+     *
+     * @param string $resource_id Google Drive resource ID.
+     */
+    private function process_google_drive_changes( $resource_id ) {
+        // Find clients with matching Google Drive configuration
+        $clients = get_posts( array(
+            'post_type' => 'tts_client',
+            'posts_per_page' => -1,
+            'meta_query' => array(
+                array(
+                    'key' => '_tts_google_drive_token',
+                    'value' => '',
+                    'compare' => '!=',
+                ),
+            ),
+        ) );
+
+        foreach ( $clients as $client ) {
+            $gdrive_token = get_post_meta( $client->ID, '_tts_google_drive_token', true );
+            $gdrive_folder = get_post_meta( $client->ID, '_tts_google_drive_folder', true ) ?: 'Social Content';
+            
+            // Schedule a background task to sync Google Drive content for this client
+            as_schedule_single_action(
+                time() + 60, // Delay to avoid rate limits
+                'tts_sync_google_drive_content',
+                array( $client->ID ),
+                'tts_content_sync'
+            );
+        }
     }
 
     /**
