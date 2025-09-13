@@ -96,6 +96,7 @@ add_action( 'plugins_loaded', function () {
         new TTS_Admin();
         new TTS_Calendar_Page();
         new TTS_Health_Page();
+        new TTS_Content_Management_Page();
         
         // Load AI Features page
         require_once TSAP_PLUGIN_DIR . 'admin/class-tts-ai-features-page.php';
@@ -121,6 +122,23 @@ add_action( 'plugins_loaded', function () {
             );
         } );
     }
+
+    // Initialize core classes
+    new TTS_Client();
+    new TTS_CPT();
+    new TTS_Webhook();
+    new TTS_Content_Source();
+    new TTS_Scheduler();
+    new TTS_Token_Refresh();
+    new TTS_Settings();
+    new TTS_Error_Recovery();
+    new TTS_Performance();
+    new TTS_Monitoring();
+    new TTS_Analytics();
+    new TTS_Cache_Manager();
+    new TTS_Validation();
+    new TTS_Notifier();
+    new TTS_REST();
 
     // Add a weekly cron schedule.
     add_filter( 'cron_schedules', function( $schedules ) {
