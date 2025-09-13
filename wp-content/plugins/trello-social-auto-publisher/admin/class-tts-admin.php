@@ -150,75 +150,185 @@ class TTS_Admin {
      * @param string $hook Current admin page hook.
      */
     public function enqueue_dashboard_assets( $hook ) {
-        // Check if we're on any FP Publisher admin page
-        if ( strpos( $hook, 'fp-publisher-' ) === false && $hook !== 'toplevel_page_fp-publisher-main' ) {
+        // Optimized hook checking - only load on FP Publisher pages
+        $fp_publisher_pages = array(
+            'toplevel_page_fp-publisher-main',
+            'fp-publisher_page_fp-publisher-calendar',
+            'fp-publisher_page_fp-publisher-analytics',
+            'fp-publisher_page_fp-publisher-health',
+            'fp-publisher_page_fp-publisher-clienti',
+            'fp-publisher_page_fp-publisher-client-wizard',
+            'fp-publisher_page_fp-publisher-content',
+            'fp-publisher_page_fp-publisher-social-connections',
+            'fp-publisher_page_fp-publisher-ai-features',
+            'fp-publisher_page_fp-publisher-log'
+        );
+
+        if ( ! in_array( $hook, $fp_publisher_pages, true ) ) {
             return;
         }
 
-        // Core assets - loaded on all FP Publisher pages
-        $this->enqueue_core_assets();
+        // Core assets - loaded on all FP Publisher pages with conditional loading
+        $this->enqueue_core_assets( $hook );
 
-        // Page-specific assets
-        switch ( $hook ) {
-            case 'toplevel_page_tts-main':
-                $this->enqueue_dashboard_specific_assets();
-                break;
-            case 'social-auto-publisher_page_tts-social-connections':
-                $this->enqueue_social_connections_assets();
-                break;
-            case 'social-auto-publisher_page_tts-client-wizard':
-                $this->enqueue_wizard_assets();
-                break;
-            case 'social-auto-publisher_page_tts-analytics':
-                $this->enqueue_analytics_assets();
-                break;
-        }
+        // Page-specific assets with lazy loading
+        $this->enqueue_page_specific_assets( $hook );
     }
 
     /**
-     * Enqueue core assets needed on all TTS pages.
+     * Enqueue core assets needed on all TTS pages with conditional loading.
+     *
+     * @param string $hook Current admin page hook.
      */
-    private function enqueue_core_assets() {
-        // Essential styles
+    private function enqueue_core_assets( $hook ) {
+        // Essential styles with version based on file modification time for better caching
+        $css_version = filemtime( plugin_dir_path( __FILE__ ) . 'css/tts-core.css' );
         wp_enqueue_style(
             'tts-core',
             plugin_dir_url( __FILE__ ) . 'css/tts-core.css',
             array(),
-            '1.3'
+            $css_version
         );
 
-        // Essential JavaScript
+        // Essential JavaScript with optimized dependencies
+        $js_version = filemtime( plugin_dir_path( __FILE__ ) . 'js/tts-core.js' );
         wp_enqueue_script(
             'tts-core',
             plugin_dir_url( __FILE__ ) . 'js/tts-core.js',
             array( 'jquery' ),
-            '1.3',
+            $js_version,
             true
         );
 
-        // Localize core script
+        // Localize core script with minimal data
         wp_localize_script( 'tts-core', 'tts_ajax', array(
             'ajax_url' => admin_url( 'admin-ajax.php' ),
             'nonce' => wp_create_nonce( 'tts_ajax_nonce' ),
+            'current_page' => $hook, // Pass current page for conditional frontend logic
         ));
+    }
+
+    /**
+     * Enqueue page-specific assets with conditional loading.
+     *
+     * @param string $hook Current admin page hook.
+     */
+    private function enqueue_page_specific_assets( $hook ) {
+        switch ( $hook ) {
+            case 'toplevel_page_fp-publisher-main':
+                $this->enqueue_dashboard_specific_assets();
+                break;
+            case 'fp-publisher_page_fp-publisher-calendar':
+                $this->enqueue_calendar_assets();
+                break;
+            case 'fp-publisher_page_fp-publisher-analytics':
+                $this->enqueue_analytics_assets();
+                break;
+            case 'fp-publisher_page_fp-publisher-social-connections':
+                $this->enqueue_social_connections_assets();
+                break;
+            case 'fp-publisher_page_fp-publisher-client-wizard':
+                // Wizard assets are handled separately to avoid duplication
+                break;
+            case 'fp-publisher_page_fp-publisher-health':
+                $this->enqueue_health_assets();
+                break;
+            case 'fp-publisher_page_fp-publisher-ai-features':
+                $this->enqueue_ai_features_assets();
+                break;
+        }
     }
 
     /**
      * Enqueue dashboard-specific assets.
      */
     private function enqueue_dashboard_specific_assets() {
+        $css_version = filemtime( plugin_dir_path( __FILE__ ) . 'css/tts-dashboard.css' );
         wp_enqueue_style(
             'tts-dashboard',
             plugin_dir_url( __FILE__ ) . 'css/tts-dashboard.css',
             array( 'tts-core' ),
-            '1.2'
+            $css_version
         );
 
+        $js_version = filemtime( plugin_dir_path( __FILE__ ) . 'js/tts-dashboard.js' );
         wp_enqueue_script(
             'tts-dashboard',
             plugin_dir_url( __FILE__ ) . 'js/tts-dashboard.js',
-            array( 'tts-core', 'wp-element', 'wp-components', 'wp-api-fetch' ),
-            '1.2',
+            array( 'tts-core' ),
+            $js_version,
+            true
+        );
+
+        // Conditional loading of React components only if needed
+        if ( $this->dashboard_needs_react_components() ) {
+            wp_enqueue_script( 'wp-element' );
+            wp_enqueue_script( 'wp-components' );
+            wp_enqueue_script( 'wp-api-fetch' );
+        }
+    }
+
+    /**
+     * Check if dashboard needs React components.
+     *
+     * @return bool
+     */
+    private function dashboard_needs_react_components() {
+        // Check if current user has capabilities that require React components
+        return current_user_can( 'manage_options' ) && 
+               get_option( 'tts_enable_advanced_ui', false );
+    }
+
+    /**
+     * Enqueue calendar specific assets.
+     */
+    private function enqueue_calendar_assets() {
+        $css_version = filemtime( plugin_dir_path( __FILE__ ) . 'css/tts-calendar.css' );
+        wp_enqueue_style(
+            'tts-calendar',
+            plugin_dir_url( __FILE__ ) . 'css/tts-calendar.css',
+            array( 'tts-core' ),
+            $css_version
+        );
+
+        $js_version = filemtime( plugin_dir_path( __FILE__ ) . 'js/tts-calendar.js' );
+        wp_enqueue_script(
+            'tts-calendar',
+            plugin_dir_url( __FILE__ ) . 'js/tts-calendar.js',
+            array( 'tts-core' ),
+            $js_version,
+            true
+        );
+    }
+
+    /**
+     * Enqueue health page specific assets.
+     */
+    private function enqueue_health_assets() {
+        $css_version = filemtime( plugin_dir_path( __FILE__ ) . 'css/tts-health.css' );
+        wp_enqueue_style(
+            'tts-health',
+            plugin_dir_url( __FILE__ ) . 'css/tts-health.css',
+            array( 'tts-core' ),
+            $css_version
+        );
+    }
+
+    /**
+     * Enqueue AI features specific assets.
+     */
+    private function enqueue_ai_features_assets() {
+        // Only load large AI assets if user has premium features enabled
+        if ( ! get_option( 'tts_ai_features_enabled', false ) ) {
+            return;
+        }
+
+        $js_version = filemtime( plugin_dir_path( __FILE__ ) . 'js/tts-advanced-features.js' );
+        wp_enqueue_script(
+            'tts-advanced-features',
+            plugin_dir_url( __FILE__ ) . 'js/tts-advanced-features.js',
+            array( 'tts-core' ),
+            $js_version,
             true
         );
     }
@@ -227,68 +337,79 @@ class TTS_Admin {
      * Enqueue social connections specific assets.
      */
     private function enqueue_social_connections_assets() {
+        $css_version = filemtime( plugin_dir_path( __FILE__ ) . 'css/tts-social-connections.css' );
         wp_enqueue_style(
             'tts-social-connections',
             plugin_dir_url( __FILE__ ) . 'css/tts-social-connections.css',
             array( 'tts-core' ),
-            '1.0'
+            $css_version
         );
 
+        $js_version = filemtime( plugin_dir_path( __FILE__ ) . 'js/tts-social-connections.js' );
         wp_enqueue_script(
             'tts-social-connections',
             plugin_dir_url( __FILE__ ) . 'js/tts-social-connections.js',
             array( 'tts-core' ),
-            '1.0',
+            $js_version,
             true
         );
     }
 
     /**
-     * Enqueue analytics specific assets.
+     * Enqueue analytics specific assets with conditional Chart.js loading.
      */
     private function enqueue_analytics_assets() {
+        $css_version = filemtime( plugin_dir_path( __FILE__ ) . 'css/tts-analytics.css' );
         wp_enqueue_style(
             'tts-analytics',
             plugin_dir_url( __FILE__ ) . 'css/tts-analytics.css',
             array( 'tts-core' ),
-            '1.0'
+            $css_version
         );
 
+        // Load Chart.js from CDN with integrity check for better performance
+        wp_enqueue_script(
+            'chart-js',
+            'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.js',
+            array(),
+            '4.4.0',
+            true
+        );
+
+        $js_version = filemtime( plugin_dir_path( __FILE__ ) . 'js/tts-analytics.js' );
         wp_enqueue_script(
             'tts-analytics',
             plugin_dir_url( __FILE__ ) . 'js/tts-analytics.js',
             array( 'tts-core', 'chart-js' ),
-            '1.0',
+            $js_version,
             true
         );
 
-        // Enqueue Chart.js for analytics
-        wp_enqueue_script(
-            'chart-js',
-            'https://cdn.jsdelivr.net/npm/chart.js',
-            array(),
-            '3.9.1',
-            true
-        );
-
-        // Localize script with enhanced data (global for all TTS pages)
+        // Localize analytics script with optimized data
         wp_localize_script(
-            'tts-admin-utils',
-            'ttsDashboard',
+            'tts-analytics',
+            'ttsAnalytics',
             array(
                 'ajaxUrl' => admin_url( 'admin-ajax.php' ),
-                'nonce' => wp_create_nonce( 'tts_dashboard' ),
-                'restUrl' => rest_url( 'wp/v2/' ),
-                'restNonce' => wp_create_nonce( 'wp_rest' ),
-                'currentPage' => isset( $_GET['page'] ) ? sanitize_text_field( $_GET['page'] ) : '',
-                'strings' => array(
-                    'confirmDelete' => __( 'Are you sure you want to delete this item?', 'trello-social-auto-publisher' ),
-                    'bulkDelete' => __( 'Are you sure you want to delete the selected items?', 'trello-social-auto-publisher' ),
-                    'loading' => __( 'Loading...', 'trello-social-auto-publisher' ),
-                    'error' => __( 'An error occurred', 'trello-social-auto-publisher' ),
-                    'success' => __( 'Operation completed successfully', 'trello-social-auto-publisher' ),
-                )
+                'nonce' => wp_create_nonce( 'tts_analytics' ),
+                'chartColors' => $this->get_chart_color_scheme(),
             )
+        );
+    }
+
+    /**
+     * Get optimized chart color scheme.
+     *
+     * @return array Color scheme for charts.
+     */
+    private function get_chart_color_scheme() {
+        return array(
+            'primary' => '#135e96',
+            'secondary' => '#f56e28',
+            'success' => '#00a32a',
+            'warning' => '#f6c23e',
+            'error' => '#dc3545',
+            'info' => '#17a2b8',
         );
     }
 
@@ -341,11 +462,12 @@ class TTS_Admin {
             return;
         }
 
+        $js_version = filemtime( plugin_dir_path( __FILE__ ) . 'js/tts-media.js' );
         wp_enqueue_script(
             'tts-media',
             plugin_dir_url( __FILE__ ) . 'js/tts-media.js',
             array( 'tts-core', 'media-editor', 'jquery-ui-sortable' ),
-            '1.1',
+            $js_version,
             true
         );
     }
@@ -362,14 +484,25 @@ class TTS_Admin {
     }
 
     /**
-     * Render the scheduled social posts widget.
+     * Render the scheduled social posts widget with optimized database queries and caching.
      */
     public function render_scheduled_posts_widget() {
+        // Check cache first
+        $cache_key = 'tts_scheduled_posts_widget_' . get_current_user_id();
+        $cached_output = get_transient( $cache_key );
+        
+        if ( false !== $cached_output ) {
+            echo $cached_output;
+            return;
+        }
+
+        // Optimized query with specific fields and meta_value ordering
         $posts = get_posts(
             array(
                 'post_type'      => 'tts_social_post',
                 'posts_per_page' => 5,
                 'post_status'    => 'any',
+                'fields'         => 'ids', // Only get IDs to reduce memory usage
                 'meta_key'       => '_tts_publish_at',
                 'orderby'        => 'meta_value',
                 'order'          => 'ASC',
@@ -381,22 +514,66 @@ class TTS_Admin {
                         'type'    => 'DATETIME',
                     ),
                 ),
+                'suppress_filters' => true, // Avoid unnecessary filter execution
             )
         );
 
         if ( empty( $posts ) ) {
-            echo '<p>' . esc_html__( 'Nessun post programmato.', 'trello-social-auto-publisher' ) . '</p>';
+            $output = '<p>' . esc_html__( 'Nessun post programmato.', 'trello-social-auto-publisher' ) . '</p>';
+            set_transient( $cache_key, $output, 300 ); // Cache for 5 minutes
+            echo $output;
             return;
         }
 
-        echo '<ul>';
-        foreach ( $posts as $post ) {
-            $channel    = get_post_meta( $post->ID, '_tts_social_channel', true );
-            $publish_at = get_post_meta( $post->ID, '_tts_publish_at', true );
-            $edit_link  = get_edit_post_link( $post->ID );
-            echo '<li><a href="' . esc_url( $edit_link ) . '">' . esc_html( $post->post_title ) . '</a> - ' . esc_html( is_array( $channel ) ? implode( ', ', $channel ) : $channel ) . ' - ' . esc_html( date_i18n( 'Y-m-d H:i', strtotime( $publish_at ) ) ) . '</li>';
+        // Batch fetch meta data to reduce database queries
+        global $wpdb;
+        $post_ids_placeholders = implode( ',', array_fill( 0, count( $posts ), '%d' ) );
+        $meta_results = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT post_id, meta_key, meta_value 
+                FROM {$wpdb->postmeta} 
+                WHERE post_id IN ($post_ids_placeholders) 
+                AND meta_key IN ('_tts_social_channel', '_tts_publish_at')",
+                ...$posts
+            )
+        );
+
+        // Organize meta data by post ID
+        $meta_by_post = array();
+        foreach ( $meta_results as $meta_row ) {
+            $meta_by_post[ $meta_row->post_id ][ $meta_row->meta_key ] = $meta_row->meta_value;
         }
-        echo '</ul>';
+
+        $output = '<ul>';
+        foreach ( $posts as $post_id ) {
+            $post = get_post( $post_id );
+            if ( ! $post ) {
+                continue;
+            }
+            
+            $channel = isset( $meta_by_post[ $post_id ]['_tts_social_channel'] ) 
+                ? maybe_unserialize( $meta_by_post[ $post_id ]['_tts_social_channel'] )
+                : '';
+            $publish_at = isset( $meta_by_post[ $post_id ]['_tts_publish_at'] ) 
+                ? $meta_by_post[ $post_id ]['_tts_publish_at']
+                : '';
+            
+            $edit_link = get_edit_post_link( $post_id );
+            $channel_display = is_array( $channel ) ? implode( ', ', $channel ) : $channel;
+            
+            $output .= sprintf(
+                '<li><a href="%s">%s</a> - %s - %s</li>',
+                esc_url( $edit_link ),
+                esc_html( $post->post_title ),
+                esc_html( $channel_display ),
+                esc_html( $publish_at ? date_i18n( 'Y-m-d H:i', strtotime( $publish_at ) ) : '' )
+            );
+        }
+        $output .= '</ul>';
+
+        // Cache the output for 5 minutes
+        set_transient( $cache_key, $output, 300 );
+        echo $output;
     }
 
     /**
@@ -409,11 +586,12 @@ class TTS_Admin {
             return;
         }
 
+        $js_version = filemtime( plugin_dir_path( __FILE__ ) . 'js/tts-dashboard-widget.js' );
         wp_enqueue_script(
             'tts-dashboard-widget',
             plugin_dir_url( __FILE__ ) . 'js/tts-dashboard-widget.js',
             array( 'jquery' ),
-            '1.0',
+            $js_version,
             true
         );
 

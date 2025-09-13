@@ -767,33 +767,28 @@ class TTS_Performance {
      */
     public static function optimize_database() {
         global $wpdb;
-        
-        try {
-            // Optimize the logs table
-            $table = $wpdb->prefix . 'tts_logs';
-            $wpdb->query( "OPTIMIZE TABLE {$table}" );
-            
-            // Clean up old transients
-            $wpdb->query( "
-                DELETE FROM {$wpdb->options} 
-                WHERE option_name LIKE '_transient_timeout_tts_%' 
-                AND option_value < UNIX_TIMESTAMP()
-            " );
-            
-            // Clean up expired transients
-            $wpdb->query( "
-                DELETE FROM {$wpdb->options} 
-                WHERE option_name LIKE '_transient_tts_%' 
-                AND option_name NOT IN (
-                    SELECT REPLACE(option_name, '_timeout_', '_') 
-                    FROM {$wpdb->options} 
-                    WHERE option_name LIKE '_transient_timeout_tts_%'
-                )
-            " );
-            
-        } catch ( Exception $e ) {
-            tts_log_event( 0, 'performance', 'error', 'Database optimization failed: ' . $e->getMessage(), '' );
+
+        $tables_to_optimize = array(
+            $wpdb->posts,
+            $wpdb->postmeta,
+            $wpdb->options,
+            $wpdb->prefix . 'tts_logs'
+        );
+
+        $optimized = 0;
+        foreach ( $tables_to_optimize as $table ) {
+            if ( $wpdb->get_var( $wpdb->prepare( "SHOW TABLES LIKE %s", $table ) ) ) {
+                $result = $wpdb->query( "OPTIMIZE TABLE `$table`" );
+                if ( $result !== false ) {
+                    $optimized++;
+                }
+            }
         }
+
+        tts_log_event( 0, 'performance', 'info', 
+            "Database optimization completed. Optimized $optimized tables.", '' );
+
+        return $optimized;
     }
     
     /**
@@ -857,13 +852,144 @@ class TTS_Performance {
             wp_cache_add_global_groups( array( self::CACHE_GROUP ) );
         }
     }
+
+    /**
+     * Invalidate all performance caches.
+     */
+    public static function invalidate_all_caches() {
+        $cache_keys = array(
+            'tts_dashboard_stats',
+            'tts_performance_metrics',
+            'tts_active_channels',
+            'tts_success_rate',
+            'tts_system_health',
+            'tts_trend_data'
+        );
+
+        foreach ( $cache_keys as $key ) {
+            delete_transient( $key );
+        }
+
+        // Clear object cache if available
+        if ( function_exists( 'wp_cache_flush_group' ) ) {
+            wp_cache_flush_group( self::CACHE_GROUP );
+        }
+
+        tts_log_event( 0, 'performance', 'info', 'All performance caches invalidated', '' );
+    }
+
+    /**
+     * Clear Trello-related caches.
+     */
+    public static function clear_trello_cache() {
+        global $wpdb;
+        
+        // Get all transients that start with tts_trello_boards_
+        $transients = $wpdb->get_col(
+            "SELECT option_name FROM {$wpdb->options} 
+             WHERE option_name LIKE '_transient_tts_trello_boards_%'"
+        );
+
+        foreach ( $transients as $transient ) {
+            $key = str_replace( '_transient_', '', $transient );
+            delete_transient( $key );
+        }
+    }
+
+    /**
+     * Get cache statistics.
+     *
+     * @return array Cache statistics.
+     */
+    public static function get_cache_stats() {
+        global $wpdb;
+
+        $cache_stats = array(
+            'total_transients' => 0,
+            'tts_transients' => 0,
+            'cache_size' => 0,
+            'cache_hit_ratio' => 0
+        );
+
+        // Count total transients
+        $cache_stats['total_transients'] = (int) $wpdb->get_var(
+            "SELECT COUNT(*) FROM {$wpdb->options} 
+             WHERE option_name LIKE '_transient_%'"
+        );
+
+        // Count TTS-specific transients
+        $cache_stats['tts_transients'] = (int) $wpdb->get_var(
+            "SELECT COUNT(*) FROM {$wpdb->options} 
+             WHERE option_name LIKE '_transient_tts_%'"
+        );
+
+        // Calculate approximate cache size
+        $tts_cache_data = $wpdb->get_results(
+            "SELECT option_value FROM {$wpdb->options} 
+             WHERE option_name LIKE '_transient_tts_%'"
+        );
+
+        foreach ( $tts_cache_data as $cache_item ) {
+            $cache_stats['cache_size'] += strlen( $cache_item->option_value );
+        }
+
+        // Format cache size
+        $cache_stats['cache_size_formatted'] = size_format( $cache_stats['cache_size'] );
+
+        return $cache_stats;
+    }
+
+    /**
+     * Clean up expired transients.
+     */
+    public static function cleanup_expired_transients() {
+        global $wpdb;
+
+        // Delete expired transients
+        $expired_transients = $wpdb->query(
+            "DELETE a, b FROM {$wpdb->options} a, {$wpdb->options} b
+             WHERE a.option_name LIKE '_transient_%'
+             AND a.option_name NOT LIKE '_transient_timeout_%'
+             AND b.option_name = CONCAT('_transient_timeout_', SUBSTRING(a.option_name, 12))
+             AND b.option_value < UNIX_TIMESTAMP()"
+        );
+
+        // Clean up orphaned timeout options
+        $orphaned_timeouts = $wpdb->query(
+            "DELETE FROM {$wpdb->options}
+             WHERE option_name LIKE '_transient_timeout_%'
+             AND option_name NOT IN (
+                 SELECT CONCAT('_transient_timeout_', SUBSTRING(option_name, 12))
+                 FROM (SELECT option_name FROM {$wpdb->options} WHERE option_name LIKE '_transient_%') AS temp
+             )"
+        );
+
+        $total_cleaned = $expired_transients + $orphaned_timeouts;
+        
+        tts_log_event( 0, 'performance', 'info', 
+            "Transient cleanup completed. Cleaned $total_cleaned expired/orphaned transients.", '' );
+
+        return $total_cleaned;
+    }
 }
 
 // Initialize performance optimizations
 add_action( 'plugins_loaded', array( 'TTS_Performance', 'enable_object_cache' ) );
 add_action( 'plugins_loaded', array( 'TTS_Performance', 'schedule_cleanup' ) );
 add_action( 'tts_database_cleanup', array( 'TTS_Performance', 'optimize_database' ) );
+add_action( 'tts_database_cleanup', array( 'TTS_Performance', 'cleanup_expired_transients' ) );
 
 // Clear cache when posts are updated
 add_action( 'save_post_tts_social_post', array( 'TTS_Performance', 'clear_dashboard_cache' ) );
+add_action( 'delete_post', array( 'TTS_Performance', 'clear_dashboard_cache' ) );
+add_action( 'wp_trash_post', array( 'TTS_Performance', 'clear_dashboard_cache' ) );
+
+// Clear cache when client settings are updated
+add_action( 'save_post_tts_client', array( 'TTS_Performance', 'clear_trello_cache' ) );
+
+// Add weekly transient cleanup
+if ( ! wp_next_scheduled( 'tts_weekly_cleanup' ) ) {
+    wp_schedule_event( time(), 'weekly', 'tts_weekly_cleanup' );
+}
+add_action( 'tts_weekly_cleanup', array( 'TTS_Performance', 'cleanup_expired_transients' ) );
 add_action( 'delete_post', array( 'TTS_Performance', 'clear_dashboard_cache' ) );
