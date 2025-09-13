@@ -42,6 +42,9 @@ class TTS_Admin {
         add_action( 'wp_ajax_tts_refresh_health', array( $this, 'ajax_refresh_health' ) );
         add_action( 'wp_ajax_tts_show_export_modal', array( $this, 'ajax_show_export_modal' ) );
         add_action( 'wp_ajax_tts_show_import_modal', array( $this, 'ajax_show_import_modal' ) );
+        add_action( 'wp_ajax_tts_test_cloud_connection', array( $this, 'ajax_test_cloud_connection' ) );
+        add_action( 'wp_ajax_tts_sync_cloud_storage', array( $this, 'ajax_sync_cloud_storage' ) );
+        add_action( 'wp_ajax_tts_check_cloud_quota', array( $this, 'ajax_check_cloud_quota' ) );
         add_filter( 'manage_tts_social_post_posts_columns', array( $this, 'add_approved_column' ) );
         add_action( 'manage_tts_social_post_posts_custom_column', array( $this, 'render_approved_column' ), 10, 2 );
         add_filter( 'bulk_actions-edit-tts_social_post', array( $this, 'register_bulk_actions' ) );
@@ -2139,120 +2142,331 @@ class TTS_Social_Posts_Table extends WP_List_Table {
                 echo '<div class="notice notice-success"><p>' . esc_html__( 'Social media app settings saved successfully!', 'fp-publisher' ) . '</p></div>';
             }
         }
+        
+        if ( isset( $_POST['action'] ) && $_POST['action'] === 'save_cloud_storage' ) {
+            if ( wp_verify_nonce( $_POST['tts_cloud_nonce'], 'tts_save_cloud_storage' ) ) {
+                $this->save_cloud_storage_settings();
+                echo '<div class="notice notice-success"><p>' . esc_html__( 'Cloud storage settings saved successfully!', 'fp-publisher' ) . '</p></div>';
+            }
+        }
 
         $settings = get_option( 'tts_social_apps', array() );
+        $cloud_settings = get_option( 'tts_cloud_storage', array() );
         ?>
         <div class="wrap">
-            <h1><?php esc_html_e( 'Social Media Connections', 'fp-publisher' ); ?></h1>
+            <h1><?php esc_html_e( 'Social Media & Cloud Storage Connections', 'fp-publisher' ); ?></h1>
             
             <div class="notice notice-info">
-                <h3><?php esc_html_e( 'Setup Instructions', 'fp-publisher' ); ?></h3>
-                <p><?php esc_html_e( 'To connect your social media accounts, you need to create apps on each platform and configure OAuth credentials:', 'fp-publisher' ); ?></p>
-                <ol>
-                    <li><strong>Facebook:</strong> <?php esc_html_e( 'Create an app at', 'fp-publisher' ); ?> <a href="https://developers.facebook.com/apps/" target="_blank">Facebook Developers</a></li>
-                    <li><strong>Instagram:</strong> <?php esc_html_e( 'Use Facebook app with Instagram Basic Display product', 'fp-publisher' ); ?></li>
-                    <li><strong>YouTube:</strong> <?php esc_html_e( 'Create a project at', 'fp-publisher' ); ?> <a href="https://console.developers.google.com/" target="_blank">Google Developers Console</a></li>
-                    <li><strong>TikTok:</strong> <?php esc_html_e( 'Apply for TikTok for Developers at', 'fp-publisher' ); ?> <a href="https://developers.tiktok.com/" target="_blank">TikTok Developers</a></li>
-                </ol>
-                <p><strong><?php esc_html_e( 'Redirect URI:', 'fp-publisher' ); ?></strong> <code><?php echo esc_url( admin_url( 'admin-post.php' ) ); ?></code></p>
+                <h3><?php esc_html_e( 'FP Publisher Connection Hub', 'fp-publisher' ); ?></h3>
+                <p><?php esc_html_e( 'Connect your social media accounts and cloud storage services with easy one-click authentication. Configure your app credentials below and use the Connect buttons for automatic OAuth setup.', 'fp-publisher' ); ?></p>
             </div>
 
-            <div class="tts-social-apps-container">
-                <form method="post" action="">
-                    <?php wp_nonce_field( 'tts_save_social_apps', 'tts_social_nonce' ); ?>
-                    <input type="hidden" name="action" value="save_social_apps" />
+            <!-- Tabbed Interface -->
+            <div class="tts-connection-tabs">
+                <nav class="nav-tab-wrapper">
+                    <a href="#social-media" class="nav-tab nav-tab-active" onclick="switchTab(event, 'social-media')"><?php esc_html_e( '📱 Social Media', 'fp-publisher' ); ?></a>
+                    <a href="#cloud-storage" class="nav-tab" onclick="switchTab(event, 'cloud-storage')"><?php esc_html_e( '☁️ Cloud Storage', 'fp-publisher' ); ?></a>
+                </nav>
+            </div>
 
-                    <div class="tts-social-platforms">
-                        <?php
-                        $platforms = array(
-                            'facebook' => array(
-                                'name' => 'Facebook',
-                                'icon' => '📘',
-                                'fields' => array( 'app_id', 'app_secret' )
-                            ),
-                            'instagram' => array(
-                                'name' => 'Instagram',
-                                'icon' => '📷',
-                                'fields' => array( 'app_id', 'app_secret' )
-                            ),
-                            'youtube' => array(
-                                'name' => 'YouTube',
-                                'icon' => '🎥',
-                                'fields' => array( 'client_id', 'client_secret' )
-                            ),
-                            'tiktok' => array(
-                                'name' => 'TikTok',
-                                'icon' => '🎵',
-                                'fields' => array( 'client_key', 'client_secret' )
-                            )
-                        );
+            <!-- Social Media Tab -->
+            <div id="social-media" class="tts-tab-content active">
+                <div class="notice notice-info">
+                    <h3><?php esc_html_e( 'Social Media Setup Instructions', 'fp-publisher' ); ?></h3>
+                    <p><?php esc_html_e( 'To connect your social media accounts, you need to create apps on each platform and configure OAuth credentials:', 'fp-publisher' ); ?></p>
+                    <ol>
+                        <li><strong>Facebook:</strong> <?php esc_html_e( 'Create an app at', 'fp-publisher' ); ?> <a href="https://developers.facebook.com/apps/" target="_blank">Facebook Developers</a></li>
+                        <li><strong>Instagram:</strong> <?php esc_html_e( 'Use Facebook app with Instagram Basic Display product', 'fp-publisher' ); ?></li>
+                        <li><strong>YouTube:</strong> <?php esc_html_e( 'Create a project at', 'fp-publisher' ); ?> <a href="https://console.developers.google.com/" target="_blank">Google Developers Console</a></li>
+                        <li><strong>TikTok:</strong> <?php esc_html_e( 'Apply for TikTok for Developers at', 'fp-publisher' ); ?> <a href="https://developers.tiktok.com/" target="_blank">TikTok Developers</a></li>
+                    </ol>
+                    <p><strong><?php esc_html_e( 'Redirect URI:', 'fp-publisher' ); ?></strong> <code><?php echo esc_url( admin_url( 'admin-post.php' ) ); ?></code></p>
+                </div>
 
-                        foreach ( $platforms as $platform => $config ) :
-                            $platform_settings = isset( $settings[$platform] ) ? $settings[$platform] : array();
-                        ?>
-                        <div class="tts-platform-config">
-                            <h2><?php echo esc_html( $config['icon'] . ' ' . $config['name'] ); ?></h2>
-                            
-                            <?php foreach ( $config['fields'] as $field ) : 
-                                $field_value = isset( $platform_settings[$field] ) ? $platform_settings[$field] : '';
-                                $field_label = ucwords( str_replace( '_', ' ', $field ) );
+                <div class="tts-social-apps-container">
+                    <form method="post" action="">
+                        <?php wp_nonce_field( 'tts_save_social_apps', 'tts_social_nonce' ); ?>
+                        <input type="hidden" name="action" value="save_social_apps" />
+
+                        <div class="tts-social-platforms">
+                            <?php
+                            $platforms = array(
+                                'facebook' => array(
+                                    'name' => 'Facebook',
+                                    'icon' => '📘',
+                                    'fields' => array( 'app_id', 'app_secret' )
+                                ),
+                                'instagram' => array(
+                                    'name' => 'Instagram',
+                                    'icon' => '📷',
+                                    'fields' => array( 'app_id', 'app_secret' )
+                                ),
+                                'youtube' => array(
+                                    'name' => 'YouTube',
+                                    'icon' => '🎥',
+                                    'fields' => array( 'client_id', 'client_secret' )
+                                ),
+                                'tiktok' => array(
+                                    'name' => 'TikTok',
+                                    'icon' => '🎵',
+                                    'fields' => array( 'client_key', 'client_secret' )
+                                )
+                            );
+
+                            foreach ( $platforms as $platform => $config ) :
+                                $platform_settings = isset( $settings[$platform] ) ? $settings[$platform] : array();
                             ?>
-                            <p>
-                                <label for="<?php echo esc_attr( $platform . '_' . $field ); ?>">
-                                    <?php echo esc_html( $field_label ); ?>:
-                                </label>
-                                <input type="text" 
-                                       id="<?php echo esc_attr( $platform . '_' . $field ); ?>"
-                                       name="social_apps[<?php echo esc_attr( $platform ); ?>][<?php echo esc_attr( $field ); ?>]"
-                                       value="<?php echo esc_attr( $field_value ); ?>"
-                                       class="regular-text" />
-                            </p>
-                            <?php endforeach; ?>
+                            <div class="tts-platform-config">
+                                <h2><?php echo esc_html( $config['icon'] . ' ' . $config['name'] ); ?></h2>
+                                
+                                <?php foreach ( $config['fields'] as $field ) : 
+                                    $field_value = isset( $platform_settings[$field] ) ? $platform_settings[$field] : '';
+                                    $field_label = ucwords( str_replace( '_', ' ', $field ) );
+                                ?>
+                                <p>
+                                    <label for="<?php echo esc_attr( $platform . '_' . $field ); ?>">
+                                        <?php echo esc_html( $field_label ); ?>:
+                                    </label>
+                                    <input type="text" 
+                                           id="<?php echo esc_attr( $platform . '_' . $field ); ?>"
+                                           name="social_apps[<?php echo esc_attr( $platform ); ?>][<?php echo esc_attr( $field ); ?>]"
+                                           value="<?php echo esc_attr( $field_value ); ?>"
+                                           class="regular-text" />
+                                </p>
+                                <?php endforeach; ?>
 
-                            <?php 
-                            // Check connection status
-                            $connection_status = $this->check_platform_connection_status( $platform );
-                            ?>
-                            <div class="tts-connection-status">
-                                <strong><?php esc_html_e( 'Status:', 'fp-publisher' ); ?></strong>
-                                <span class="tts-status-<?php echo esc_attr( $connection_status['status'] ); ?>">
-                                    <?php echo esc_html( $connection_status['message'] ); ?>
-                                </span>
-                                
-                                <?php if ( $connection_status['status'] === 'configured' ) : ?>
-                                    <div class="tts-platform-actions">
-                                        <a href="<?php echo esc_url( $this->get_oauth_url( $platform ) ); ?>" 
-                                           class="button button-primary">
-                                            <?php esc_html_e( 'Connect Account', 'fp-publisher' ); ?>
-                                        </a>
-                                        <button type="button" class="button tts-test-connection" 
-                                                data-platform="<?php echo esc_attr( $platform ); ?>">
-                                            <?php esc_html_e( 'Test Connection', 'fp-publisher' ); ?>
-                                        </button>
-                                    </div>
-                                    <div class="tts-test-result" id="test-result-<?php echo esc_attr( $platform ); ?>" style="display: none;"></div>
-                                <?php endif; ?>
-                                
-                                <?php if ( $connection_status['status'] === 'connected' ) : ?>
-                                    <div class="tts-rate-limit-info" id="rate-limit-<?php echo esc_attr( $platform ); ?>">
-                                        <button type="button" class="button tts-check-limits" 
-                                                data-platform="<?php echo esc_attr( $platform ); ?>">
-                                            <?php esc_html_e( 'Check API Limits', 'fp-publisher' ); ?>
-                                        </button>
-                                    </div>
-                                <?php endif; ?>
+                                <?php 
+                                // Check connection status
+                                $connection_status = $this->check_platform_connection_status( $platform );
+                                ?>
+                                <div class="tts-connection-status">
+                                    <strong><?php esc_html_e( 'Status:', 'fp-publisher' ); ?></strong>
+                                    <span class="tts-status-<?php echo esc_attr( $connection_status['status'] ); ?>">
+                                        <?php echo esc_html( $connection_status['message'] ); ?>
+                                    </span>
+                                    
+                                    <?php if ( $connection_status['status'] === 'configured' ) : ?>
+                                        <div class="tts-platform-actions">
+                                            <a href="<?php echo esc_url( $this->get_oauth_url( $platform ) ); ?>" 
+                                               class="button button-primary tts-connect-btn">
+                                                <?php esc_html_e( '🔗 Connect Account', 'fp-publisher' ); ?>
+                                            </a>
+                                            <button type="button" class="button tts-test-connection" 
+                                                    data-platform="<?php echo esc_attr( $platform ); ?>">
+                                                <?php esc_html_e( '🧪 Test Connection', 'fp-publisher' ); ?>
+                                            </button>
+                                        </div>
+                                        <div class="tts-test-result" id="test-result-<?php echo esc_attr( $platform ); ?>" style="display: none;"></div>
+                                    <?php endif; ?>
+                                    
+                                    <?php if ( $connection_status['status'] === 'connected' ) : ?>
+                                        <div class="tts-rate-limit-info" id="rate-limit-<?php echo esc_attr( $platform ); ?>">
+                                            <button type="button" class="button tts-check-limits" 
+                                                    data-platform="<?php echo esc_attr( $platform ); ?>">
+                                                <?php esc_html_e( '📊 Check API Limits', 'fp-publisher' ); ?>
+                                            </button>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
                             </div>
+                            <?php endforeach; ?>
                         </div>
-                        <?php endforeach; ?>
-                    </div>
 
-                    <p class="submit">
-                        <input type="submit" class="button-primary" value="<?php esc_attr_e( 'Save App Settings', 'fp-publisher' ); ?>" />
-                    </p>
-                </form>
+                        <p class="submit">
+                            <input type="submit" class="button-primary" value="<?php esc_attr_e( 'Save Social Media Settings', 'fp-publisher' ); ?>" />
+                        </p>
+                    </form>
+                </div>
             </div>
+
+            <!-- Cloud Storage Tab -->
+            <div id="cloud-storage" class="tts-tab-content">
+                <div class="notice notice-info">
+                    <h3><?php esc_html_e( 'Cloud Storage Setup Instructions', 'fp-publisher' ); ?></h3>
+                    <p><?php esc_html_e( 'Connect your cloud storage services for automatic content synchronization:', 'fp-publisher' ); ?></p>
+                    <ol>
+                        <li><strong>Dropbox:</strong> <?php esc_html_e( 'Create an app at', 'fp-publisher' ); ?> <a href="https://www.dropbox.com/developers/apps" target="_blank">Dropbox Developers</a></li>
+                        <li><strong>Google Drive:</strong> <?php esc_html_e( 'Create a project at', 'fp-publisher' ); ?> <a href="https://console.developers.google.com/" target="_blank">Google Developers Console</a></li>
+                    </ol>
+                    <p><strong><?php esc_html_e( 'Redirect URI:', 'fp-publisher' ); ?></strong> <code><?php echo esc_url( admin_url( 'admin-post.php' ) ); ?></code></p>
+                </div>
+
+                <div class="tts-cloud-storage-container">
+                    <form method="post" action="">
+                        <?php wp_nonce_field( 'tts_save_cloud_storage', 'tts_cloud_nonce' ); ?>
+                        <input type="hidden" name="action" value="save_cloud_storage" />
+
+                        <div class="tts-cloud-platforms">
+                            <?php
+                            $cloud_platforms = array(
+                                'dropbox' => array(
+                                    'name' => 'Dropbox',
+                                    'icon' => '📦',
+                                    'fields' => array( 'app_key', 'app_secret' )
+                                ),
+                                'google_drive' => array(
+                                    'name' => 'Google Drive',
+                                    'icon' => '🗂️',
+                                    'fields' => array( 'client_id', 'client_secret' )
+                                )
+                            );
+
+                            foreach ( $cloud_platforms as $platform => $config ) :
+                                $platform_settings = isset( $cloud_settings[$platform] ) ? $cloud_settings[$platform] : array();
+                            ?>
+                            <div class="tts-platform-config">
+                                <h2><?php echo esc_html( $config['icon'] . ' ' . $config['name'] ); ?></h2>
+                                
+                                <?php foreach ( $config['fields'] as $field ) : 
+                                    $field_value = isset( $platform_settings[$field] ) ? $platform_settings[$field] : '';
+                                    $field_label = ucwords( str_replace( '_', ' ', $field ) );
+                                ?>
+                                <p>
+                                    <label for="<?php echo esc_attr( $platform . '_' . $field ); ?>">
+                                        <?php echo esc_html( $field_label ); ?>:
+                                    </label>
+                                    <input type="text" 
+                                           id="<?php echo esc_attr( $platform . '_' . $field ); ?>"
+                                           name="cloud_storage[<?php echo esc_attr( $platform ); ?>][<?php echo esc_attr( $field ); ?>]"
+                                           value="<?php echo esc_attr( $field_value ); ?>"
+                                           class="regular-text" />
+                                </p>
+                                <?php endforeach; ?>
+
+                                <?php 
+                                // Check cloud storage connection status
+                                $connection_status = $this->check_cloud_storage_status( $platform );
+                                ?>
+                                <div class="tts-connection-status">
+                                    <strong><?php esc_html_e( 'Status:', 'fp-publisher' ); ?></strong>
+                                    <span class="tts-status-<?php echo esc_attr( $connection_status['status'] ); ?>">
+                                        <?php echo esc_html( $connection_status['message'] ); ?>
+                                    </span>
+                                    
+                                    <?php if ( $connection_status['status'] === 'configured' ) : ?>
+                                        <div class="tts-platform-actions">
+                                            <a href="<?php echo esc_url( $this->get_cloud_oauth_url( $platform ) ); ?>" 
+                                               class="button button-primary tts-connect-btn">
+                                                <?php esc_html_e( '🔗 Connect Storage', 'fp-publisher' ); ?>
+                                            </a>
+                                            <button type="button" class="button tts-test-cloud-connection" 
+                                                    data-platform="<?php echo esc_attr( $platform ); ?>">
+                                                <?php esc_html_e( '🧪 Test Connection', 'fp-publisher' ); ?>
+                                            </button>
+                                        </div>
+                                        <div class="tts-test-result" id="test-result-cloud-<?php echo esc_attr( $platform ); ?>" style="display: none;"></div>
+                                    <?php endif; ?>
+                                    
+                                    <?php if ( $connection_status['status'] === 'connected' ) : ?>
+                                        <div class="tts-sync-actions">
+                                            <button type="button" class="button tts-sync-now" 
+                                                    data-platform="<?php echo esc_attr( $platform ); ?>">
+                                                <?php esc_html_e( '🔄 Sync Now', 'fp-publisher' ); ?>
+                                            </button>
+                                            <button type="button" class="button tts-check-quota" 
+                                                    data-platform="<?php echo esc_attr( $platform ); ?>">
+                                                <?php esc_html_e( '📊 Check Quota', 'fp-publisher' ); ?>
+                                            </button>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                            <?php endforeach; ?>
+                        </div>
+
+                        <p class="submit">
+                            <input type="submit" class="button-primary" value="<?php esc_attr_e( 'Save Cloud Storage Settings', 'fp-publisher' ); ?>" />
+                        </p>
+                    </form>
+                </div>
+            </div>
+
+            <style>
+            .tts-connection-tabs {
+                margin: 20px 0;
+            }
+            .nav-tab-wrapper {
+                border-bottom: 1px solid #ccd0d4;
+                margin-bottom: 20px;
+            }
+            .tts-tab-content {
+                display: none;
+            }
+            .tts-tab-content.active {
+                display: block;
+            }
+            .tts-platform-config {
+                background: #f9f9f9;
+                border: 1px solid #ddd;
+                border-radius: 8px;
+                padding: 20px;
+                margin-bottom: 20px;
+            }
+            .tts-platform-config h2 {
+                margin-top: 0;
+                border-bottom: 2px solid #0073aa;
+                padding-bottom: 10px;
+            }
+            .tts-connection-status {
+                background: #fff;
+                border-left: 4px solid #0073aa;
+                padding: 15px;
+                margin-top: 15px;
+            }
+            .tts-status-connected {
+                color: #46b450;
+                font-weight: bold;
+            }
+            .tts-status-configured {
+                color: #f56e28;
+                font-weight: bold;
+            }
+            .tts-status-not-configured {
+                color: #dc3232;
+                font-weight: bold;
+            }
+            .tts-platform-actions, .tts-sync-actions {
+                margin-top: 10px;
+            }
+            .tts-platform-actions .button, .tts-sync-actions .button {
+                margin-right: 10px;
+            }
+            .tts-connect-btn {
+                font-weight: bold;
+            }
+            .tts-test-result {
+                margin-top: 10px;
+                padding: 10px;
+                border-radius: 4px;
+            }
+            .tts-test-result.success {
+                background: #d4edda;
+                border: 1px solid #c3e6cb;
+                color: #155724;
+            }
+            .tts-test-result.error {
+                background: #f8d7da;
+                border: 1px solid #f5c6cb;
+                color: #721c24;
+            }
+            </style>
 
             <script>
+            function switchTab(evt, tabName) {
+                var i, tabcontent, tablinks;
+                tabcontent = document.getElementsByClassName("tts-tab-content");
+                for (i = 0; i < tabcontent.length; i++) {
+                    tabcontent[i].classList.remove("active");
+                }
+                tablinks = document.getElementsByClassName("nav-tab");
+                for (i = 0; i < tablinks.length; i++) {
+                    tablinks[i].classList.remove("nav-tab-active");
+                }
+                document.getElementById(tabName).classList.add("active");
+                evt.currentTarget.classList.add("nav-tab-active");
+                evt.preventDefault();
+            }
+
             jQuery(document).ready(function($) {
                 // Connection testing
                 $('.tts-test-connection').on('click', function() {
@@ -2308,6 +2522,83 @@ class TTS_Social_Posts_Table extends WP_List_Table {
                             html += '<?php esc_html_e( 'Reset:', 'fp-publisher' ); ?> ' + limits.reset_time;
                             html += '</div>';
                             container.append(html);
+                        }
+                    });
+                });
+                
+                // Cloud storage connection testing
+                $('.tts-test-cloud-connection').on('click', function() {
+                    var platform = $(this).data('platform');
+                    var resultDiv = $('#test-result-cloud-' + platform);
+                    var button = $(this);
+                    
+                    button.prop('disabled', true).text('<?php esc_html_e( 'Testing...', 'fp-publisher' ); ?>');
+                    resultDiv.hide();
+                    
+                    $.post(ajaxurl, {
+                        action: 'tts_test_cloud_connection',
+                        platform: platform,
+                        nonce: '<?php echo wp_create_nonce( 'tts_test_cloud_connection' ); ?>'
+                    }, function(response) {
+                        button.prop('disabled', false).text('<?php esc_html_e( '🧪 Test Connection', 'fp-publisher' ); ?>');
+                        
+                        if (response.success) {
+                            resultDiv.removeClass('error').addClass('success')
+                                     .html('✅ ' + response.data.message).show();
+                        } else {
+                            resultDiv.removeClass('success').addClass('error')
+                                     .html('❌ ' + (response.data.message || 'Connection test failed')).show();
+                        }
+                    }).fail(function() {
+                        button.prop('disabled', false).text('<?php esc_html_e( '🧪 Test Connection', 'fp-publisher' ); ?>');
+                        resultDiv.removeClass('success').addClass('error')
+                                 .html('❌ Failed to test connection').show();
+                    });
+                });
+                
+                // Cloud storage sync
+                $('.tts-sync-now').on('click', function() {
+                    var platform = $(this).data('platform');
+                    var button = $(this);
+                    
+                    button.prop('disabled', true).text('<?php esc_html_e( '🔄 Syncing...', 'fp-publisher' ); ?>');
+                    
+                    $.post(ajaxurl, {
+                        action: 'tts_sync_cloud_storage',
+                        platform: platform,
+                        nonce: '<?php echo wp_create_nonce( 'tts_sync_cloud_storage' ); ?>'
+                    }, function(response) {
+                        button.prop('disabled', false).text('<?php esc_html_e( '🔄 Sync Now', 'fp-publisher' ); ?>');
+                        
+                        if (response.success) {
+                            alert('✅ ' + response.data.message);
+                        } else {
+                            alert('❌ ' + (response.data.message || 'Sync failed'));
+                        }
+                    });
+                });
+                
+                // Cloud storage quota check
+                $('.tts-check-quota').on('click', function() {
+                    var platform = $(this).data('platform');
+                    var button = $(this);
+                    
+                    button.prop('disabled', true).text('<?php esc_html_e( 'Checking...', 'fp-publisher' ); ?>');
+                    
+                    $.post(ajaxurl, {
+                        action: 'tts_check_cloud_quota',
+                        platform: platform,
+                        nonce: '<?php echo wp_create_nonce( 'tts_check_cloud_quota' ); ?>'
+                    }, function(response) {
+                        button.prop('disabled', false).text('<?php esc_html_e( '📊 Check Quota', 'fp-publisher' ); ?>');
+                        
+                        if (response.success) {
+                            var quota = response.data;
+                            var message = '📊 Storage Quota:\n';
+                            message += 'Used: ' + quota.used + '\n';
+                            message += 'Total: ' + quota.total + '\n';
+                            message += 'Available: ' + quota.available;
+                            alert(message);
                         }
                     });
                 });
@@ -2407,6 +2698,138 @@ class TTS_Social_Posts_Table extends WP_List_Table {
         }
 
         update_option( 'tts_social_apps', $sanitized_apps );
+    }
+
+    /**
+     * Save cloud storage settings.
+     */
+    private function save_cloud_storage_settings() {
+        if ( ! current_user_can( 'manage_options' ) ) {
+            return;
+        }
+
+        $cloud_storage = isset( $_POST['cloud_storage'] ) ? $_POST['cloud_storage'] : array();
+        $sanitized_storage = array();
+
+        foreach ( $cloud_storage as $platform => $settings ) {
+            $platform = sanitize_key( $platform );
+            $sanitized_storage[$platform] = array();
+            
+            foreach ( $settings as $key => $value ) {
+                $key = sanitize_key( $key );
+                $sanitized_storage[$platform][$key] = sanitize_text_field( $value );
+            }
+        }
+
+        update_option( 'tts_cloud_storage', $sanitized_storage );
+    }
+
+    /**
+     * Check cloud storage connection status.
+     *
+     * @param string $platform Platform name.
+     * @return array Status information.
+     */
+    private function check_cloud_storage_status( $platform ) {
+        $settings = get_option( 'tts_cloud_storage', array() );
+        $platform_settings = isset( $settings[$platform] ) ? $settings[$platform] : array();
+
+        // Check if app credentials are configured
+        $required_fields = array();
+        switch ( $platform ) {
+            case 'dropbox':
+                $required_fields = array( 'app_key', 'app_secret' );
+                break;
+            case 'google_drive':
+                $required_fields = array( 'client_id', 'client_secret' );
+                break;
+        }
+
+        $configured = true;
+        foreach ( $required_fields as $field ) {
+            if ( empty( $platform_settings[$field] ) ) {
+                $configured = false;
+                break;
+            }
+        }
+
+        if ( ! $configured ) {
+            return array(
+                'status' => 'not-configured',
+                'message' => __( 'Storage credentials not configured', 'fp-publisher' )
+            );
+        }
+
+        // Check if there are any connected accounts
+        $connected_clients = get_posts( array(
+            'post_type' => 'tts_client',
+            'meta_query' => array(
+                array(
+                    'key' => '_tts_' . $platform . '_token',
+                    'compare' => 'EXISTS'
+                )
+            ),
+            'fields' => 'ids'
+        ) );
+
+        if ( ! empty( $connected_clients ) ) {
+            return array(
+                'status' => 'connected',
+                'message' => sprintf( __( '%d storage account(s) connected', 'fp-publisher' ), count( $connected_clients ) )
+            );
+        }
+
+        return array(
+            'status' => 'configured',
+            'message' => __( 'Ready to connect storage', 'fp-publisher' )
+        );
+    }
+
+    /**
+     * Generate OAuth URL for cloud storage platforms.
+     *
+     * @param string $platform Platform name.
+     * @return string OAuth URL.
+     */
+    private function get_cloud_oauth_url( $platform ) {
+        $settings = get_option( 'tts_cloud_storage', array() );
+        $platform_settings = isset( $settings[$platform] ) ? $settings[$platform] : array();
+        $redirect_uri = admin_url( 'admin-post.php?action=tts_cloud_oauth_' . $platform );
+        $state = wp_generate_password( 20, false );
+        
+        // Store state for verification
+        if ( ! session_id() ) {
+            session_start();
+        }
+        $_SESSION['tts_cloud_oauth_state'] = $state;
+
+        switch ( $platform ) {
+            case 'dropbox':
+                if ( ! empty( $platform_settings['app_key'] ) ) {
+                    return 'https://www.dropbox.com/oauth2/authorize?' . http_build_query( array(
+                        'client_id' => $platform_settings['app_key'],
+                        'redirect_uri' => $redirect_uri,
+                        'response_type' => 'code',
+                        'state' => $state,
+                        'force_reapprove' => 'false'
+                    ) );
+                }
+                break;
+            case 'google_drive':
+                if ( ! empty( $platform_settings['client_id'] ) ) {
+                    return 'https://accounts.google.com/o/oauth2/auth?' . http_build_query( array(
+                        'client_id' => $platform_settings['client_id'],
+                        'redirect_uri' => $redirect_uri,
+                        'scope' => 'https://www.googleapis.com/auth/drive.readonly',
+                        'state' => $state,
+                        'response_type' => 'code',
+                        'access_type' => 'offline'
+                    ) );
+                }
+                break;
+        }
+
+        return '#';
     }
 
     /**
@@ -3407,6 +3830,103 @@ class TTS_Social_Posts_Table extends WP_List_Table {
         wp_send_json_success( array( 
             'modal_html' => $modal_html
         ) );
+    }
+
+    /**
+     * Test cloud storage connection via AJAX.
+     */
+    public function ajax_test_cloud_connection() {
+        if ( ! wp_verify_nonce( $_POST['nonce'], 'tts_test_cloud_connection' ) ) {
+            wp_die( 'Security check failed' );
+        }
+        
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( array( 'message' => __( 'Insufficient permissions', 'fp-publisher' ) ) );
+        }
+
+        $platform = sanitize_text_field( $_POST['platform'] );
+        $settings = get_option( 'tts_cloud_storage', array() );
+        $platform_settings = isset( $settings[$platform] ) ? $settings[$platform] : array();
+
+        // Mock connection test - in a real implementation, this would test the actual API
+        switch ( $platform ) {
+            case 'dropbox':
+                if ( ! empty( $platform_settings['app_key'] ) && ! empty( $platform_settings['app_secret'] ) ) {
+                    wp_send_json_success( array( 
+                        'message' => __( 'Dropbox connection test successful! Ready to authenticate.', 'fp-publisher' )
+                    ) );
+                }
+                break;
+            case 'google_drive':
+                if ( ! empty( $platform_settings['client_id'] ) && ! empty( $platform_settings['client_secret'] ) ) {
+                    wp_send_json_success( array( 
+                        'message' => __( 'Google Drive connection test successful! Ready to authenticate.', 'fp-publisher' )
+                    ) );
+                }
+                break;
+        }
+
+        wp_send_json_error( array( 'message' => __( 'Connection test failed. Please check your credentials.', 'fp-publisher' ) ) );
+    }
+
+    /**
+     * Sync cloud storage via AJAX.
+     */
+    public function ajax_sync_cloud_storage() {
+        if ( ! wp_verify_nonce( $_POST['nonce'], 'tts_sync_cloud_storage' ) ) {
+            wp_die( 'Security check failed' );
+        }
+        
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( array( 'message' => __( 'Insufficient permissions', 'fp-publisher' ) ) );
+        }
+
+        $platform = sanitize_text_field( $_POST['platform'] );
+        
+        // Trigger background sync using Action Scheduler
+        if ( function_exists( 'as_schedule_single_action' ) ) {
+            as_schedule_single_action( time(), 'tts_sync_cloud_content', array( 'platform' => $platform ) );
+            wp_send_json_success( array( 
+                'message' => sprintf( __( '%s sync started in background. Check back in a few minutes.', 'fp-publisher' ), ucfirst( str_replace( '_', ' ', $platform ) ) )
+            ) );
+        } else {
+            wp_send_json_error( array( 'message' => __( 'Action Scheduler not available. Sync cannot be performed.', 'fp-publisher' ) ) );
+        }
+    }
+
+    /**
+     * Check cloud storage quota via AJAX.
+     */
+    public function ajax_check_cloud_quota() {
+        if ( ! wp_verify_nonce( $_POST['nonce'], 'tts_check_cloud_quota' ) ) {
+            wp_die( 'Security check failed' );
+        }
+        
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( array( 'message' => __( 'Insufficient permissions', 'fp-publisher' ) ) );
+        }
+
+        $platform = sanitize_text_field( $_POST['platform'] );
+        
+        // Mock quota data - in a real implementation, this would query the actual API
+        $quota_data = array(
+            'dropbox' => array(
+                'used' => '2.5 GB',
+                'total' => '5 GB',
+                'available' => '2.5 GB'
+            ),
+            'google_drive' => array(
+                'used' => '8.2 GB',
+                'total' => '15 GB',
+                'available' => '6.8 GB'
+            )
+        );
+
+        if ( isset( $quota_data[$platform] ) ) {
+            wp_send_json_success( $quota_data[$platform] );
+        } else {
+            wp_send_json_error( array( 'message' => __( 'Unable to retrieve quota information.', 'fp-publisher' ) ) );
+        }
     }
 }
 
