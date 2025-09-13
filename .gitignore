@@ -1,0 +1,55 @@
+# WordPress
+wp-config.php
+wp-content/uploads/
+wp-content/cache/
+wp-content/backups/
+wp-content/upgrade/
+wp-content/debug.log
+
+# Plugin specific
+*.log
+*.tmp
+*.temp
+
+# Development files
+node_modules/
+.sass-cache/
+*.map
+*.min.css
+*.min.js
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+*.bak
+
+# Build artifacts
+dist/
+build/
+compiled/
+
+# Composer
+vendor/
+composer.lock
+
+# Environment files
+.env
+.env.local
+.env.production
+
+# Backup files
+*.sql
+*.zip
+*.tar.gz
+
+# Cache files
+*.cache
+cache/
+tmp/

@@ -1,0 +1,36 @@
+FP Publisher Optimization Report
+Generated: Sat Sep 13 12:49:03 UTC 2025
+===============================
+
+File Sizes Before/After Optimization:
+
+CSS Files:
+  tts-accessibility.css: 10832 bytes
+  tts-analytics.css: 2904 bytes
+  tts-calendar.css: 2915 bytes
+  tts-core.css: 7469 bytes
+  tts-dashboard.css: 14400 bytes
+  tts-frequency-status.css: 3862 bytes
+  tts-health.css: 3147 bytes
+  tts-optimized.css: 7497 bytes
+  tts-social-connections.css: 6372 bytes
+  combined.min.css: 31314 bytes
+
+JavaScript Files:
+  tts-admin-utils.js: 26131 bytes
+  tts-advanced-features.js: 43578 bytes
+  tts-analytics.js: 962 bytes
+  tts-calendar.js: 352 bytes
+  tts-core.js: 14086 bytes
+  tts-dashboard-widget.js: 215 bytes
+  tts-dashboard.js: 15337 bytes
+  tts-frequency-status.js: 6977 bytes
+  tts-help-system.js: 25786 bytes
+  tts-media.js: 2304 bytes
+  tts-notifications.js: 15312 bytes
+  tts-optimized-core.js: 20044 bytes
+  tts-social-connections.js: 15771 bytes
+  tts-wizard.js: 1886 bytes
+  combined.min.js: 32654 bytes
+
+Optimization completed successfully!
