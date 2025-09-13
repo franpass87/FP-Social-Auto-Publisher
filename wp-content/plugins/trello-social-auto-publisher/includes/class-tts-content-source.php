@@ -169,6 +169,7 @@ class TTS_Content_Source {
                 'schedule_date' => $schedule_date,
                 'social_channels' => $social_channels,
                 'source_type' => self::SOURCE_LOCAL,
+                'source_reference' => basename( $movefile['file'] ),
             ) );
 
             if ( $post_id ) {
@@ -227,11 +228,12 @@ class TTS_Content_Source {
             'post_type'    => 'tts_social_post',
             'meta_input'   => array(
                 '_tts_client_id'        => $data['client_id'],
-                '_tts_source_type'      => $data['source_type'],
+                '_tts_content_source'   => $data['source_type'],
+                '_tts_source_reference' => $data['source_reference'] ?? '',
                 '_tts_attachment_id'    => $data['attachment_id'],
-                '_tts_social_channels'  => $data['social_channels'],
+                '_tts_social_channel'   => $data['social_channels'],
                 '_tts_schedule_date'    => $data['schedule_date'],
-                '_tts_created_via'      => 'content_upload',
+                '_tts_created_via'      => 'content_source_' . $data['source_type'],
             ),
         );
 
@@ -337,6 +339,7 @@ class TTS_Content_Source {
             'schedule_date' => $schedule_date,
             'social_channels' => $social_channels,
             'source_type' => 'manual',
+            'source_reference' => 'created-' . current_time( 'Y-m-d-H-i-s' ),
         ) );
 
         if ( $post_id ) {
@@ -763,6 +766,7 @@ class TTS_Content_Source {
             'schedule_date' => '',
             'social_channels' => array(), // Can be configured later
             'source_type' => $source,
+            'source_reference' => $file['path'] ?? $file['name'],
         ) );
         
         if ( $post_id ) {

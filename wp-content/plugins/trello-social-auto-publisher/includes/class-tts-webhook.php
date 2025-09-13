@@ -357,7 +357,11 @@ class TTS_Webhook {
                 'post_content' => wp_kses_post( $result['desc'] ),
                 'post_type'    => 'tts_social_post',
                 'post_status'  => 'draft',
-                'meta_input'   => array( '_tts_client_id' => $client_id ),
+                'meta_input'   => array( 
+                    '_tts_client_id' => $client_id,
+                    '_tts_content_source' => 'trello',
+                    '_tts_source_reference' => $result['id'],
+                ),
             ),
             true
         );

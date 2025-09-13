@@ -23,12 +23,14 @@ class TTS_CPT {
         add_action( 'add_meta_boxes_tts_social_post', array( $this, 'add_schedule_metabox' ) );
         add_action( 'add_meta_boxes_tts_social_post', array( $this, 'add_preview_metabox' ) );
         add_action( 'add_meta_boxes_tts_social_post', array( $this, 'add_channel_metabox' ) );
+        add_action( 'add_meta_boxes_tts_social_post', array( $this, 'add_content_source_metabox' ) );
         add_action( 'add_meta_boxes_tts_social_post', array( $this, 'add_media_metabox' ) );
         add_action( 'add_meta_boxes_tts_social_post', array( $this, 'add_messages_metabox' ) );
         add_action( 'add_meta_boxes_tts_social_post', array( $this, 'add_approval_metabox' ) );
         add_action( 'add_meta_boxes_tts_social_post', array( $this, 'add_location_metabox' ) );
         add_action( 'save_post_tts_social_post', array( $this, 'save_schedule_metabox' ), 5, 3 );
         add_action( 'save_post_tts_social_post', array( $this, 'save_channel_metabox' ), 10, 3 );
+        add_action( 'save_post_tts_social_post', array( $this, 'save_content_source_metabox' ), 12, 3 );
         add_action( 'save_post_tts_social_post', array( $this, 'save_media_metabox' ), 15, 3 );
         add_action( 'save_post_tts_social_post', array( $this, 'save_messages_metabox' ), 20, 3 );
         add_action( 'save_post_tts_social_post', array( $this, 'save_approval_metabox' ), 1, 3 );
@@ -62,6 +64,28 @@ class TTS_CPT {
                 'show_in_rest' => true,
                 'single'       => true,
                 'type'         => 'integer',
+            )
+        );
+
+        register_post_meta(
+            'tts_social_post',
+            '_tts_content_source',
+            array(
+                'show_in_rest' => true,
+                'single'       => true,
+                'type'         => 'string',
+                'default'      => 'manual',
+            )
+        );
+
+        register_post_meta(
+            'tts_social_post',
+            '_tts_source_reference',
+            array(
+                'show_in_rest' => true,
+                'single'       => true,
+                'type'         => 'string',
+                'default'      => '',
             )
         );
 
@@ -183,6 +207,19 @@ class TTS_CPT {
             'tts_social_channel',
             __( 'Channels', 'fp-publisher' ),
             array( $this, 'render_channel_metabox' ),
+            'tts_social_post',
+            'side'
+        );
+    }
+
+    /**
+     * Register the content source meta box.
+     */
+    public function add_content_source_metabox() {
+        add_meta_box(
+            'tts_content_source',
+            __( 'Content Source', 'fp-publisher' ),
+            array( $this, 'render_content_source_metabox' ),
             'tts_social_post',
             'side'
         );
@@ -315,6 +352,50 @@ class TTS_CPT {
                 esc_html( $display )
             );
         }
+    }
+
+    /**
+     * Render the content source meta box.
+     *
+     * @param WP_Post $post Current post object.
+     */
+    public function render_content_source_metabox( $post ) {
+        wp_nonce_field( 'tts_content_source_metabox', 'tts_content_source_nonce' );
+        
+        $source = get_post_meta( $post->ID, '_tts_content_source', true );
+        $source_reference = get_post_meta( $post->ID, '_tts_source_reference', true );
+        
+        $sources = array(
+            'manual' => __( '✍️ Manual Creation', 'fp-publisher' ),
+            'local' => __( '📁 Local Upload', 'fp-publisher' ),
+            'dropbox' => __( '📦 Dropbox', 'fp-publisher' ),
+            'google_drive' => __( '🗂️ Google Drive', 'fp-publisher' ),
+            'trello' => __( '📋 Trello', 'fp-publisher' ),
+        );
+        
+        echo '<p><label for="tts_content_source"><strong>' . esc_html__( 'Source Type:', 'fp-publisher' ) . '</strong></label></p>';
+        echo '<select id="tts_content_source" name="_tts_content_source" style="width: 100%;">';
+        
+        foreach ( $sources as $key => $label ) {
+            printf(
+                '<option value="%s" %s>%s</option>',
+                esc_attr( $key ),
+                selected( $source, $key, false ),
+                esc_html( $label )
+            );
+        }
+        
+        echo '</select>';
+        
+        if ( ! empty( $source_reference ) ) {
+            echo '<p style="margin-top: 10px;"><small>';
+            echo '<strong>' . esc_html__( 'Source Reference:', 'fp-publisher' ) . '</strong><br>';
+            echo esc_html( $source_reference );
+            echo '</small></p>';
+        }
+        
+        // Add hidden field for source reference (usually set programmatically)
+        echo '<input type="hidden" name="_tts_source_reference" value="' . esc_attr( $source_reference ) . '" />';
     }
 
     /**
@@ -488,6 +569,42 @@ class TTS_CPT {
                 update_post_meta( $post_id, '_tts_social_channel', $channels );
             } else {
                 delete_post_meta( $post_id, '_tts_social_channel' );
+            }
+        }
+    }
+
+    /**
+     * Save content source meta box data.
+     *
+     * @param int     $post_id Post ID.
+     * @param WP_Post $post    Post object.
+     * @param bool    $update  Whether this is an existing post being updated.
+     */
+    public function save_content_source_metabox( $post_id, $post, $update ) {
+        if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+            return;
+        }
+
+        if ( ! current_user_can( 'edit_post', $post_id ) ) {
+            return;
+        }
+
+        if ( isset( $_POST['tts_content_source_nonce'] ) && wp_verify_nonce( $_POST['tts_content_source_nonce'], 'tts_content_source_metabox' ) ) {
+            
+            // Save content source
+            if ( isset( $_POST['_tts_content_source'] ) ) {
+                $content_source = sanitize_text_field( wp_unslash( $_POST['_tts_content_source'] ) );
+                update_post_meta( $post_id, '_tts_content_source', $content_source );
+            }
+            
+            // Save source reference 
+            if ( isset( $_POST['_tts_source_reference'] ) ) {
+                $source_reference = sanitize_text_field( wp_unslash( $_POST['_tts_source_reference'] ) );
+                if ( ! empty( $source_reference ) ) {
+                    update_post_meta( $post_id, '_tts_source_reference', $source_reference );
+                } else {
+                    delete_post_meta( $post_id, '_tts_source_reference' );
+                }
             }
         }
     }
